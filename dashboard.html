@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - The BlackFlower</title>
+    
+    <link rel="stylesheet" href="css/style.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-container">
+            <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
+            <div class="brand-title">The BlackFlower</div>
+            <div class="brand-subtitle">Professional Art</div>
+        </div>
+        
+        <nav class="nav-menu">
+            <a href="dashboard.html" style="border-bottom: 1px solid #ffffff;">الرئيسية</a>
+            <a href="tasks.html">المهام</a>
+            <a href="ads.html">الإعلانات</a>
+            <a href="mining.html">التعدين</a>
+            <a href="faucet.html">الصنبور</a>
+            <a href="wallet-io.html">المحفظة</a>
+            <a href="live-chat.html">الدعم الفني</a>
+            <a href="settings.html">الإعدادات</a>
+            <a href="#" id="logout-link" style="color: #ff5555;">خروج</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h2 style="text-transform: uppercase; margin-bottom: 5px;">أهلاً بك مجدداً، <span id="user-display-name">...</span></h2>
+        <p style="font-size: 14px; opacity: 0.7; margin-bottom: 30px;">متابعة فورية لإحصائيات حسابك الفني وأرباحك.</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px;">
+            
+            <div style="border: 1px solid #ffffff; padding: 20px; text-align: center;">
+                <h3 style="font-size: 14px; text-transform: uppercase; margin-bottom: 10px; opacity: 0.8;">الرصيد الحالي للمحفظة</h3>
+                <p style="font-size: 28px; font-weight: bold; font-family: monospace;"><span id="wallet-balance">0.0000</span> $</p>
+            </div>
+
+            <div style="border: 1px solid #ffffff; padding: 20px; text-align: center;">
+                <h3 style="font-size: 14px; text-transform: uppercase; margin-bottom: 10px; opacity: 0.8;">نوع الحساب الفني</h3>
+                <p id="account-type-status" style="font-size: 20px; font-weight: bold; margin-top: 8px;">مستخدم عادي</p>
+                <button id="admin-panel-btn" onclick="window.location.href='admin.html'" style="margin-top: 10px; padding: 5px 15px; font-size: 12px; display: none;">لوحة الإدارة العليا</button>
+            </div>
+
+        </div>
+
+        <h3 style="text-transform: uppercase; margin-bottom: 15px; font-size: 16px;">الوصول السريع للأدوات</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+            <button onclick="window.location.href='tasks.html'">استعراض المهام اليومية</button>
+            <button onclick="window.location.href='mining.html'" style="background-color: #000000; color: #ffffff;">دخول غرف التعدين</button>
+            <button onclick="window.location.href='faucet.html'">المطالبة بهدية الصنبور</button>
+        </div>
+    </div>
+
+    <script src="js/supabase-config.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
