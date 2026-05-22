@@ -16,12 +16,12 @@ body {
 }
 
 /* ==========================================================================
-   2. الهيدر (الشعار والكلام متناسقين في جهة اليسار أعلى الصفحة)
+   2. الهيدر (ترتيب أفقي متسلسل من اليسار: شعار ➔ عنوان ➔ نص فرعي)
    ========================================================================== */
 .main-header {
     width: 100%;
     background-color: #000000; /* خلفية الهيدر سوداء */
-    border-bottom: 1px solid #222222; /* خط سفلي دقيق */
+    border-bottom: 1px solid #222222; /* line سفلي دقيق */
     padding: 15px 30px; /* مساحة داخلية متناسقة */
     display: flex;
 }
@@ -30,9 +30,8 @@ body {
 .header-container {
     display: flex;
     align-items: center;
-    gap: 15px; /* مسافة متناسقة بين الشعار والنصوص */
+    gap: 20px; /* مسافة متناسقة بين الشعار والنصوص */
     max-width: 100%;
-    text-align: left; /* اتجاه النصوص لليسار */
     margin-right: auto; /* دفع العناصر لليَسار تماماً في نظام rtl */
 }
 
@@ -43,32 +42,34 @@ body {
     object-fit: contain;
 }
 
-/* حاوية النصوص المصاحبة للشعار */
+/* حاوية النصوص: تم تعديلها لتصبح أفقية (Row) لترتيب الكلمات وراء بعضها */
 .header-text-block {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    flex-direction: row; /* جعل الكلام يسير على سطر واحد متتالي */
+    align-items: baseline; /* موازنة الكلمات على خط أساسي واحد للعين */
+    gap: 15px; /* مسافة فاصلة بين الجملتين */
+    text-align: left;
 }
 
 /* عنوان الموقع الرئيسي - بنوع خط التايمز الفخم */
 .brand-title {
-    font-family: 'Times New Roman', Times, Baskerville, Georgia, serif; /* تطبيق خط التايمز */
-    font-size: 2.1rem; /* زيادة الحجم قليلاً لأن خطوط السيرف تظهر أصغر نسبياً */
+    font-family: 'Times New Roman', Times, Baskerville, Georgia, serif;
+    font-size: 2.1rem;
     font-weight: 700;
     color: #ffffff;
     letter-spacing: 1px;
-    line-height: 1.1;
     text-transform: uppercase;
+    white-space: nowrap; /* منع انقسام السطر */
 }
 
-/* النص الفرعي */
+/* النص الفرعي - يظهر مباشرة بعد العنوان الرئيسي */
 .brand-subtitle {
-    font-size: 0.9rem;
+    font-size: 1.1rem; /* حجم متناسق عند وقوفه بجانب العنوان الرئيسي */
     font-weight: 400;
-    color: #aaaaaa;
+    color: #aaaaaa; /* لون رمادي أنيق */
     letter-spacing: 2px;
     text-transform: uppercase;
-    margin-top: 2px;
+    white-space: nowrap; /* منع انقسام السطر */
 }
 
 /* ==========================================================================
@@ -135,12 +136,23 @@ body {
         padding: 12px 20px;
     }
 
+    .header-container {
+        gap: 12px;
+    }
+
     .header-logo {
-        height: 50px;
+        height: 45px;
+    }
+
+    /* في الشاشات الصغيرة يُفضل إرجاع النصوص تحت بعضها لعدم خروجها عن الشاشة */
+    .header-text-block {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
     }
 
     .brand-title {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
     }
 
     .brand-subtitle {
