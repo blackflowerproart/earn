@@ -1,32 +1,161 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The BlackFlower</title>
-    
-    <link rel="stylesheet" href="css/style.css">
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-<body>
+/* ==========================================================================
+   1. الإعدادات العامة للموقع (Reset & Base Styles)
+   ========================================================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-    <header class="main-header">
-        <div class="header-container">
-            <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
-            <div class="brand-title">The BlackFlower</div>
-            <div class="brand-subtitle">Professional Art</div>
-        </div>
-    </header>
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #0d0d0d; /* خلفية داكنة فخمة */
+    color: #ffffff;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
 
-    <div class="container">
-        <div id="auth-actions" class="auth-buttons-container">
-            <button class="btn-blackflower" onclick="window.location.href='login.html'">LOGIN</button>
-            <button class="btn-blackflower" onclick="window.location.href='register.html'">START EARNING</button>
-        </div>
-    </div>
+/* ==========================================================================
+   2. الهيدر (الشعار والكلام متناسقين في جهة اليسار أعلى الصفحة)
+   ========================================================================== */
+.main-header {
+    width: 100%;
+    background-color: #000000; /* خلفية الهيدر سوداء */
+    border-bottom: 1px solid #222222; /* خط سفلي دقيق */
+    padding: 15px 30px; /* مساحة داخلية متناسقة */
+    display: flex;
+}
 
-    <script src="js/supabase-config.js"></script>
-    <script src="js/dashboard.js"></script>
-</body>
-</html>
+/* دفع حاوية الهيدر بالكامل إلى جهة اليسار تلقائياً */
+.header-container {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* مسافة متناسقة بين الشعار والنصوص */
+    max-width: 100%;
+    text-align: left; /* اتجاه النصوص لليسار */
+    margin-right: auto; /* دفع العناصر لليَسار تماماً في نظام rtl */
+}
+
+/* حجم الشعار المتناسق */
+.header-logo {
+    height: 60px; /* حجم متوسط وأنيق */
+    width: auto;
+    object-fit: contain;
+}
+
+/* حاوية النصوص المصاحبة للشعار */
+.header-text-block {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* عنوان الموقع الرئيسي - بنوع خط التايمز الفخم */
+.brand-title {
+    font-family: 'Times New Roman', Times, Baskerville, Georgia, serif; /* تطبيق خط التايمز */
+    font-size: 2.1rem; /* زيادة الحجم قليلاً لأن خطوط السيرف تظهر أصغر نسبياً */
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 1px;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+/* النص الفرعي */
+.brand-subtitle {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: #aaaaaa;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
+/* ==========================================================================
+   3. حاوية المحتوى الرئيسي والأزرار
+   ========================================================================== */
+.container {
+    max-width: 1200px;
+    margin: 80px auto 0 auto; /* مسافة علوية مناسبة أسفل الهيدر */
+    padding: 0 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* حاوية الأزرار */
+.auth-buttons-container {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    margin-top: 40px;
+    width: 100%;
+}
+
+/* ==========================================================================
+   4. تصميم الأزرار (مربع أسود، كلام أبيض، إطار أبيض، ينعكس عند الهوفر)
+   ========================================================================== */
+.btn-blackflower {
+    background-color: #000000;
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 16px 45px;
+    border: 2px solid #ffffff;
+    border-radius: 0px; /* زوايا مربعة حادة وعصرية */
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    min-width: 200px;
+    text-transform: uppercase;
+}
+
+/* تأثير تمرير الماوس (Hover) - انعكاس كامل للألوان */
+.btn-blackflower:hover {
+    background-color: #ffffff;
+    color: #000000;
+    border-color: #ffffff;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
+}
+
+/* عند الضغط الفعلي على الزر */
+.btn-blackflower:active {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================================================
+   5. التجاوب مع شاشات الهواتف (Responsive Design)
+   ========================================================================== */
+@media (max-width: 768px) {
+    .main-header {
+        padding: 12px 20px;
+    }
+
+    .header-logo {
+        height: 50px;
+    }
+
+    .brand-title {
+        font-size: 1.6rem;
+    }
+
+    .brand-subtitle {
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+    }
+
+    .auth-buttons-container {
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .btn-blackflower {
+        width: 100%;
+        max-width: 300px;
+    }
+}
