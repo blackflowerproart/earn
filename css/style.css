@@ -1,150 +1,165 @@
-/* ========================================================
-   1. الإعدادات العامة (Global Minimalist Settings)
-   ======================================================== */
+/* ==========================================================================
+   1. الإعدادات العامة للموقع (Reset & Base Styles)
+   ========================================================================== */
 * {
-    box-sizing: border-box;
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    background-color: #000000; /* خلفية سوداء خالصة للموقع */
-    color: #ffffff;            /* كتابة بيضاء خالصة */
-    display: block;
-    line-height: 1.6;
-}
-
-a {
+    font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #0d0d0d; /* خلفية داكنة فخمة تتماشى مع الشعار */
     color: #ffffff;
-    text-decoration: underline;
+    min-height: 100vh;
+    overflow-x: hidden;
 }
 
-a:hover {
-    opacity: 0.7;
-}
-
-/* ========================================================
-   2. الهيدر الموحد بالأبيض والأسود (The BlackFlower Header)
-   ======================================================== */
+/* ==========================================================================
+   2. الهيدر (الموقع والشعار والكلام على اليسار في أعلى الصفحة)
+   ========================================================================== */
 .main-header {
-    background-color: #000000;
-    border-bottom: 2px solid #ffffff; /* تحديد الهيدر بخط سفلي أبيض */
-    padding: 25px 20px;
-    text-align: center;
     width: 100%;
+    background-color: #000000; /* خلفية الهيدر سوداء بالكامل */
+    border-bottom: 1px solid #222222; /* خط سفلي دقيق لفصل الهيدر */
+    padding: 25px 40px; /* مساحة داخلية مريحة تعطي فخامة */
 }
 
+/* دفع محتويات الهيدر بالكامل إلى جهة اليسار */
 .header-container {
-    display: block;
-    max-width: 600px;
-    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* محاذاة العناصر إلى اليسار */
+    gap: 25px; /* مسافة بين الشعار والنصوص */
+    max-width: 100%;
+    text-align: left; /* جعل اتجاه النصوص لليسار لتتناسب مع الهوية الإنجليزية للموقع */
 }
 
-/* تنسيق الشعار المرفوع على الموقع */
+/* تكبير حجم الشعار */
 .header-logo {
-    max-height: 70px;
-    height: auto;
+    height: 90px; /* حجم كبير وواضح للشعار */
     width: auto;
-    margin-bottom: 12px;
-    display: inline-block;
+    object-fit: contain;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.1)); /* إشعاع خفيف جداً حول الشعار */
 }
 
-/* عنوان الموقع بنوع خط تايمز كما طلبت */
+/* حاوية النصوص المصاحبة للشعار */
+.header-text-block {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* تكبير اسم الموقع الرئيسي */
 .brand-title {
-    font-family: 'Times New Roman', Times, serif;
-    font-size: 28pt;
-    font-weight: bold;
-    color: #ffffff; 
-    letter-spacing: 1px;
-    line-height: 1.2;
-}
-
-/* العنوان الفرعي بنوع خط أريال وحجم أصغر */
-.brand-subtitle {
-    font-family: Arial, sans-serif;
-    font-size: 13pt;
-    font-weight: normal;
-    color: #ffffff; 
+    font-size: 2.8rem; /* حجم خط كبير وبارز جداً */
+    font-weight: 800;
+    color: #ffffff;
     letter-spacing: 2px;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+/* تكبير النص الفرعي */
+.brand-subtitle {
+    font-size: 1.3rem; /* حجم أكبر يتناسب مع العنوان الرئيسي */
+    font-weight: 400;
+    color: #aaaaaa; /* لون رمادي أنيق لعدم تشتيت العين */
+    letter-spacing: 4px;
+    text-transform: uppercase;
     margin-top: 5px;
-    text-transform: uppercase;
 }
 
-/* ========================================================
-   3. حاويات الصفحات الموحدة (Container Framework)
-   ======================================================= */
+/* ==========================================================================
+   3. حاوية المحتوى الرئيسي والأزرار
+   ========================================================================== */
 .container {
-    max-width: 550px; /* حجم مخصص ومثالي لصفحات الدخول والتسجيل */
-    width: 90%;
-    margin: 50px auto;
-    background-color: #000000; 
-    padding: 30px;
-    border: 1px solid #ffffff; /* إطار أبيض يحدد محتوى الصفحة */
-    border-radius: 0px;        /* حواف حادة لتعزيز الطابع الاحترافي الكلاسيكي */
+    max-width: 1200px;
+    margin: 100px auto 0 auto; /* مسافة علوية لترك مساحة مريحة أسفل الهيدر الكبير */
+    padding: 0 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-/* ========================================================
-   4. حقول الإدخال والأزرار (Strict Forms & Buttons)
-   ======================================================== */
-.form-group {
-    margin-bottom: 20px;
-    text-align: right;
-    dir: rtl;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 11pt;
-    color: #ffffff;
-    font-weight: bold;
-}
-
-/* مدخلات سوداء بالكامل بحدود ونصوص بيضاء */
-.form-group input {
+/* حاوية الأزرار */
+.auth-buttons-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 40px;
     width: 100%;
-    padding: 12px;
-    background-color: #000000;
-    border: 1px solid #ffffff;
-    border-radius: 0px;
-    color: #ffffff;
-    font-size: 11pt;
 }
 
-.form-group input:focus {
-    outline: 2px solid #ffffff; /* إطار تركيز خارجي عريض عند الإدخال */
-}
-
-/* الأزرار: خلفية بيضاء ونصوص سوداء */
-button {
-    background-color: #ffffff;
-    color: #000000;
-    font-weight: bold;
-    border: 1px solid #ffffff;
-    padding: 12px 35px;
-    border-radius: 0px;
+/* ==========================================================================
+   4. تصميم الأزرار (مربع أسود، كلام أبيض، إطار أبيض، ينعكس عند الهوفر)
+   ========================================================================== */
+.btn-blackflower {
+    background-color: #000000; /* خلفية سوداء */
+    color: #ffffff; /* كلام أبيض */
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    font-size: 1.2rem; /* حجم خط كبير وواضح داخل الزر */
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 20px 55px; /* حجم زر كبير وفخم */
+    border: 2px solid #ffffff; /* إطار أبيض */
+    border-radius: 0px; /* زوايا مربعة حادة تماماً لمظهر هندسي حديث */
     cursor: pointer;
-    font-size: 12pt;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5); /* ظل داكن عميق */
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* حركة ناعمة وانسيابية */
+    min-width: 240px; /* عرض أدنى كبير لضمان هيبة الزر */
     text-transform: uppercase;
-    transition: all 0.2s ease;
 }
 
-/* عند تمرير الماوس فوق الزر ينعكس التصميم */
-button:hover {
-    background-color: #000000;
-    color: #ffffff;
+/* تأثير تمرير الماوس (Hover) - انعكاس كامل للألوان */
+.btn-blackflower:hover {
+    background-color: #ffffff; /* الخلفية تصبح بيضاء */
+    color: #000000; /* الكلام يصبح أسود */
+    border-color: #ffffff; /* يظل الإطار أبيض ليحدد الزر بشكل فخم */
+    transform: translateY(-5px); /* يرتفع الزر قليلاً عند التمرير */
+    box-shadow: 0 12px 30px rgba(255, 255, 255, 0.25); /* توهج أبيض أنيق حول الزر */
 }
 
-/* ========================================================
-   5. رسائل وتنبيهات الحالات (Status Display)
-   ======================================================== */
-.msg {
-    margin-top: 20px;
-    font-weight: bold;
-    text-align: center;
-    padding: 12px;
-    border: 1px dashed #ffffff; /* إطار متقطع لعرض الأخطاء والنجاح */
-    background-color: #000000;
-    color: #ffffff;
+/* عند الضغط الفعلي على الزر */
+.btn-blackflower:active {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================================================
+   5. التجاوب مع شاشات الهواتف والأجهزة اللوحية (Responsive Design)
+   ========================================================================== */
+@media (max-width: 768px) {
+    .main-header {
+        padding: 20px;
+    }
+    
+    .header-container {
+        gap: 15px;
+    }
+
+    .header-logo {
+        height: 65px; /* تصغير متناسب للشعار على الهواتف */
+    }
+
+    .brand-title {
+        font-size: 1.8rem; /* تصغير متناسب للعنوان */
+    }
+
+    .brand-subtitle {
+        font-size: 0.9rem;
+        letter-spacing: 2px;
+    }
+
+    .auth-buttons-container {
+        flex-direction: column; /* ترتيب الأزرار فوق بعضها في الهواتف */
+        gap: 20px;
+        align-items: center;
+    }
+
+    .btn-blackflower {
+        width: 100%; /* الزر يأخذ العرض الكامل المتاح في الشاشات الصغيرة */
+        max-width: 320px;
+    }
 }
