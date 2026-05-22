@@ -1,60 +1,84 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
-    <header class="main-header">
-    <div class="header-container">
-        <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
-        <div class="header-text-block">
-            <div class="brand-title">The BlackFlower</div>
-            <div class="brand-subtitle">Professional Art</div>
-        </div>
-    </div>
-</header>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إنشاء حساب جديد - The BlackFlower</title>
-    
-    <link rel="stylesheet" href="css/style.css">
+    <title>Register - The BlackFlower</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .btn-container {
+            margin-top: 20px;
+        }
+        a {
+            color: #ffffff;
+        }
+    </style>
 </head>
 <body>
 
     <header class="main-header">
         <div class="header-container">
             <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
-            <div class="brand-title">The BlackFlower</div>
-            <div class="brand-subtitle">Professional Art</div>
+            <div class="header-text-block">
+                <h1 class="brand-title" style="margin: 0; font-size: 24px;">The BlackFlower</h1>
+                <p class="brand-subtitle" style="margin: 0; font-size: 14px; opacity: 0.8;">Professional Art</p>
+            </div>
         </div>
     </header>
 
     <div class="container">
-        <h2 style="text-align: center; margin-bottom: 10px; text-transform: uppercase;">إنشاء حساب جديد</h2>
-        <p style="text-align: center; margin-bottom: 30px; font-size: 14px; opacity: 0.8;">انضم إلينا اليوم وابدأ في جمع الأرباح الرقمية.</p>
+        <h2>Create New Account</h2>
+        <p style="opacity: 0.8;">Join us today and start collecting digital profits.</p>
         
         <form id="register-form">
             <div class="form-group">
-                <label for="reg-username">اسم المستخدم (Username):</label>
-                <input type="text" id="reg-username" placeholder="مثال: blackflower_user" required>
+                <label for="reg-username">Username:</label>
+                <input type="text" id="reg-username" placeholder="e.g., blackflower_user" required>
             </div>
 
             <div class="form-group">
-                <label for="reg-email">البريد الإلكتروني:</label>
+                <label for="reg-email">Email Address:</label>
                 <input type="email" id="reg-email" placeholder="name@example.com" required>
             </div>
 
             <div class="form-group">
-                <label for="reg-password">كلمة المرور:</label>
-                <input type="password" id="reg-password" placeholder="يجب ألا تقل عن 6 خانات" minlength="6" required>
+                <label for="reg-password">Password:</label>
+                <input type="password" id="reg-password" placeholder="At least 6 characters" minlength="6" required>
             </div>
 
-            <div style="text-align: center; margin-top: 10px;">
-                <button type="submit" id="register-btn">إنشاء الحساب</button>
+            <div class="btn-container">
+                <button type="submit" id="register-btn">Register</button>
             </div>
         </form>
 
-        <div style="margin-top: 30px; font-size: 13px; text-align: center; border-top: 1px dashed #ffffff; padding-top: 20px; line-height: 2;">
-            <p>تمتلك حساباً بالفعل؟ <a href="login.html">تسجيل الدخول من هنا</a></p>
+        <div style="margin-top: 30px; border-top: 1px dashed #ffffff; padding-top: 20px;">
+            <p>Already have an account? <a href="login.html">Login here</a></p>
         </div>
 
         <p id="reg-response-message" class="msg" style="display: none;"></p>
