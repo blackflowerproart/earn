@@ -16,60 +16,60 @@ body {
 }
 
 /* ==========================================================================
-   2. الهيدر (ترتيب أفقي متسلسل من اليسار: شعار ➔ عنوان ➔ نص فرعي)
+   2. الهيدر (ترتيب عمودي جهة اليسار: شعار في الأعلى ➔ عنوان ➔ نص فرعي)
    ========================================================================== */
 .main-header {
     width: 100%;
     background-color: #000000; /* خلفية الهيدر سوداء */
-    border-bottom: 1px solid #222222; /* line سفلي دقيق */
-    padding: 15px 30px; /* مساحة داخلية متناسقة */
+    border-bottom: 1px solid #222222; /* خط سفلي دقيق */
+    padding: 20px 30px; /* مساحة داخلية متناسقة تمنح فخامة لترتيب العناصر */
     display: flex;
 }
 
-/* دفع حاوية الهيدر بالكامل إلى جهة اليسار تلقائياً */
+/* دفع حاوية الهيدر بالكامل إلى جهة اليسار وتحويلها لترتيب عمودي (Column) */
 .header-container {
     display: flex;
-    align-items: center;
-    gap: 20px; /* مسافة متناسقة بين الشعار والنصوص */
+    flex-direction: column; /* ترتيب العناصر (الشعار ثم حاوية النصوص) فوق بعضها */
+    align-items: flex-start; /* محاذاة البداية جهة اليسار */
+    gap: 12px; /* مسافة متناسقة بين الشعار والنصوص التي تحته */
     max-width: 100%;
     margin-right: auto; /* دفع العناصر لليَسار تماماً في نظام rtl */
 }
 
 /* حجم الشعار المتناسق */
 .header-logo {
-    height: 60px; /* حجم متوسط وأنيق */
+    height: 55px; /* حجم أنيق ومتناسق عند وضعه في الأعلى */
     width: auto;
     object-fit: contain;
 }
 
-/* حاوية النصوص: تم تعديلها لتصبح أفقية (Row) لترتيب الكلمات وراء بعضها */
+/* حاوية النصوص: مرتبة عمودياً لتكون العناوين تحت بعضها أسفل الشعار */
 .header-text-block {
     display: flex;
-    flex-direction: row; /* جعل الكلام يسير على سطر واحد متتالي */
-    align-items: baseline; /* موازنة الكلمات على خط أساسي واحد للعين */
-    gap: 15px; /* مسافة فاصلة بين الجملتين */
+    flex-direction: column; /* ترتيب عمودي للنصوص */
+    align-items: flex-start; /* محاذاة النصوص لليسار */
+    gap: 4px; /* مسافة صغيرة وجميلة بين جملة العنوان والجملة الأخيرة */
     text-align: left;
 }
 
 /* عنوان الموقع الرئيسي - بنوع خط التايمز الفخم */
 .brand-title {
     font-family: 'Times New Roman', Times, Baskerville, Georgia, serif;
-    font-size: 2.1rem;
+    font-size: 1.8rem; /* حجم متناسق جداً ومريح للعين */
     font-weight: 700;
     color: #ffffff;
     letter-spacing: 1px;
+    line-height: 1.1;
     text-transform: uppercase;
-    white-space: nowrap; /* منع انقسام السطر */
 }
 
-/* النص الفرعي - يظهر مباشرة بعد العنوان الرئيسي */
+/* النص الفرعي الأخير - يظهر في الأسفل تماماً */
 .brand-subtitle {
-    font-size: 1.1rem; /* حجم متناسق عند وقوفه بجانب العنوان الرئيسي */
+    font-size: 0.85rem; /* حجم ناعم وأنيق أسفل خط التايمز */
     font-weight: 400;
-    color: #aaaaaa; /* لون رمادي أنيق */
-    letter-spacing: 2px;
+    color: #aaaaaa; /* لون رمادي هادئ لكسر حدة الأبيض */
+    letter-spacing: 3px; /* تباعد حرفي مميز يعطي طابعاً مودرن */
     text-transform: uppercase;
-    white-space: nowrap; /* منع انقسام السطر */
 }
 
 /* ==========================================================================
@@ -133,22 +133,15 @@ body {
    ========================================================================== */
 @media (max-width: 768px) {
     .main-header {
-        padding: 12px 20px;
+        padding: 15px 20px;
     }
 
     .header-container {
-        gap: 12px;
+        gap: 10px;
     }
 
     .header-logo {
-        height: 45px;
-    }
-
-    /* في الشاشات الصغيرة يُفضل إرجاع النصوص تحت بعضها لعدم خروجها عن الشاشة */
-    .header-text-block {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 2px;
+        height: 45px; /* حجم أصغر قليلاً ليناسب شاشات الموبايل */
     }
 
     .brand-title {
@@ -156,8 +149,8 @@ body {
     }
 
     .brand-subtitle {
-        font-size: 0.8rem;
-        letter-spacing: 1px;
+        font-size: 0.75rem;
+        letter-spacing: 2px;
     }
 
     .auth-buttons-container {
