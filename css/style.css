@@ -1,0 +1,203 @@
+/* ========================================================
+   1. الإعدادات العامة (Global Settings)
+   ======================================================== */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background-color: #000000; /* خلفية سوداء خالصة لكافة الصفحات */
+    color: #ffffff;            /* كتابة بيضاء خالصة */
+    display: block;
+    line-height: 1.6;
+}
+
+/* صياغة عامة للروابط داخل الموقع لتلتزم باللون الأبيض */
+a {
+    color: #ffffff;
+    text-decoration: underline;
+    transition: opacity 0.2s ease;
+}
+
+a:hover {
+    opacity: 0.7;
+}
+
+/* ========================================================
+   2. الهيدر الموحد بالأبيض والأسود (The BlackFlower Header)
+   ======================================================== */
+.main-header {
+    background-color: #000000;
+    border-bottom: 2px solid #ffffff; /* خط سفلي أبيض لتحديد الهيدر */
+    padding: 25px 20px;
+    text-align: center;
+    width: 100%;
+}
+
+.header-container {
+    display: block;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* تنسيق الشعار logo.png */
+.header-logo {
+    max-height: 70px;
+    height: auto;
+    width: auto;
+    margin-bottom: 10px;
+    display: inline-block;
+    /* فلتر اختياري لجعل الشعار يتناسب مع الأبيض والأسود إذا كان ملوناً */
+    filter: grayscale(100%) brightness(200%); 
+}
+
+/* العنوان الرئيسي بالخط التايمز المطلوب باللون الأبيض */
+.brand-title {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 28pt;
+    font-weight: bold;
+    color: #ffffff; 
+    letter-spacing: 1px;
+    line-height: 1.2;
+}
+
+/* العنوان الفرعي بخط أريال أصغر باللون الأبيض */
+.brand-subtitle {
+    font-family: Arial, sans-serif;
+    font-size: 13pt;
+    font-weight: normal;
+    color: #ffffff; 
+    letter-spacing: 2px;
+    margin-top: 5px;
+    text-transform: uppercase;
+}
+
+/* ========================================================
+   3. حاويات الصفحات والقوائم (Layout & Navigation)
+   ======================================================= */
+.container {
+    max-width: 1000px;
+    width: 90%;
+    margin: 40px auto;
+    background-color: #000000; /* الحاوية سوداء بالكامل */
+    padding: 30px;
+    border: 1px solid #ffffff; /* تحديد الحاوية بإطار أبيض نظيف */
+    border-radius: 0px;        /* حواف حادة لتناسب التصميم الكلاسيكي */
+}
+
+/* شريط التنقل العلوي بين الصفحات */
+.nav-menu {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.nav-menu a {
+    color: #ffffff;
+    text-decoration: none;
+    margin: 0 15px;
+    font-size: 11pt;
+    font-weight: bold;
+    border-bottom: 1px solid transparent;
+}
+
+.nav-menu a:hover {
+    border-bottom: 1px solid #ffffff; /* خط سفلي عند تمرير الماوس */
+}
+
+/* ========================================================
+   4. المدخلات والأزرار (Black & White Forms & Buttons)
+   ======================================================== */
+.form-group {
+    margin-bottom: 25px;
+    text-align: right;
+    dir: rtl;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 11pt;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+/* حقول الإدخال: خلفية سوداء، حدود بيضاء، نص أبيض */
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 12px;
+    background-color: #000000;
+    border: 1px solid #ffffff;
+    border-radius: 0px;
+    color: #ffffff;
+    font-size: 11pt;
+}
+
+.form-group input:focus {
+    outline: 2px solid #ffffff; /* توهج خارجي أبيض عند الضغط */
+}
+
+/* الأزرار: خلفية بيضاء بالكامل والكتابة داخلها باللون الأسود */
+button, .btn {
+    background-color: #ffffff;
+    color: #000000;
+    font-weight: bold;
+    border: 1px solid #ffffff;
+    padding: 12px 28px;
+    border-radius: 0px;
+    cursor: pointer;
+    font-size: 12pt;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+}
+
+/* عند تمرير الماوس ينعكس الزر: يصبح أسود والكتابة بيضاء */
+button:hover, .btn:hover {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+button:disabled {
+    background-color: #000000;
+    color: #555555;
+    border-color: #555555;
+    cursor: not-allowed;
+}
+
+/* ========================================================
+   5. تنسيق الجداول والبيانات (Black & White Tables)
+   ======================================================== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 30px;
+    background-color: #000000;
+    border: 1px solid #ffffff;
+}
+
+th, td {
+    padding: 14px;
+    text-align: center;
+    border: 1px solid #ffffff; /* كل الحدود بيضاء */
+    color: #ffffff;
+}
+
+th {
+    background-color: #ffffff; /* رأس الجدول أبيض بالكامل */
+    color: #000000;            /* نصوص الرأس سوداء */
+    font-weight: bold;
+}
+
+/* ========================================================
+   6. التنبيهات ورسائل الحالات (Status Messages)
+   ======================================================== */
+.msg {
+    margin-top: 20px;
+    font-weight: bold;
+    text-align: center;
+    padding: 10px;
+    border: 1px dashed #ffffff; /* تنبيه محاط بخط متقطع أبيض */
+    color: #ffffff;
+}
