@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The BlackFlower - الرئيسية</title>
     
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="../css/style.css">
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -13,7 +13,7 @@
 
     <header class="main-header">
         <div class="header-container">
-            <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
+            <img src="../logo.png" alt="BlackFlower Logo" class="header-logo">
             <div class="brand-title">The BlackFlower</div>
             <div class="brand-subtitle">Professional Art</div>
         </div>
@@ -25,12 +25,13 @@
             مرحباً بك في المنصة الفنية المخصصة لتنفيذ المهام اليومية، مشاهدة الإعلانات المحمية، التعدين الافتراضي، والمطالبة بمكافآت الصنبور المجانية.
         </p>
 
-        <div id="auth-actions" style="margin: 20px 0;">
-            <p style="font-size: 14px; opacity: 0.5;">جاري فحص حالة الحساب...</p>
+        <div id="auth-actions" style="margin: 20px 0; display: flex; justify-content: center; gap: 20px;">
+            <button onclick="window.location.href='login.html'">تسجيل الدخول</button>
+            <button onclick="window.location.href='register.html'" style="background-color: #000000; color: #ffffff;">إنشاء حساب جديد</button>
         </div>
     </div>
 
-    <script src="js/supabase-config.js"></script>
-    <script src="js/dashboard.js"></script>
+    <script src="../js/supabase-config.js"></script>
+    <script src="../js/dashboard.js"></script>
 </body>
 </html>
