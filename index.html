@@ -5,15 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The BlackFlower</title>
     
-    <!-- ربط ملف الستايل -->
     <link rel="stylesheet" href="css/style.css">
     
-    <!-- مكتبة Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-    <!-- الهيدر الخاص بالموقع -->
     <header class="main-header">
         <div class="header-container">
             <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
@@ -22,15 +19,13 @@
         </div>
     </header>
 
-    <!-- حاوية المحتوى الرئيسي والأزرار -->
     <div class="container">
         <div id="auth-actions" class="auth-buttons-container">
-            <button class="btn btn-secondary" onclick="window.location.href='login.html'">LOGIN</button>
-            <button class="btn btn-primary" onclick="window.location.href='register.html'">START EARNING</button>
+            <button class="btn-blackflower" onclick="window.location.href='login.html'">LOGIN</button>
+            <button class="btn-blackflower" onclick="window.location.href='register.html'">START EARNING</button>
         </div>
     </div>
 
-    <!-- ملفات الجافا سكربت -->
     <script src="js/supabase-config.js"></script>
     <script src="js/dashboard.js"></script>
 </body>
