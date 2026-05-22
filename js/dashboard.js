@@ -1,23 +1,58 @@
 document.addEventListener("DOMContentLoaded", async () => {
-    const authActionsContainer = document.getElementById('auth-actions');
+    
+    // 1. التحقق من حالة المستخدم وتأمين الصفحة
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    // إذا لم يكن هناك مستخدم مسجل، يتم طرده فوراً لصفحة تسجيل الدخول لحماية الصفحة
+    if (!user || authError) {
+        window.location.href = 'login.html';
+        return;
+    }
 
-    // التأكد من أننا في الصفحة الرئيسية (index.html) لمنع الأخطاء في الصفحات الأخرى
-    if (authActionsContainer) {
-        // 1. جلب بيانات الجلسة الحالية من Supabase
-        const { data: { session }, error } = await supabase.auth.getSession();
+    // 2. جلب البروفايل الخاص بالمستخدم لمعرفة اسم المستخدم وصلاحيات الإدارة
+    let { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('username, is_admin')
+        .eq('id', user.id)
+        .single();
 
-        if (session && session.user) {
-            // إذا كان المستخدم مسجل دخوله بالفعل، نعرض له زر الدخول المباشر للوحة التحكم
-            authActionsContainer.innerHTML = `
-                <p style="color: #10b981; font-weight: bold; margin-bottom: 15px;">أنت مسجّل الدخول بالفعل كـ (${session.user.email})</p>
-                <button onclick="window.location.href='dashboard.html'" style="background-color: #3b82f6;">الانتقال إلى لوحة التحكم</button>
-            `;
-        } else {
-            // إذا كان زائراً جديداً، نعرض له أزرار تسجيل الدخول وإنشاء الحساب
-            authActionsContainer.innerHTML = `
-                <button onclick="window.location.href='login.html'" style="margin-left: 10px;">تسجيل الدخول</button>
-                <button onclick="window.location.href='register.html' " style="background-color: #2563eb;">إنشاء حساب جديد</button>
-            `;
+    if (profile) {
+        // عرض اسم المستخدم في واجهة اللوحة
+        const displayNameEl = document.getElementById('user-display-name');
+        if (displayNameEl) displayNameEl.innerText = profile.username;
+
+        // التحقق مما إذا كان هذا الحساب أدمن، لإظهار زر التحكم الإداري المخفي
+        if (profile.is_admin) {
+            const adminBtn = document.getElementById('admin-panel-btn');
+            const accountTypeStatus = document.getElementById('account-type-status');
+            if (adminBtn) adminBtn.style.display = 'inline-block';
+            if (accountTypeStatus) accountTypeStatus.innerText = 'المدير الرئيسي (Admin)';
         }
+    }
+
+    // 3. جلب رصيد المحفظة المالي بدقة 4 أرقام عشرية وعرضه حياً للمستخدم
+    let { data: wallet } = await supabase
+        .from('wallets')
+        .select('balance')
+        .eq('user_id', user.id)
+        .single();
+
+    if (wallet) {
+        const balanceEl = document.getElementById('wallet-balance');
+        if (balanceEl) balanceEl.innerText = Number(wallet.balance).toFixed(4);
+    }
+
+    // 4. معالجة وتأمين زر تسجيل الخروج (Logout) وتدمير الجلسة الحالية
+    const logoutLink = document.getElementById('logout-link');
+    if (logoutLink) {
+        logoutLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const { error } = await supabase.auth.signOut();
+            if (!error) {
+                window.location.href = 'login.html';
+            } else {
+                alert("حدث خطأ أثناء تسجيل الخروج: " + error.message);
+            }
+        });
     }
 });
