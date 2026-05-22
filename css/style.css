@@ -1,5 +1,5 @@
 /* ========================================================
-   1. الإعدادات العامة (Global Settings)
+   1. الإعدادات العامة (Global Minimalist Settings)
    ======================================================== */
 * {
     box-sizing: border-box;
@@ -9,17 +9,15 @@
 
 body {
     font-family: 'Segoe UI', Arial, sans-serif;
-    background-color: #000000; /* خلفية سوداء خالصة لكافة الصفحات */
+    background-color: #000000; /* خلفية سوداء خالصة للموقع */
     color: #ffffff;            /* كتابة بيضاء خالصة */
     display: block;
     line-height: 1.6;
 }
 
-/* صياغة عامة للروابط داخل الموقع لتلتزم باللون الأبيض */
 a {
     color: #ffffff;
     text-decoration: underline;
-    transition: opacity 0.2s ease;
 }
 
 a:hover {
@@ -31,7 +29,7 @@ a:hover {
    ======================================================== */
 .main-header {
     background-color: #000000;
-    border-bottom: 2px solid #ffffff; /* خط سفلي أبيض لتحديد الهيدر */
+    border-bottom: 2px solid #ffffff; /* تحديد الهيدر بخط سفلي أبيض */
     padding: 25px 20px;
     text-align: center;
     width: 100%;
@@ -43,18 +41,16 @@ a:hover {
     margin: 0 auto;
 }
 
-/* تنسيق الشعار logo.png */
+/* تنسيق الشعار المرفوع على الموقع */
 .header-logo {
     max-height: 70px;
     height: auto;
     width: auto;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     display: inline-block;
-    /* فلتر اختياري لجعل الشعار يتناسب مع الأبيض والأسود إذا كان ملوناً */
-    filter: grayscale(100%) brightness(200%); 
 }
 
-/* العنوان الرئيسي بالخط التايمز المطلوب باللون الأبيض */
+/* عنوان الموقع بنوع خط تايمز كما طلبت */
 .brand-title {
     font-family: 'Times New Roman', Times, serif;
     font-size: 28pt;
@@ -64,7 +60,7 @@ a:hover {
     line-height: 1.2;
 }
 
-/* العنوان الفرعي بخط أريال أصغر باللون الأبيض */
+/* العنوان الفرعي بنوع خط أريال وحجم أصغر */
 .brand-subtitle {
     font-family: Arial, sans-serif;
     font-size: 13pt;
@@ -76,56 +72,37 @@ a:hover {
 }
 
 /* ========================================================
-   3. حاويات الصفحات والقوائم (Layout & Navigation)
+   3. حاويات الصفحات الموحدة (Container Framework)
    ======================================================= */
 .container {
-    max-width: 1000px;
+    max-width: 550px; /* حجم مخصص ومثالي لصفحات الدخول والتسجيل */
     width: 90%;
-    margin: 40px auto;
-    background-color: #000000; /* الحاوية سوداء بالكامل */
+    margin: 50px auto;
+    background-color: #000000; 
     padding: 30px;
-    border: 1px solid #ffffff; /* تحديد الحاوية بإطار أبيض نظيف */
-    border-radius: 0px;        /* حواف حادة لتناسب التصميم الكلاسيكي */
-}
-
-/* شريط التنقل العلوي بين الصفحات */
-.nav-menu {
-    margin-top: 20px;
-    text-align: center;
-}
-
-.nav-menu a {
-    color: #ffffff;
-    text-decoration: none;
-    margin: 0 15px;
-    font-size: 11pt;
-    font-weight: bold;
-    border-bottom: 1px solid transparent;
-}
-
-.nav-menu a:hover {
-    border-bottom: 1px solid #ffffff; /* خط سفلي عند تمرير الماوس */
+    border: 1px solid #ffffff; /* إطار أبيض يحدد محتوى الصفحة */
+    border-radius: 0px;        /* حواف حادة لتعزيز الطابع الاحترافي الكلاسيكي */
 }
 
 /* ========================================================
-   4. المدخلات والأزرار (Black & White Forms & Buttons)
+   4. حقول الإدخال والأزرار (Strict Forms & Buttons)
    ======================================================== */
 .form-group {
-    margin-bottom: 25px;
+    margin-bottom: 20px;
     text-align: right;
     dir: rtl;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     font-size: 11pt;
     color: #ffffff;
     font-weight: bold;
 }
 
-/* حقول الإدخال: خلفية سوداء، حدود بيضاء، نص أبيض */
-.form-group input, .form-group select, .form-group textarea {
+/* مدخلات سوداء بالكامل بحدود ونصوص بيضاء */
+.form-group input {
     width: 100%;
     padding: 12px;
     background-color: #000000;
@@ -136,16 +113,16 @@ a:hover {
 }
 
 .form-group input:focus {
-    outline: 2px solid #ffffff; /* توهج خارجي أبيض عند الضغط */
+    outline: 2px solid #ffffff; /* إطار تركيز خارجي عريض عند الإدخال */
 }
 
-/* الأزرار: خلفية بيضاء بالكامل والكتابة داخلها باللون الأسود */
-button, .btn {
+/* الأزرار: خلفية بيضاء ونصوص سوداء */
+button {
     background-color: #ffffff;
     color: #000000;
     font-weight: bold;
     border: 1px solid #ffffff;
-    padding: 12px 28px;
+    padding: 12px 35px;
     border-radius: 0px;
     cursor: pointer;
     font-size: 12pt;
@@ -153,51 +130,21 @@ button, .btn {
     transition: all 0.2s ease;
 }
 
-/* عند تمرير الماوس ينعكس الزر: يصبح أسود والكتابة بيضاء */
-button:hover, .btn:hover {
+/* عند تمرير الماوس فوق الزر ينعكس التصميم */
+button:hover {
     background-color: #000000;
     color: #ffffff;
 }
 
-button:disabled {
-    background-color: #000000;
-    color: #555555;
-    border-color: #555555;
-    cursor: not-allowed;
-}
-
 /* ========================================================
-   5. تنسيق الجداول والبيانات (Black & White Tables)
-   ======================================================== */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 30px;
-    background-color: #000000;
-    border: 1px solid #ffffff;
-}
-
-th, td {
-    padding: 14px;
-    text-align: center;
-    border: 1px solid #ffffff; /* كل الحدود بيضاء */
-    color: #ffffff;
-}
-
-th {
-    background-color: #ffffff; /* رأس الجدول أبيض بالكامل */
-    color: #000000;            /* نصوص الرأس سوداء */
-    font-weight: bold;
-}
-
-/* ========================================================
-   6. التنبيهات ورسائل الحالات (Status Messages)
+   5. رسائل وتنبيهات الحالات (Status Display)
    ======================================================== */
 .msg {
     margin-top: 20px;
     font-weight: bold;
     text-align: center;
-    padding: 10px;
-    border: 1px dashed #ffffff; /* تنبيه محاط بخط متقطع أبيض */
+    padding: 12px;
+    border: 1px dashed #ffffff; /* إطار متقطع لعرض الأخطاء والنجاح */
+    background-color: #000000;
     color: #ffffff;
 }
