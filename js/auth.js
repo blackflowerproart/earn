@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // 1. معالجة عملية التسجيل (Sign Up) والإدخال في جدول profiles
+    // 1. معالجة عملية التسجيل (Sign Up) والإدخل في جدول profiles
     // ==========================================
     const registerForm = document.getElementById('register-form');
     if (registerForm) {
@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showMessage(responseMessage, '', false);
 
             try {
-                // إرسال الرابط المباشر لصفحة الاستعادة على جيتهب بيجز الموثقة في السوبابيز
+                // إرسال الرابط المباشر لصفحة الاستعادة على جيتهب بيجز
                 const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
                     redirectTo: 'https://blackflowerproart.github.io/earn/reset-password.html', 
                 });
@@ -140,3 +140,73 @@ document.addEventListener('DOMContentLoaded', () => {
                 forgotPasswordForm.reset();
 
             } catch (error) {
+                showMessage(responseMessage, `Error: ${error.message}`, false);
+            } finally {
+                resetBtn.disabled = false;
+                resetBtn.innerText = 'Send Reset Link';
+            }
+        });
+    }
+
+    // ==========================================
+    // 4. معالجة حفظ كلمة المرور الجديدة (Update Password)
+    // ==========================================
+    const resetPasswordForm = document.getElementById('reset-password-form');
+    if (resetPasswordForm) {
+        resetPasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const responseMessage = document.getElementById('reset-msg');
+            const updateBtn = document.getElementById('update-pass-btn');
+
+            if (newPassword !== confirmPassword) {
+                showMessage(responseMessage, "Error: Passwords do not match!", false);
+                return;
+            }
+
+            updateBtn.disabled = true;
+            updateBtn.innerText = 'Updating...';
+            showMessage(responseMessage, '', false);
+
+            try {
+                const { error } = await supabaseClient.auth.updateUser({
+                    password: newPassword
+                });
+
+                if (error) throw error;
+
+                showMessage(responseMessage, 'Password updated successfully! Redirecting to login...', true);
+                resetPasswordForm.reset();
+                
+                setTimeout(() => window.location.href = 'login.html', 2500);
+
+            } catch (error) {
+                showMessage(responseMessage, `Error: ${error.message}`, false);
+            } finally {
+                updateBtn.disabled = false;
+                updateBtn.innerText = 'Update Password';
+            }
+        });
+    }
+
+}); // هنا تم إغلاق دالة DOMContentLoaded بشكل صحيح ونهائي
+
+// دالة مساعدة عامة لإظهار الرسائل وتنسيق الألوان ديناميكياً (مستقلة بالخارج)
+function showMessage(element, text, isSuccess) {
+    if (!element) return;
+    
+    if (text === '') {
+        element.style.display = 'none';
+        element.innerText = '';
+        return;
+    }
+
+    element.style.display = 'block';
+    element.innerText = text;
+    element.style.color = isSuccess ? '#00ff77' : '#ff4444';
+    element.style.marginTop = '15px';
+    element.style.textAlign = 'center';
+    element.style.fontSize = '0.9rem';
+}
