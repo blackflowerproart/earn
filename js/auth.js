@@ -163,3 +163,48 @@ function showMessage(element, text, isSuccess) {
     element.style.textAlign = 'center';
     element.style.fontSize = '0.9rem';
 }
+// ==========================================
+    // 4. معالجة حفظ كلمة المرور الجديدة (Update Password)
+    // ==========================================
+    const resetPasswordForm = document.getElementById('reset-password-form');
+    if (resetPasswordForm) {
+        resetPasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const responseMessage = document.getElementById('reset-msg');
+            const updateBtn = document.getElementById('update-pass-btn');
+
+            // التأكد من تطابق كلمتي المرور
+            if (newPassword !== confirmPassword) {
+                showMessage(responseMessage, "Error: Passwords do not match!", false);
+                return;
+            }
+
+            updateBtn.disabled = true;
+            updateBtn.innerText = 'Updating...';
+            showMessage(responseMessage, '', false);
+
+            try {
+                // تحديث كلمة المرور للمستخدم الحالي الموثق عبر رابط البريد الإلكتروني
+                const { error } = await supabaseClient.auth.updateUser({
+                    password: newPassword
+                });
+
+                if (error) throw error;
+
+                showMessage(responseMessage, 'Password updated successfully! Redirecting to login...', true);
+                resetPasswordForm.reset();
+                
+                // التوجيه لصفحة تسجيل الدخول بعد النجاح بـ 2 ثانية
+                setTimeout(() => window.location.href = 'login.html', 2500);
+
+            } catch (error) {
+                showMessage(responseMessage, `Error: ${error.message}`, false);
+            } finally {
+                updateBtn.disabled = false;
+                updateBtn.innerText = 'Update Password';
+            }
+        });
+    }
