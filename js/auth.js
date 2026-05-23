@@ -1,6 +1,7 @@
 // الانتظار حتى يتم تحميل عناصر الصفحة بالكامل
 document.addEventListener('DOMContentLoaded', () => {
     
+    // التوثق التلقائي من اسم متغير السوبابيز المستخدم في الإعدادات
     const supabaseClient = (typeof _supabase !== 'undefined') ? _supabase : (typeof supabase !== 'undefined' ? supabase : null);
 
     if (!supabaseClient) {
@@ -128,11 +129,10 @@ document.addEventListener('DOMContentLoaded', () => {
             showMessage(responseMessage, '', false);
 
             try {
-               const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-    // window.location.origin تجلب رابط موقعك الحالي تلقائياً سواء كان محلياً أو بعد الرفع على الإنترنت
-    redirectTo: window.location.origin + '/reset-password.html', 
-});
-               
+                // إرسال الرابط المباشر لصفحة الاستعادة على جيتهب بيجز الموثقة في السوبابيز
+                const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+                    redirectTo: 'https://blackflowerproart.github.io/earn/reset-password.html', 
+                });
 
                 if (error) throw error;
 
@@ -140,73 +140,3 @@ document.addEventListener('DOMContentLoaded', () => {
                 forgotPasswordForm.reset();
 
             } catch (error) {
-                showMessage(responseMessage, `Error: ${error.message}`, false);
-            } finally {
-                resetBtn.disabled = false;
-                resetBtn.innerText = 'Send Reset Link';
-            }
-        });
-    }
-});
-
-function showMessage(element, text, isSuccess) {
-    if (!element) return;
-    
-    if (text === '') {
-        element.style.display = 'none';
-        element.innerText = '';
-        return;
-    }
-
-    element.style.display = 'block';
-    element.innerText = text;
-    element.style.color = isSuccess ? '#00ff77' : '#ff4444';
-    element.style.marginTop = '15px';
-    element.style.textAlign = 'center';
-    element.style.fontSize = '0.9rem';
-}
-// ==========================================
-    // 4. معالجة حفظ كلمة المرور الجديدة (Update Password)
-    // ==========================================
-    const resetPasswordForm = document.getElementById('reset-password-form');
-    if (resetPasswordForm) {
-        resetPasswordForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const newPassword = document.getElementById('new-password').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
-            const responseMessage = document.getElementById('reset-msg');
-            const updateBtn = document.getElementById('update-pass-btn');
-
-            // التأكد من تطابق كلمتي المرور
-            if (newPassword !== confirmPassword) {
-                showMessage(responseMessage, "Error: Passwords do not match!", false);
-                return;
-            }
-
-            updateBtn.disabled = true;
-            updateBtn.innerText = 'Updating...';
-            showMessage(responseMessage, '', false);
-
-            try {
-                // تحديث كلمة المرور للمستخدم الحالي الموثق عبر رابط البريد الإلكتروني
-                const { error } = await supabaseClient.auth.updateUser({
-                    password: newPassword
-                });
-
-                if (error) throw error;
-
-                showMessage(responseMessage, 'Password updated successfully! Redirecting to login...', true);
-                resetPasswordForm.reset();
-                
-                // التوجيه لصفحة تسجيل الدخول بعد النجاح بـ 2 ثانية
-                setTimeout(() => window.location.href = 'login.html', 2500);
-
-            } catch (error) {
-                showMessage(responseMessage, `Error: ${error.message}`, false);
-            } finally {
-                updateBtn.disabled = false;
-                updateBtn.innerText = 'Update Password';
-            }
-        });
-    }
