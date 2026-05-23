@@ -1,32 +1,33 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The BlackFlower</title>
+    <title>The BlackFlower - Professional Art</title>
     
     <link rel="stylesheet" href="css/style.css">
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
     <header class="main-header">
         <div class="header-container">
             <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
-            <div class="brand-title">The BlackFlower</div>
-            <div class="brand-subtitle">Professional Art</div>
+            <div class="header-text-block">
+                <div class="brand-title">The BlackFlower</div>
+                <div class="brand-subtitle">Professional Art</div>
+            </div>
         </div>
     </header>
 
     <div class="container">
-        <div id="auth-actions" class="auth-buttons-container">
-            <button class="btn-blackflower" onclick="window.location.href='login.html'">LOGIN</button>
-            <button class="btn-blackflower" onclick="window.location.href='register.html'">START EARNING</button>
+        <h2 style="text-transform: uppercase; letter-spacing: 3px; margin-bottom: 15px; text-align: center;">Welcome to The BlackFlower</h2>
+        <p style="color: #aaaaaa; margin-bottom: 40px; font-size: 1.1rem; text-align: center; letter-spacing: 1px;">Join the professional art community and start your journey.</p>
+        
+        <div class="auth-buttons-container">
+            <button onclick="window.location.href='login.html'" class="btn-blackflower">Login</button>
+            <button onclick="window.location.href='register.html'" class="btn-blackflower">Register</button>
         </div>
     </div>
 
-    <script src="js/supabase-config.js"></script>
-    <script src="js/dashboard.js"></script>
 </body>
 </html>
