@@ -128,9 +128,11 @@ document.addEventListener('DOMContentLoaded', () => {
             showMessage(responseMessage, '', false);
 
             try {
-                const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-                    redirectTo: window.location.origin + '/reset-password.html',
-                });
+               const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+    // window.location.origin تجلب رابط موقعك الحالي تلقائياً سواء كان محلياً أو بعد الرفع على الإنترنت
+    redirectTo: window.location.origin + '/reset-password.html', 
+});
+               
 
                 if (error) throw error;
 
