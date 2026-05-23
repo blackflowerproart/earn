@@ -1,13 +1,20 @@
 // الانتظار حتى يتم تحميل عناصر الصفحة بالكامل
 document.addEventListener('DOMContentLoaded', () => {
     
+    const supabaseClient = (typeof _supabase !== 'undefined') ? _supabase : (typeof supabase !== 'undefined' ? supabase : null);
+
+    if (!supabaseClient) {
+        console.error("Supabase client is not initialized. Please check your supabase-config.js file.");
+        return;
+    }
+
     // ==========================================
-    // 1. معالجة عملية التسجيل (Sign Up)
+    // 1. معالجة عملية التسجيل (Sign Up) والإدخال في جدول profiles
     // ==========================================
     const registerForm = document.getElementById('register-form');
     if (registerForm) {
         registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); // منع الصفحة من إعادة التحميل
+            e.preventDefault();
 
             const username = document.getElementById('reg-username').value.trim();
             const email = document.getElementById('reg-email').value.trim();
@@ -15,14 +22,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const responseMessage = document.getElementById('reg-response-message');
             const registerBtn = document.getElementById('register-btn');
 
-            // تغيير حالة الزر أثناء المعالجة
             registerBtn.disabled = true;
             registerBtn.innerText = 'Registering...';
             showMessage(responseMessage, '', false);
 
             try {
-                // استخدام دالة Supabase لإنشاء الحساب وحفظ الـ username في الـ metadata
-                const { data, error } = await _supabase.auth.signUp({
+                // الخطوة أ: إنشاء الحساب الأساسي في نظام Auth
+                const { data, error } = await supabaseClient.auth.signUp({
                     email: email,
                     password: password,
                     options: {
@@ -34,13 +40,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (error) throw error;
 
-                // التحقق مما إذا كان تفعيل البريد الإلكتروني مطلوباً
+                // الخطوة ب: إدخال البيانات المخصصة في جدول profiles العام باستخدام الـ id الجديد
+                if (data.user) {
+                    const { error: profileError } = await supabaseClient
+                        .from('profiles')
+                        .insert([
+                            { 
+                                id: data.user.id, 
+                                username: username, 
+                                email: email 
+                            }
+                        ]);
+
+                    if (profileError) {
+                        console.error("Error inserting into profiles table:", profileError.message);
+                    }
+                }
+
                 if (data.user && data.session === null) {
                     showMessage(responseMessage, 'Registration successful! Please check your email to verify your account.', true);
                     registerForm.reset();
                 } else {
                     showMessage(responseMessage, 'Registration successful! Redirecting...', true);
-                    // التوجيه إلى لوحة التحكم (dashboard) في حال الدخول المباشر
                     setTimeout(() => window.location.href = 'dashboard.html', 2000);
                 }
 
@@ -71,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showMessage(responseMessage, '', false);
 
             try {
-                const { data, error } = await _supabase.auth.signInWithPassword({
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
                     email: email,
                     password: password
                 });
@@ -79,7 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (error) throw error;
 
                 showMessage(responseMessage, 'Login successful! Redirecting...', true);
-                // التوجيه إلى لوحة التحكم بعد نجاح الدخول
                 setTimeout(() => window.location.href = 'dashboard.html', 1500);
 
             } catch (error) {
@@ -108,8 +128,8 @@ document.addEventListener('DOMContentLoaded', () => {
             showMessage(responseMessage, '', false);
 
             try {
-                const { error } = await _supabase.auth.resetPasswordForEmail(email, {
-                    redirectTo: window.location.origin + '/reset-password.html', // صفحة تعيين الباسورد الجديد
+                const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.origin + '/reset-password.html',
                 });
 
                 if (error) throw error;
@@ -127,7 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// دالة مساعدة لعرض الرسائل للمستخدم وتغيير لونها حسب الحالة
 function showMessage(element, text, isSuccess) {
     if (!element) return;
     
@@ -139,7 +158,6 @@ function showMessage(element, text, isSuccess) {
 
     element.style.display = 'block';
     element.innerText = text;
-    // تخصيص الألوان لتناسب طابع موقعك الأسود (أخضر للنجاح، أحمر خفيف للخطأ)
     element.style.color = isSuccess ? '#00ff77' : '#ff4444';
     element.style.marginTop = '15px';
     element.style.textAlign = 'center';
