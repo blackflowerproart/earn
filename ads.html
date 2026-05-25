@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advertisements - The BlackFlower</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* التنسيقات المخصصة لقسم الإعلانات تماشياً مع طابع النيون والمظهر المظلم */
+        .ads-wrapper {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+            width: 100%;
+        }
+        .ads-panel {
+            border: 2px solid #ffffff;
+            background-color: #000000;
+            padding: 25px;
+        }
+        .ads-panel h2 {
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 1px dashed #333;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        /* كروت الإعلانات المتاحة للمشاهدة */
+        .ad-card {
+            border: 1px solid #333;
+            background: #050505;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: border-color 0.3s;
+        }
+        .ad-card:hover {
+            border-color: #ff00ff;
+        }
+        .ad-info h4 {
+            margin: 0 0 5px 0;
+            font-size: 1.2rem;
+            color: #fff;
+        }
+        .ad-info p {
+            margin: 0 0 10px 0;
+            color: #888;
+            font-size: 0.9rem;
+        }
+        .ad-meta {
+            font-size: 0.85rem;
+            color: #00ff77;
+            font-family: monospace;
+        }
+        /* فورم إضافة إعلان جديد */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            background: #000;
+            border: 1px solid #fff;
+            color: #fff;
+            padding: 10px;
+            font-family: inherit;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #ff00ff;
+        }
+        .live-calc {
+            background: #111;
+            padding: 15px;
+            border: 1px dashed #333;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 1rem;
+        }
+        .live-calc span {
+            color: #ff00ff;
+            font-weight: bold;
+        }
+        @media (max-width: 900px) {
+            .ads-wrapper {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-container">
+            <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
+            <div class="header-text-block">
+                <div class="brand-title">The BlackFlower</div>
+                <div class="brand-subtitle">Advertisements Hub</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container" style="max-width: 100%; padding: 0 20px;">
+        
+        <button onclick="window.location.href='dashboard.html'" class="btn-blackflower" style="margin-top:20px; min-width: 150px;">🏠 Back to Dashboard</button>
+
+        <div class="ads-wrapper">
+            
+            <div class="ads-panel">
+                <h2>📺 Available Advertisements</h2>
+                <div id="available-ads-container">
+                    <p style="color:#555;">Loading active advertisements...</p>
+                </div>
+            </div>
+
+            <div class="ads-panel">
+                <h2>📢 Create Ad Campaign</h2>
+                <form id="create-ad-form">
+                    <div class="form-group">
+                        <label>Ad Title</label>
+                        <input type="text" id="ad-title" placeholder="e.g. Best Art Shop" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Short Description</label>
+                        <textarea id="ad-desc" rows="3" placeholder="Describe what users will see..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Website URL</label>
+                        <input type="url" id="ad-url" placeholder="https://example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Ad Package / Duration Type</label>
+                        <select id="ad-type" onchange="calculateAdCost()" required>
+                            <option value="5s">5 Seconds (Cost: $0.05/day | Reward: $0.0005)</option>
+                            <option value="10s" selected>10 Seconds (Cost: $0.10/day | Reward: $0.0010)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Campaign Duration (Days)</label>
+                        <input type="number" id="ad-days" min="1" value="1" oninput="calculateAdCost()" required>
+                    </div>
+
+                    <div class="live-calc">
+                        Total Campaign Cost: <span id="total-cost-display">$0.10</span>
+                    </div>
+
+                    <button type="submit" class="btn-blackflower" style="width: 100%; margin-top: 15px; border-color: #00ff77; color: #00ff77;">🚀 Launch Campaign</button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script>
+        // دالة حساب تكلفة الإعلان فورياً للمستخدم أثناء الكتابة
+        function calculateAdCost() {
+            const type = document.getElementById('ad-type').value;
+            const days = parseInt(document.getElementById('ad-days').value) || 1;
+            const pricePerDay = (type === '5s') ? 0.05 : 0.10;
+            const totalCost = pricePerDay * days;
+            document.getElementById('total-cost-display').textContent = `$${totalCost.toFixed(4)}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            calculateAdCost();
+            loadActiveAds();
+
+            document.getElementById('create-ad-form').addEventListener('submit', handleCreateAd);
+        });
+
+        // 1. جلب وعرض الإعلانات النشطة من قاعدة البيانات
+        async function loadActiveAds() {
+            const container = document.getElementById('available-ads-container');
+            
+            const { data: ads, error } = await supabase
+                .from('ads')
+                .select('*')
+                .eq('status', 'active')
+                .gt('ends_at', new Date().toISOString());
+
+            if (error || !ads || ads.length === 0) {
+                container.innerHTML = '<p style="color:#666;">No active advertisements available right now.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            ads.forEach(ad => {
+                const card = document.createElement('div');
+                card.className = 'ad-card';
+                card.innerHTML = `
+                    <div class="ad-info">
+                        <h4>${ad.title}</h4>
+                        <p>${ad.description}</p>
+                        <div class="ad-meta">⏱️ Time: ${ad.ad_type === '5s' ? '5 Sec' : '10 Sec'} | 💰 Earn: $${parseFloat(ad.reward_per_view).toFixed(4)}</div>
+                    </div>
+                    <button onclick="watchAd('${ad.id}', '${ad.website_url}', ${ad.ad_type === '5s' ? 5 : 10})" class="btn-blackflower" style="min-width:100px;">📺 Watch</button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // 2. معالجة تقديم دالة إضافة إعلان جديد والخصم من المحفظة
+        async function handleCreateAd(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('ad-title').value;
+            const description = document.getElementById('ad-desc').value;
+            const website_url = document.getElementById('ad-url').value;
+            const ad_type = document.getElementById('ad-type').value;
+            const duration_days = parseInt(document.getElementById('ad-days').value);
+            
+            const pricePerDay = (ad_type === '5s') ? 0.05 : 0.10;
+            const total_cost = pricePerDay * duration_days;
+            const reward_per_view = (ad_type === '5s') ? 0.0005 : 0.0010;
+
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) { alert('Please login first'); return; }
+
+            // تحقق من رصيد المعلن أولاً من جدول profiles
+            const { data: profile } = await supabase.from('profiles').select('wallet_balance').eq('id', user.id).single();
+            
+            if (profile.wallet_balance < total_cost) {
+                alert(`⚠️ Insufficient funds. You need $${total_cost.toFixed(4)} but your balance is $${parseFloat(profile.wallet_balance).toFixed(4)}`);
+                return;
+            }
+
+            // حساب تاريخ انتهاء الإعلان بناءً على الأيام المطلوبة
+            let endsAt = new Date();
+            endsAt.setDate(endsAt.getDate() + duration_days);
+
+            // 1. خصم الرصيد من المحفظة
+            const newBalance = parseFloat(profile.wallet_balance) - total_cost;
+            await supabase.from('profiles').update({ wallet_balance: newBalance }).eq('id', user.id);
+
+            // 2. تسجيل الإعلان في جدول ads
+            const { error: insertError } = await supabase.from('ads').insert([{
+                user_id: user.id,
+                title,
+                description,
+                website_url,
+                ad_type,
+                duration_days,
+                total_cost,
+                reward_per_view,
+                ends_at: endsAt.toISOString()
+            }]);
+
+            if (insertError) {
+                alert('Error creating ad campaign: ' + insertError.message);
+            } else {
+                alert('🚀 Campaign launched successfully! Your ad is now live.');
+                document.getElementById('create-ad-form').reset();
+                calculateAdCost();
+                loadActiveAds();
+            }
+        }
+
+        // 3. دالة محاكاة مشاهدة الإعلان واحتساب الربح وزيادة عداد الرتبة
+        async function watchAd(adId, url, duration) {
+            alert(`Opening ad. Please stay on the tab for ${duration} seconds to claim your reward.`);
+            const adWindow = window.open(url, '_blank');
+
+            setTimeout(async () => {
+                const { data: { user } } = await supabase.auth.getUser();
+                
+                // إضافة المكافأة للمشاهد، وتحديث عداد مشاهدة الإعلانات (ads_watched_count) لتأهيل رتبته تلقائياً
+                const { data: adData } = await supabase.from('ads').select('reward_per_view').eq('id', adId).single();
+                const { data: profile } = await supabase.from('profiles').select('wallet_balance, ads_watched_count').eq('id', user.id).single();
+
+                const updatedBalance = parseFloat(profile.wallet_balance) + parseFloat(adData.reward_per_view);
+                const updatedCount = (profile.ads_watched_count || 0) + 1;
+
+                // تحديث جدول الـ profiles (مما يشغل الـ Trigger للرتبة تلقائياً)
+                await supabase.from('profiles').update({
+                    wallet_balance: updatedBalance,
+                    ads_watched_count: updatedCount
+                }).eq('id', user.id);
+
+                // حفظ عملية المشاهدة لمنع التكرار
+                await supabase.from('ad_views').insert([{ user_id: user.id, ad_id: adId }]);
+
+                alert(`🎉 Success! You earned $${parseFloat(adData.reward_per_view).toFixed(4)} and your rank counter increased!`);
+                loadActiveAds();
+            }, duration * 1000);
+        }
+    </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+</body>
+</html>
