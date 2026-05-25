@@ -1,9 +1,8 @@
 /**
  * The BlackFlower - Dashboard Subsystem
- * نظام إدارة لوحة التحكم وجلب بيانات الرتب والمحفظة تلقائياً
+ * نظام إدارة لوحة التحكم وجلب بيانات الرتب والمحفظة من جدول profiles
  */
 
-// التأكد من أن مكتبة Supabase تم استدعاؤها وتهيئتها بنجاح
 document.addEventListener('DOMContentLoaded', () => {
     // تشغيل الدالة الأساسية لفحص الجلسة وجلب البيانات
     initDashboard();
@@ -20,9 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 async function initDashboard() {
     try {
-        // التأكد أولاً من وجود كائن الـ supabase العام لتجنب أخطاء الفشل في الجلب
         if (typeof supabase === 'undefined' || !supabase) {
-            console.error("Supabase is not defined. check your supabase-config.js file.");
+            console.error("Supabase is not defined. Check your supabase-config.js file.");
             return;
         }
 
@@ -31,16 +29,16 @@ async function initDashboard() {
 
         if (authError || !user) {
             console.warn("Access denied. Redirecting to login...");
-            window.location.href = 'login.html'; // توجيه لصفحة تسجيل الدخول إذا لم يكن مسجلاً
+            window.location.href = 'login.html';
             return;
         }
 
-        // 2. جلب بيانات المستخدم التفصيلية ورتبته من جدول user_profiles
-        const { data: profile, error: profileError } = await supabase
-            .from('user_profiles')
+        // 2. جلب البيانات مباشرة من جدول profiles الخاص بك
+        let { data: profile, error: profileError } = await supabase
+            .from('profiles')
             .select('username, wallet_balance, current_rank')
             .eq('id', user.id)
-            .single();
+            .maybeSingle();
 
         if (profileError) {
             console.error("Error fetching user profile:", profileError.message);
@@ -48,10 +46,37 @@ async function initDashboard() {
             return;
         }
 
-        // 3. تحديث واجهة المستخدم بناءً على البيانات المستلمة
+        // 3. تأمين الكود: إذا كان الجدول فارغاً للحساب الحالي، نقوم بإنشاء سجل افتراضي له فوراً
+        if (!profile) {
+            console.log("Profile row dynamic creation...");
+            const defaultUsername = user.email ? user.email.split('@')[0] : 'User_' + user.id.substring(0, 5);
+            
+            const { data: newProfile, error: createError } = await supabase
+                .from('profiles')
+                .insert([
+                    { 
+                        id: user.id, 
+                        username: defaultUsername, 
+                        wallet_balance: 0.0000, 
+                        total_deposited: 0.0000, 
+                        ads_watched_count: 0, 
+                        current_rank: 'Standard' 
+                    }
+                ])
+                .select()
+                .single();
+
+            if (createError) {
+                console.error("Failed to create profile row:", createError.message);
+                return;
+            }
+            profile = newProfile;
+        }
+
+        // 4. تحديث واجهة المستخدم بالبيانات الصحيحة
         updateDashboardUI(profile);
 
-        // 4. فحص ما إذا كان المستخدم أدمن لإظهار لوحة التحكم الخاصة بالإدارة
+        // 5. فحص صلاحيات الأدمن (بالاعتماد على جدول profiles)
         checkAdminStatus(user.id);
 
     } catch (err) {
@@ -61,37 +86,37 @@ async function initDashboard() {
 
 /**
  * تحديث عناصر واجهة المستخدم بالبيانات الحقيقية وتلوين الرتب
- * @param {Object} profile - بيانات المستخدم القادمة من قاعدة البيانات
  */
 function updateDashboardUI(profile) {
     const nameElement = document.getElementById('user-display-name');
     const balanceElement = document.getElementById('wallet-balance');
     const rankElement = document.getElementById('account-type-status');
 
-    // حقن البيانات في النصوص
     if (nameElement) nameElement.textContent = profile.username || 'Anonymous User';
-    if (balanceElement) balanceElement.textContent = parseFloat(profile.wallet_balance).toFixed(4);
+    if (balanceElement) balanceElement.textContent = parseFloat(profile.wallet_balance || 0).toFixed(4);
     
     if (rankElement) {
-        rankElement.textContent = profile.current_rank;
+        // إذا كان حقل الرتبة فارغاً في قاعدة البيانات نضع القيمة الافتراضية Standard
+        const userRank = profile.current_rank || 'Standard';
+        rankElement.textContent = userRank;
 
-        // تطبيق تأثيرات بصرية وألوان بناءً على رتبة المستخدم الحالية
-        switch (profile.current_rank) {
+        // تطبيق الألوان والتأثيرات بحسب الرتب المعتمدة لمشروعك
+        switch (userRank) {
             case 'BlackFlower Legend':
-                rankElement.style.color = '#ff00ff'; // لون أرجواني نيون أسطوري
+                rankElement.style.color = '#ff00ff'; // أرجواني نيون للرتبة الأسطورية
                 rankElement.style.fontWeight = 'bold';
                 rankElement.style.textShadow = '0 0 12px rgba(255, 0, 255, 0.8)';
                 break;
                 
             case 'Bronze Elite':
-                rankElement.style.color = '#cd7f32'; // لون برونزي احترافي
+                rankElement.style.color = '#cd7f32'; // برونزي احترافي للمستوى الثاني
                 rankElement.style.fontWeight = 'bold';
                 rankElement.style.textShadow = '0 0 5px rgba(205, 127, 50, 0.5)';
                 break;
                 
             case 'Standard':
             default:
-                rankElement.style.color = '#aaaaaa'; // لون رمادي كلاسيكي للمستويات العادية
+                rankElement.style.color = '#aaaaaa'; // رمادي كلاسيكي للمبتدئين
                 rankElement.style.textShadow = 'none';
                 break;
         }
@@ -99,37 +124,34 @@ function updateDashboardUI(profile) {
 }
 
 /**
- * التحقق من رتبة المسؤول (Admin) لإظهار زر لوحة تحكم الإدارة
- * @param {String} userId - المعرف الفريد للمستخدم
+ * التحقق من رتبة المسؤول (Admin) بإستخدام جدول profiles
  */
 async function checkAdminStatus(userId) {
     const adminBtn = document.getElementById('admin-panel-btn');
     if (!adminBtn) return;
 
     const { data, error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('is_admin')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
     if (!error && data && data.is_admin === true) {
-        adminBtn.style.display = 'block'; // إظهار الزر إذا كان مسؤولاً
+        adminBtn.style.display = 'block';
     } else {
-        adminBtn.style.display = 'none';  // إخفاء الزر تماماً للمستخدم العادي
+        adminBtn.style.display = 'none';
     }
 }
 
 /**
- * معالجة عملية تسجيل خروج المستخدم وتوجيهه للرئيسية
+ * خروج آمن للمستخدم وتنظيف الجلسة
  */
 async function handleLogout(event) {
     event.preventDefault();
-    
     const confirmLogout = confirm("Are you sure you want to logout?");
     if (!confirmLogout) return;
 
     const { error } = await supabase.auth.signOut();
-    
     if (error) {
         alert("Error logging out: " + error.message);
     } else {
