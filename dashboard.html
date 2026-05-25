@@ -1,161 +1,137 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - The BlackFlower</title>
+/**
+ * The BlackFlower - Dashboard Subsystem
+ * نظام إدارة لوحة التحكم وجلب بيانات الرتب والمحفظة تلقائياً
+ */
+
+// التأكد من أن مكتبة Supabase تم استدعاؤها وتهيئتها في ملف supabase-config.js
+// تأكد أن متغير الـ 'supabase' معرف عالمياً (Global) في الملف الآخر.
+
+document.addEventListener('DOMContentLoaded', () => {
+    // تشغيل الدالة الأساسية لفحص الجلسة وجلب البيانات
+    initDashboard();
+
+    // ربط حدث تسجيل الخروج بالزر المخصص له
+    const logoutBtn = document.getElementById('logout-link');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
+});
+
+/**
+ * الدالة الرئيسية لتهيئة لوحة التحكم
+ */
+async function initDashboard() {
+    try {
+        // 1. التحقق من وجود مستخدم مسجل دخول حالياً
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+            console.warn("Access denied. Redirecting to login...");
+            window.location.href = 'login.html'; // توجيه لصفحة تسجيل الدخول إذا لم يكن مسجلاً
+            return;
+        }
+
+        // 2. جلب بيانات المستخدم التفصيلية ورتبته من جدول user_profiles
+        const { data: profile, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('username, wallet_balance, current_rank')
+            .eq('id', user.id)
+            .single();
+
+        if (profileError) {
+            console.error("Error fetching user profile:", profileError.message);
+            // إذا لم يكن هناك بروفايل منشأ بعد لهذا الـ UUID (يمكنك توجيهه لإكمال البيانات أو إنشاء بروفايل افتراضي)
+            document.getElementById('user-display-name').textContent = "Error Loading";
+            return;
+        }
+
+        // 3. تحديث واجهة المستخدم بناءً على البيانات المستلمة
+        updateDashboardUI(profile);
+
+        // 4. فحص ما إذا كان المستخدم أدمن لإظهار لوحة التحكم الخاصة بالإدارة
+        checkAdminStatus(user.id);
+
+    } catch (err) {
+        console.error("Unexpected error in dashboard initialization:", err);
+    }
+}
+
+/**
+ * تحديث عناصر واجهة المستخدم بالبيانات الحقيقية وتلوين الرتب
+ * @param {Object} profile - بيانات المستخدم القادمة من قاعدة البيانات
+ */
+function updateDashboardUI(profile) {
+    const nameElement = document.getElementById('user-display-name');
+    const balanceElement = document.getElementById('wallet-balance');
+    const rankElement = document.getElementById('account-type-status');
+
+    // حقن البيانات في النصوص
+    if (nameElement) nameElement.textContent = profile.username || 'Anonymous User';
+    if (balanceElement) balanceElement.textContent = parseFloat(profile.wallet_balance).toFixed(4);
     
-    <link rel="stylesheet" href="css/style.css">
+    if (rankElement) {
+        rankElement.textContent = profile.current_rank;
+
+        // تطبيق تأثيرات بصرية وألوان بناءً على رتبة المستخدم الحالية
+        switch (profile.current_rank) {
+            case 'BlackFlower Legend':
+                rankElement.style.color = '#ff00ff'; // لون أرجواني نيون أسطوري
+                rankElement.style.fontWeight = 'bold';
+                rankElement.style.textShadow = '0 0 12px rgba(255, 0, 255, 0.8)';
+                break;
+                
+            case 'Bronze Elite':
+                rankElement.style.color = '#cd7f32'; // لون برونزي احترافي
+                rankElement.style.fontWeight = 'bold';
+                rankElement.style.textShadow = '0 0 5px rgba(205, 127, 50, 0.5)';
+                break;
+                
+            case 'Standard':
+            default:
+                rankElement.style.color = '#aaaaaa'; // لون رمادي كلاسيكي للمستويات العادية
+                rankElement.style.textShadow = 'none';
+                break;
+        }
+    }
+}
+
+/**
+ * التحقق من رتبة المسؤول (Admin) لإظهار زر لوحة تحكم الإدارة
+ * @param {String} userId - المعرف الفريد للمستخدم
+ */
+async function checkAdminStatus(userId) {
+    const adminBtn = document.getElementById('admin-panel-btn');
+    if (!adminBtn) return;
+
+    // نقوم بفحص حقل الأدمن (فرضاً أنك تملك جدول صلاحيات أو حقل في الـ profile اسمه is_admin)
+    const { data, error } = await supabase
+        .from('user_profiles')
+        .select('is_admin') // يفضل إضافة هذا الحقل لاحقاً لجدولك إذا كنت تستخدم لوحة أدمن
+        .eq('id', userId)
+        .single();
+
+    if (!error && data && data.is_admin === true) {
+        adminBtn.style.display = 'block'; // إظهار الزر إذا كان مسؤولاً
+    } else {
+        adminBtn.style.display = 'none';  // إخفاء الزر تماماً للمستخدم العادي
+    }
+}
+
+/**
+ * معالجة عملية تسجيل خروج المستخدم وتوجيهه للرئيسية
+ */
+async function handleLogout(event) {
+    event.preventDefault();
     
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    const confirmLogout = confirm("Are you sure you want to logout?");
+    if (!confirmLogout) return;
 
-    <style>
-        /* التنسيقات الإضافية للإطار العريض والأقسام السفلية تماشياً مع التصميم الأساسي */
-        .control-panel-bar {
-            width: 100%;
-            background-color: #000000;
-            border: 2px solid #ffffff;
-            margin-top: 20px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .user-stats-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            border-bottom: 1px dashed #333333;
-            padding-bottom: 15px;
-        }
-
-        .stat-item {
-            font-size: 1.1rem;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-
-        .stat-item span {
-            color: #aaaaaa;
-            font-family: monospace;
-        }
-
-        .navigation-buttons-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            justify-content: flex-start;
-        }
-
-        /* تخصيص أزرار لوحة التحكم بنفس الكلاس الأصلي لتأثير الهوفر المنعكس */
-        .control-panel-bar .btn-blackflower {
-            padding: 12px 25px;
-            font-size: 0.95rem;
-            min-width: 150px;
-            flex: 1;
-            min-width: calc(20% - 15px); /* توزيع متناسق على الشاشات الكبيرة */
-            text-align: center;
-        }
-
-        .bottom-content-section {
-            width: 100%;
-            margin-top: 40px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-        }
-
-        .content-box {
-            border: 1px solid #ffffff;
-            background-color: #050505;
-            padding: 25px;
-            min-height: 250px;
-        }
-
-        .content-box h3 {
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #222222;
-            padding-bottom: 10px;
-        }
-
-        /* التجاوب مع شاشات الهواتف */
-        @media (max-width: 768px) {
-            .user-stats-row {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            .control-panel-bar .btn-blackflower {
-                min-width: 100%;
-            }
-        }
-    </style>
-</head>
-<body>
-
-    <header class="main-header">
-        <div class="header-container">
-            <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
-            <div class="header-text-block">
-                <div class="brand-title">The BlackFlower</div>
-                <div class="brand-subtitle">Professional Art</div>
-            </div>
-        </div>
-    </header>
-
-    <div class="container" style="margin-top: 30px; max-width: 100%;">
-        
-        <div class="control-panel-bar">
-            
-            <div class="user-stats-row">
-                <div class="stat-item">👤 Username: <span id="user-display-name">Loading...</span></div>
-                <div class="stat-item">💰 Wallet Balance: <span id="wallet-balance">0.0000</span> $</div>
-                <div class="stat-item">🛡️ Rank: <span id="account-type-status">Standard User</span></div>
-            </div>
-
-            <div class="navigation-buttons-row">
-                <button onclick="window.location.href='dashboard.html'" class="btn-blackflower">🏠 Dashboard</button>
-                <button onclick="window.location.href='tasks.html'" class="btn-blackflower">📋 Tasks</button>
-                <button onclick="window.location.href='ads.html'" class="btn-blackflower">📺 Advertisements</button>
-                <button onclick="window.location.href='mining.html'" class="btn-blackflower">⛏️ Mining Room</button>
-                <button onclick="window.location.href='faucet.html'" class="btn-blackflower">🚰 Faucet Gift</button>
-                <button onclick="window.location.href='wallet-io.html'" class="btn-blackflower">💳 Wallet Transfer</button>
-                <button onclick="window.location.href='live-chat.html'" class="btn-blackflower">💬 Live Support</button>
-                <button onclick="window.location.href='settings.html'" class="btn-blackflower">⚙️ Account Settings</button>
-                
-                <button id="admin-panel-btn" onclick="window.location.href='admin.html'" class="btn-blackflower" style="display: none; border-color: #00ff77; color: #00ff77;">👑 Admin Panel</button>
-                
-                <button id="logout-link" class="btn-blackflower" style="border-color: #ff4444; color: #ff4444;">🚪 Logout</button>
-            </div>
-        </div>
-
-        <div class="bottom-content-section">
-            
-            <div class="content-box">
-                <h3>📋 Available Tasks</h3>
-                <div id="tasks-container-display">
-                    <p style="color: #666; font-size: 0.95rem;">Active tasks will load here directly...</p>
-                </div>
-            </div>
-
-            <div class="content-box">
-                <h3>📺 Featured Ads</h3>
-                <div id="ads-container-display">
-                    <p style="color: #666; font-size: 0.95rem;">Sponsored advertisements will stream here...</p>
-                </div>
-            </div>
-
-        </div>
-
-    </div>
-
-    <script src="js/supabase-config.js"></script>
-    <script src="js/dashboard.js"></script>
-</body>
-</html>
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) {
+        alert("Error logging out: " + error.message);
+    } else {
+        // توجيه المستخدم لصفحة تسجيل الدخول أو الصفحة الرئيسية بعد الخروج بنجاح
+        window.location.href = 'login.html'; 
+    }
+}
