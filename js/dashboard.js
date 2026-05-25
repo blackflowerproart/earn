@@ -1,91 +1,138 @@
-document.addEventListener("DOMContentLoaded", async () => {
-    
-    // ========================================================
-    // 1. منطق الصفحة الرئيسية العامة (index.html)
-    // ========================================================
-    const authActionsContainer = document.getElementById('auth-actions');
+/**
+ * The BlackFlower - Dashboard Subsystem
+ * نظام إدارة لوحة التحكم وجلب بيانات الرتب والمحفظة تلقائياً
+ */
 
-    if (authActionsContainer) {
-        // جلب بيانات الجلسة الحالية من نظام الحماية في سوبابيس
-        const { data: { session }, error } = await supabase.auth.getSession();
+// التأكد من أن مكتبة Supabase تم استدعاؤها وتهيئتها بنجاح
+document.addEventListener('DOMContentLoaded', () => {
+    // تشغيل الدالة الأساسية لفحص الجلسة وجلب البيانات
+    initDashboard();
 
-        if (session && session.user) {
-            // إذا كان المستخدم مسجل دخوله مسبقاً، نعرض له زر التوجه الفوري للداخل
-            authActionsContainer.innerHTML = `
-                <p style="font-size: 14px; margin-bottom: 20px; text-transform: uppercase;">أنت مسجّل الدخول حالياً كـ (${session.user.email})</p>
-                <button onclick="window.location.href='dashboard.html'">الانتقال إلى لوحة التحكم</button>
-            `;
-        } else {
-            // إذا كان زائراً جديداً، يتم عرض زر تسجيل الدخول وزر إنشاء حساب جديد بالتصميم الموحد
-            authActionsContainer.innerHTML = `
-                <button onclick="window.location.href='login.html'" style="margin-left: 15px;">تسجيل الدخول</button>
-                <button onclick="window.location.href='register.html'" style="background-color: #000000; color: #ffffff;">إنشاء حساب جديد</button>
-            `;
-        }
+    // ربط حدث تسجيل الخروج بالزر المخصص له
+    const logoutBtn = document.getElementById('logout-link');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
     }
+});
 
-    // ========================================================
-    // 2. منطق لوحة التحكم الخاصة بالأعضاء (dashboard.html)
-    // ========================================================
-    const dashboardCheck = document.getElementById('user-display-name');
-
-    // نتحقق من وجود عنصر لوحة التحكم للتأكد أن المستخدم داخل صفحة dashboard.html
-    if (dashboardCheck) {
-        // أ) التحقق من حالة المستخدم وتأمين الصفحة
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        
-        // إذا لم يكن هناك مستخدم مسجل، يتم طرده فوراً لصفحة تسجيل الدخول لحماية البيانات
-        if (!user || authError) {
-            window.location.href = 'login.html';
+/**
+ * الدالة الرئيسية لتهيئة لوحة التحكم
+ */
+async function initDashboard() {
+    try {
+        // التأكد أولاً من وجود كائن الـ supabase العام لتجنب أخطاء الفشل في الجلب
+        if (typeof supabase === 'undefined' || !supabase) {
+            console.error("Supabase is not defined. check your supabase-config.js file.");
             return;
         }
 
-        // ب) جلب البروفايل الخاص بالمستخدم لمعرفة اسم المستخدم وصلاحيات الإدارة
-        let { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('username, is_admin')
+        // 1. التحقق من وجود مستخدم مسجل دخول حالياً
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+            console.warn("Access denied. Redirecting to login...");
+            window.location.href = 'login.html'; // توجيه لصفحة تسجيل الدخول إذا لم يكن مسجلاً
+            return;
+        }
+
+        // 2. جلب بيانات المستخدم التفصيلية ورتبته من جدول user_profiles
+        const { data: profile, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('username, wallet_balance, current_rank')
             .eq('id', user.id)
             .single();
 
-        if (profile) {
-            // عرض اسم المستخدم في واجهة اللوحة
-            dashboardCheck.innerText = profile.username;
-
-            // التحقق مما إذا كان هذا الحساب أدمن، لإظهار زر التحكم الإداري المخفي
-            if (profile.is_admin) {
-                const adminBtn = document.getElementById('admin-panel-btn');
-                const accountTypeStatus = document.getElementById('account-type-status');
-                if (adminBtn) adminBtn.style.display = 'inline-block';
-                if (accountTypeStatus) accountTypeStatus.innerText = 'المدير الرئيسي (Admin)';
-            }
+        if (profileError) {
+            console.error("Error fetching user profile:", profileError.message);
+            document.getElementById('user-display-name').textContent = "Error Loading";
+            return;
         }
 
-        // جـ) جلب رصيد المحفظة المالي بدقة 4 أرقام عشرية وعرضه حياً للمدخل الحالي
-        let { data: wallet } = await supabase
-            .from('wallets')
-            .select('balance')
-            .eq('user_id', user.id)
-            .single();
+        // 3. تحديث واجهة المستخدم بناءً على البيانات المستلمة
+        updateDashboardUI(profile);
 
-        if (wallet) {
-            const balanceEl = document.getElementById('wallet-balance');
-            if (balanceEl) balanceEl.innerText = Number(wallet.balance).toFixed(4);
+        // 4. فحص ما إذا كان المستخدم أدمن لإظهار لوحة التحكم الخاصة بالإدارة
+        checkAdminStatus(user.id);
+
+    } catch (err) {
+        console.error("Unexpected error in dashboard initialization:", err);
+    }
+}
+
+/**
+ * تحديث عناصر واجهة المستخدم بالبيانات الحقيقية وتلوين الرتب
+ * @param {Object} profile - بيانات المستخدم القادمة من قاعدة البيانات
+ */
+function updateDashboardUI(profile) {
+    const nameElement = document.getElementById('user-display-name');
+    const balanceElement = document.getElementById('wallet-balance');
+    const rankElement = document.getElementById('account-type-status');
+
+    // حقن البيانات في النصوص
+    if (nameElement) nameElement.textContent = profile.username || 'Anonymous User';
+    if (balanceElement) balanceElement.textContent = parseFloat(profile.wallet_balance).toFixed(4);
+    
+    if (rankElement) {
+        rankElement.textContent = profile.current_rank;
+
+        // تطبيق تأثيرات بصرية وألوان بناءً على رتبة المستخدم الحالية
+        switch (profile.current_rank) {
+            case 'BlackFlower Legend':
+                rankElement.style.color = '#ff00ff'; // لون أرجواني نيون أسطوري
+                rankElement.style.fontWeight = 'bold';
+                rankElement.style.textShadow = '0 0 12px rgba(255, 0, 255, 0.8)';
+                break;
+                
+            case 'Bronze Elite':
+                rankElement.style.color = '#cd7f32'; // لون برونزي احترافي
+                rankElement.style.fontWeight = 'bold';
+                rankElement.style.textShadow = '0 0 5px rgba(205, 127, 50, 0.5)';
+                break;
+                
+            case 'Standard':
+            default:
+                rankElement.style.color = '#aaaaaa'; // لون رمادي كلاسيكي للمستويات العادية
+                rankElement.style.textShadow = 'none';
+                break;
         }
     }
+}
 
-    // ========================================================
-    // 3. معالجة وتأمين زر تسجيل الخروج المشترك (Logout)
-    // ========================================================
-    const logoutLink = document.getElementById('logout-link');
-    if (logoutLink) {
-        logoutLink.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const { error } = await supabase.auth.signOut();
-            if (!error) {
-                window.location.href = 'login.html';
-            } else {
-                alert("حدث خطأ أثناء تسجيل الخروج: " + error.message);
-            }
-        });
+/**
+ * التحقق من رتبة المسؤول (Admin) لإظهار زر لوحة تحكم الإدارة
+ * @param {String} userId - المعرف الفريد للمستخدم
+ */
+async function checkAdminStatus(userId) {
+    const adminBtn = document.getElementById('admin-panel-btn');
+    if (!adminBtn) return;
+
+    const { data, error } = await supabase
+        .from('user_profiles')
+        .select('is_admin')
+        .eq('id', userId)
+        .single();
+
+    if (!error && data && data.is_admin === true) {
+        adminBtn.style.display = 'block'; // إظهار الزر إذا كان مسؤولاً
+    } else {
+        adminBtn.style.display = 'none';  // إخفاء الزر تماماً للمستخدم العادي
     }
-});
+}
+
+/**
+ * معالجة عملية تسجيل خروج المستخدم وتوجيهه للرئيسية
+ */
+async function handleLogout(event) {
+    event.preventDefault();
+    
+    const confirmLogout = confirm("Are you sure you want to logout?");
+    if (!confirmLogout) return;
+
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) {
+        alert("Error logging out: " + error.message);
+    } else {
+        window.location.href = 'login.html'; 
+    }
+}
