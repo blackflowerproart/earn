@@ -4,10 +4,10 @@
  */
 
 // 1. ضع هنا رابط مشروعك الخاص (تجدها في إعدادات Supabase -> API)
-const SUPABASE_URL = 'https://your-project-id.supabase.co'; 
+const SUPABASE_URL = 'https://eepmmmgxwfkkmjvkpudz.supabase.co'; 
 
 // 2. ضع هنا مفتاح الـ Anon Key الخاص بمشروعك
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.your-actual-anon-key-here';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVlcG1tbWd4d2Zra21qdmtwdWR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MjA1MzQsImV4cCI6MjA5NDk5NjUzNH0.xfRkikruKDib_XXU8Acu4Aqdx5_mKzK-A1ln8_TpsnA';
 
 try {
     // التحقق من أن المكتبة تم تحميلها بنجاح عبر الـ CDN في صفحة الـ HTML
