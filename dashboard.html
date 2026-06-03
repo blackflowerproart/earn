@@ -176,5 +176,215 @@
             font-size: 1.3rem;
             background-color: #000000;
         }
-<script src="js/supabase-config.js"></script>
-<script src="js/dashboard.js"></script>
+
+        .frozen-card {
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* التجاوب مع شاشات الهواتف */
+        @media (max-width: 768px) {
+            .user-stats-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .control-panel-bar .btn-blackflower {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-container">
+            <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
+            <div class="header-text-block">
+                <div class="brand-title">The BlackFlower</div>
+                <div class="brand-subtitle">Professional Art</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container" style="margin-top: 30px; max-width: 100%;">
+        
+        <div class="control-panel-bar">
+            
+            <div class="user-stats-row">
+                <div class="stat-item">👤 Username: <span id="user-display-name">Loading...</span></div>
+                <div class="stat-item">💰 Wallet Balance: <span id="wallet-balance">0.0000</span> $</div>
+                <div class="stat-item">🛡️ Rank: <span id="account-type-status">Loading...</span></div>
+            </div>
+
+            <div class="navigation-buttons-row">
+                <button onclick="window.location.href='dashboard.html'" class="btn-blackflower">🏠 Dashboard</button>
+                <button onclick="window.location.href='tasks.html'" class="btn-blackflower">📋 Tasks</button>
+                <button onclick="window.location.href='ads.html'" class="btn-blackflower">📺 Advertisements</button>
+                <button onclick="window.location.href='mining.html'" class="btn-blackflower">⛏️ Mining Room</button>
+                <button onclick="window.location.href='faucet.html'" class="btn-blackflower">🚰 Faucet Gift</button>
+                <button onclick="window.location.href='wallet-io.html'" class="btn-blackflower">💳 Wallet Transfer</button>
+                <button onclick="window.location.href='live-chat.html'" class="btn-blackflower">💬 Live Support</button>
+                <button onclick="window.location.href='settings.html'" class="btn-blackflower">⚙️ Account Settings</button>
+                
+                <button id="admin-panel-btn" onclick="window.location.href='admin.html'" class="btn-blackflower" style="display: none; border-color: #00ff77; color: #00ff77;">👑 Admin Panel</button>
+                
+                <button id="logout-link" class="btn-blackflower" style="border-color: #ff4444; color: #ff4444;">🚪 Logout</button>
+            </div>
+        </div>
+
+        <div class="bottom-content-section">
+            
+            <div class="content-box">
+                <h3>📋 Available Tasks</h3>
+                <div id="tasks-container-display">
+                    <p style="color: #666; font-size: 0.95rem;">Active tasks will load here directly...</p>
+                </div>
+            </div>
+
+            <div class="content-box">
+                <h3>📺 Featured Ads</h3>
+                <div id="ads-container-display">
+                    <p style="color: #666; font-size: 0.95rem;">Sponsored advertisements will stream here...</p>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/dashboard.js"></script>
+
+    <script>
+        // التوجيه التلقائي للمهام وعرض الحالات الحية بعد تحميل الصفحة والتأكد من اتصال سوبابيز
+        document.addEventListener("DOMContentLoaded", () => {
+            // فحص وجود كائن سوبابيز المنشأ في الملفات الخارجية
+            if (typeof supabase !== 'undefined') {
+                loadDashboardTasks();
+            } else {
+                console.error("Supabase client is not initialized. Please check supabase-config.js");
+            }
+        });
+
+        async function loadDashboardTasks() {
+            const container = document.getElementById('tasks-container-display');
+            
+            try {
+                // 1. جلب بيانات المستخدم الحالي المسجل
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
+                if (userError || !user) {
+                    container.innerHTML = `<p style="color: #ff4444; font-size: 0.9rem;">Please log in to see available tasks.</p>`;
+                    return;
+                }
+
+                // 2. جلب قائمة المهام من جدول المهام الأساسي
+                const { data: tasks, error: tasksError } = await supabase
+                    .from('tasks')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (tasksError) throw tasksError;
+
+                // 3. جلب المهام التي أرسلها هذا المستخدم بالفعل لفحص التجميد
+                const { data: userSubmissions, error: subError } = await supabase
+                    .from('task_submissions')
+                    .select('task_id')
+                    .eq('user_id', user.id);
+
+                if (subError) throw subError;
+
+                // بناء مصفوفة سريعة بالـ IDs للمهام المكتملة
+                const completedTaskIds = new Set(userSubmissions ? userSubmissions.map(s => s.task_id) : []);
+
+                // تنظيف الحاوية لبدء حقن البيانات المحدثة
+                container.innerHTML = "";
+
+                if (!tasks || tasks.length === 0) {
+                    container.innerHTML = `<p style="color: #666; font-size: 0.95rem;">No tasks active for today.</p>`;
+                    return;
+                }
+
+                // 4. حلقة تكرارية لإنشاء الكروت برمجياً وحقنها
+                tasks.forEach(task => {
+                    const isDone = completedTaskIds.has(task.id);
+                    
+                    // إنشاء الكرت الرئيسي للمهمة
+                    const card = document.createElement('div');
+                    card.className = `task-card ${isDone ? 'frozen-card' : ''}`;
+
+                    // تجهيز الوسائط التوضيحية إن وجدت (فيديو أو صورة)
+                    let mediaContent = '';
+                    if (task.media_url) {
+                        if (task.media_url.match(/\.(mp4|webm|mov|ogg)$/i)) {
+                            mediaContent = `<video src="${task.media_url}" controls class="task-media-preview"></video>`;
+                        } else {
+                            mediaContent = `<img src="${task.media_url}" class="task-media-preview" alt="Task Proof Orientation">`;
+                        }
+                    }
+
+                    // تصميم المحتوى الداخلي للكرت بالإنجليزية بالكامل
+                    card.innerHTML = `
+                        ${mediaContent}
+                        <div class="task-header">
+                            <span class="task-title">${task.title}</span>
+                            <span class="task-price">$${parseFloat(task.price || 0.50).toFixed(2)}</span>
+                        </div>
+                        <p class="task-details">${task.details}</p>
+                        <div style="display: flex; gap: 10px; margin-top: 5px;">
+                            <a href="${task.target_url}" target="_blank" class="task-action-btn" style="flex: 1;">Go To Link →</a>
+                            <button onclick="handleTaskCompletion('${task.id}')" class="task-action-btn" style="flex: 1;">Submit Proof</button>
+                        </div>
+                    `;
+
+                    // إذا كانت المهمة منفذة مسبقاً، يتم حجب الكرت بالمربع الشفاف فوراً وقفل العمليات
+                    if (isDone) {
+                        const overlay = document.createElement('div');
+                        overlay.className = "task-completed-overlay";
+                        overlay.innerHTML = `<div class="completed-badge">COMPLETED</div>`;
+                        card.appendChild(overlay);
+                    }
+
+                    container.appendChild(card);
+                });
+
+            } catch (err) {
+                console.error("Error building dashboard tasks:", err);
+                container.innerHTML = `<p style="color: #ff4444; font-size: 0.9rem;">Error loading tasks: ${err.message}</p>`;
+            }
+        }
+
+        // دالة إرسال التثبيت والتنفيذ الفوري لتجميد الكرت
+        async function handleTaskCompletion(taskId) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return alert("Session expired. Please log in again.");
+
+            const confirmation = confirm("Are you sure you have completed all requirements for this task?");
+            if (!confirmation) return;
+
+            try {
+                // إدراج سجل في جدول تسليمات المهام لربطها وتجميدها للمستخدم الحالي
+                const { error } = await supabase
+                    .from('task_submissions')
+                    .insert([
+                        { 
+                            task_id: taskId, 
+                            user_id: user.id, 
+                            status: 'pending',
+                            created_at: new Date() 
+                        }
+                    ]);
+
+                if (error) throw error;
+
+                alert("Success! The task has been recorded and is now locked for verification.");
+                loadDashboardTasks(); // إعادة تحميل القسم لتطبيق المربع الأسود الشفاف والتجميد فوراً
+
+            } catch (error) {
+                alert("Submission failed: " + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
