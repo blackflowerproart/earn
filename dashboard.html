@@ -83,80 +83,96 @@
             padding-bottom: 10px;
         }
 
-        /* التجاوب مع شاشات الهواتف */
-        @media (max-width: 768px) {
-            .user-stats-row {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            .control-panel-bar .btn-blackflower {
-                min-width: 100%;
-            }
+        /* تنسيقات كروت المهام الديناميكية لتطابق الهوية البصرية */
+        .task-card {
+            border: 1px solid #333333;
+            background-color: #000000;
+            padding: 15px;
+            margin-bottom: 15px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
-    </style>
-</head>
-<body>
 
-    <header class="main-header">
-        <div class="header-container">
-            <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
-            <div class="header-text-block">
-                <div class="brand-title">The BlackFlower</div>
-                <div class="brand-subtitle">Professional Art</div>
-     
-            </div>
-        </div>
-    </header>
+        .task-media-preview {
+            width: 100%;
+            max-height: 150px;
+            object-cover: cover;
+            border: 1px solid #222222;
+            background-color: #111111;
+        }
 
-    <div class="container" style="margin-top: 30px; max-width: 100%;">
-        
-        <div class="control-panel-bar">
-            
-            <div class="user-stats-row">
-                <div class="stat-item">👤 Username: <span id="user-display-name">Loading...</span></div>
-                <div class="stat-item">💰 Wallet Balance: <span id="wallet-balance">0.0000</span> $</div>
-                <div class="stat-item">🛡️ Rank: <span id="account-type-status">Loading...</span></div>
-            </div>
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-            <div class="navigation-buttons-row">
-                <button onclick="window.location.href='dashboard.html'" class="btn-blackflower">🏠 Dashboard</button>
-                <button onclick="window.location.href='tasks.html'" class="btn-blackflower">📋 Tasks</button>
-               <button onclick="window.location.href='ads.html'" class="btn-blackflower">📺 Advertisements</button>
-                <button onclick="window.location.href='mining.html'" class="btn-blackflower">⛏️ Mining Room</button>
-                <button onclick="window.location.href='faucet.html'" class="btn-blackflower">🚰 Faucet Gift</button>
-                <button onclick="window.location.href='wallet-io.html'" class="btn-blackflower">💳 Wallet Transfer</button>
-                <button onclick="window.location.href='live-chat.html'" class="btn-blackflower">💬 Live Support</button>
-                <button onclick="window.location.href='settings.html'" class="btn-blackflower">⚙️ Account Settings</button>
-                
-                <button id="admin-panel-btn" onclick="window.location.href='admin.html'" class="btn-blackflower" style="display: none; border-color: #00ff77; color: #00ff77;">👑 Admin Panel</button>
-                
-                <button id="logout-link" class="btn-blackflower" style="border-color: #ff4444; color: #ff4444;">🚪 Logout</button>
-            </div>
-        </div>
+        .task-title {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
 
-        <div class="bottom-content-section">
-            
-            <div class="content-box">
-                <h3>📋 Available Tasks</h3>
-                <div id="tasks-container-display">
-                    <p style="color: #666; font-size: 0.95rem;">Active tasks will load here directly...</p>
-                </div>
-            </div>
+        .task-price {
+            font-family: monospace;
+            color: #ffffff;
+            border: 1px solid #ffffff;
+            padding: 2px 8px;
+            font-size: 0.9rem;
+        }
 
-            <div class="content-box">
-                <h3>📺 Featured Ads</h3>
-                <div id="ads-container-display">
-                    <p style="color: #666; font-size: 0.95rem;">Sponsored advertisements will stream here...</p>
-                </div>
-            </div>
+        .task-details {
+            font-family: Arial, sans-serif;
+            font-size: 0.9rem;
+            color: #aaaaaa;
+            line-height: 1.4;
+        }
 
-        </div>
+        .task-action-btn {
+            background-color: #ffffff;
+            color: #000000;
+            border: 1px solid #ffffff;
+            padding: 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
 
-    </div>
+        .task-action-btn:hover {
+            background-color: #000000;
+            color: #ffffff;
+        }
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase-config.js"></script>
-    <script src="js/dashboard.js"></script>
-</body>
-</html>
+        /* تأثير التجميد والمربع الأسود الشفاف عند إتمام المهمة */
+        .task-completed-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            pointer-events: auto;
+        }
+
+        .completed-badge {
+            color: #ff4444;
+            border: 2px solid #ff4444;
+            padding: 5px 15px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-family: monospace;
+            font-size: 1.3rem;
+            background-color: #000000;
+        }
