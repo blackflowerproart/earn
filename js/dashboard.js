@@ -158,3 +158,52 @@ async function handleLogout(event) {
         window.location.href = 'login.html'; 
     }
 }
+// دالة جلب وعرض رصيد المحفظة للمستخدم الحالي
+async function fetchAndDisplayWalletBalance() {
+    try {
+        // 1. التأكد من أن المستخدم مسجل الدخول وجلب بياناته
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !user) {
+            console.log("User is not logged in.");
+            document.getElementById('wallet-balance').innerText = "0.0000";
+            return;
+        }
+
+        // 2. جلب سطر الرصيد من جدول wallets المطابق للـ user_id
+        const { data: walletData, error: walletError } = await supabase
+            .from('wallets')
+            .select('balance')
+            .eq('user_id', user.id)
+            .single(); // جلب سطر واحد فقط صراحة
+
+        if (walletError) {
+            // إذا لم تكن المحفظة منشأة بعد في الجدول، اعرض صفر
+            if (walletError.code === 'PGRST116') { 
+                console.log("No wallet row found for this user. Displaying 0.00");
+                document.getElementById('wallet-balance').innerText = "0.0000";
+            } else {
+                throw walletError;
+            }
+            return;
+        }
+
+        // 3. تحديث النص داخل عنصر الـ HTML لعرض الرصيد بدقة 4 أرقام بعد الفاصلة
+        if (walletData && walletData.balance !== undefined) {
+            const formattedBalance = parseFloat(walletData.balance).toFixed(4);
+            document.getElementById('wallet-balance').innerText = formattedBalance;
+        }
+
+    } catch (error) {
+        console.error("Error fetching wallet balance:", error.message);
+        document.getElementById('wallet-balance').innerText = "ERROR";
+    }
+}
+
+// استدعاء الدالة تلقائياً عند تحميل الصفحة
+document.addEventListener("DOMContentLoaded", () => {
+    // تأكد من أن كائن سوبابيز معرف قبل الاستدعاء
+    if (typeof supabase !== 'undefined') {
+        fetchAndDisplayWalletBalance();
+    }
+});
