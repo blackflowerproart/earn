@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Execute Task - The BlackFlower</title>
+    
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        /* تصميم صندوق التنفيذ المتناسق مع الهوية الفخمة للموقع */
+        .execute-task-box {
+            width: 100%;
+            max-width: 700px;
+            background-color: #000000;
+            border: 2px solid #ffffff;
+            padding: 40px;
+            margin: 30px auto 0 auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+        }
+
+        .task-title-view {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .task-reward-badge {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #00ff77;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 30px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .info-section {
+            border: 1px solid #222222;
+            background-color: #050505;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .info-section h4 {
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            color: #ffffff;
+            border-bottom: 1px solid #111111;
+            padding-bottom: 5px;
+        }
+
+        .task-instructions {
+            font-family: Arial, sans-serif;
+            font-size: 0.95rem;
+            color: #aaaaaa;
+            line-height: 1.6;
+            white-space: pre-line; /* للحفاظ على تنسيق السطور والفقرات */
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            font-family: Arial, sans-serif;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        .form-control-file {
+            background-color: #000000;
+            color: #aaaaaa;
+            padding: 10px 0;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+            font-size: 0.9rem;
+        }
+
+        /* تنسيق الأزرار الحادة المتطابقة مع الـ buttons لديك */
+        .btn-row {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .execute-task-box .btn-blackflower {
+            flex: 1;
+            text-align: center;
+            padding: 14px;
+            font-size: 1rem;
+        }
+
+        .btn-secondary-bf {
+            background-color: #000000;
+            color: #ffffff;
+            border: 1px solid #ffffff;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-secondary-bf:hover {
+            background-color: #ffffff;
+            color: #000000;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-container">
+            <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
+            <div class="header-text-block">
+                <div class="brand-title">The BlackFlower</div>
+                <div class="brand-subtitle">Professional Art</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <div id="loading-fallback" style="text-align: center; margin-top: 50px; color: #666;">
+            LOADING TASK CONFIGURATION...
+        </div>
+
+        <div class="execute-task-box" id="main-task-box" style="display: none;">
+            <h2 class="task-title-view" id="display-title">TASK TITLE</h2>
+            <div class="task-reward-badge">REWARD: <span id="display-reward">$0.0000</span></div>
+
+            <div class="info-section">
+                <h4>📋 Instructions / Requirements</h4>
+                <p class="task-instructions" id="display-details">Loading instructions...</p>
+            </div>
+
+            <a href="#" target="_blank" id="target-link-btn" class="btn-secondary-bf" style="width: 100%; text-align: center; padding: 15px; margin-bottom: 25px; box-sizing: border-box;">
+                Step 1: Open Target Link →
+            </a>
+
+            <form id="submissionForm">
+                <div class="form-group">
+                    <label for="proofMedia">Step 2: Upload Proof Screenshot (Optional)</label>
+                    <input type="file" id="proofMedia" class="form-control-file" accept="image/*">
+                </div>
+
+                <div class="btn-row">
+                    <a href="dashboard.html" class="btn-secondary-bf" style="padding: 14px; text-align: center; max-width: 120px;">Cancel</a>
+                    <button type="submit" id="submitBtn" class="btn-blackflower">Submit & Freeze Task</button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    
+    <script>
+        // 1. استخراج الـ ID الخاص بالمهمة من رابط الصفحة URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const taskId = urlParams.get('id');
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (!taskId) {
+                alert("Invalid URL. Returning to Dashboard.");
+                window.location.href = 'dashboard.html';
+                return;
+            }
+            if (typeof supabase !== 'undefined') {
+                fetchTaskDetails();
+            } else {
+                console.error("Supabase not loaded.");
+            }
+        });
+
+        // 2. جلب تفاصيل المهمة المحددة من جدول tasks لعرضها للمستخدم
+        async function fetchTaskDetails() {
+            try {
+                const { data: task, error } = await supabase
+                    .from('tasks')
+                    .select('*')
+                    .eq('id', taskId)
+                    .single(); // جلب سطر واحد فقط متطابق
+
+                if (error || !task) throw new Error("Task not found or has been archived.");
+
+                // حقن البيانات في الـ HTML
+                document.getElementById('display-title').innerText = task.title;
+                document.getElementById('display-reward').innerText = `$${parseFloat(task.reward || 0.00).toFixed(4)}`;
+                document.getElementById('display-details').innerText = task.details;
+                document.getElementById('target-link-btn').href = task.target_url;
+
+                // إظهار الصندوق الرئيسي وإخفاء كلمة Loading
+                document.getElementById('loading-fallback').style.display = 'none';
+                document.getElementById('main-task-box').style.display = 'block';
+
+            } catch (err) {
+                alert(err.message);
+                window.location.href = 'dashboard.html';
+            }
+        }
+
+        // 3. معالجة إرسال الإثبات لجدول task_submissions لتجميدها للمستخدم للأبد
+        document.getElementById('submissionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerText = "SUBMITTING PROOF...";
+
+            try {
+                // التأكد من أن الجلسة نشطة والمستخدم مسجل
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) throw new Error("Session expired. Please log in again.");
+
+                const proofFile = document.getElementById('proofMedia').files[0];
+                let proofUrl = null;
+
+                // إذا كان العضو قد رفع صورة إثبات، نقوم برفعها للـ Bucket الخاص بالإثباتات
+                if (proofFile) {
+                    const fileExt = proofFile.name.split('.').pop();
+                    const fileName = `${Date.now()}.${fileExt}`;
+                    const filePath = `submissions/${user.id}/${fileName}`;
+
+                    // يتم الرفع إلى باكت افتراضي اسمه 'task-proofs' (تأكد من وجوده أو إنشائه في Storage بسوبابيز)
+                    let { error: uploadError } = await supabase.storage
+                        .from('task-proofs')
+                        .upload(filePath, proofFile);
+
+                    if (!uploadError) {
+                        const { data: publicUrlData } = supabase.storage
+                            .from('task-proofs')
+                            .getPublicUrl(filePath);
+                        proofUrl = publicUrlData.publicUrl;
+                    }
+                }
+
+                // حقن السجل في جدول الـ submissions لتجميد المهمة فوراً
+                const { error: insertError } = await supabase
+                    .from('task_submissions')
+                    .insert([
+                        {
+                            task_id: parseInt(taskId),
+                            user_id: user.id,
+                            status: 'pending',
+                            // إذا أردت حفظ رابط الصورة المرفوعة في جدول الإرساليات، تأكد من وجود عمود باسم proof_url بنوع text في جدولك
+                            // وإذا لم يكن موجوداً، يمكنك إزالة السطر أدناه دون مشاكل
+                            proof_url: proofUrl, 
+                            created_at: new Date()
+                        }
+                    ]);
+
+                if (insertError) throw insertError;
+
+                alert("Success! Your submission is recorded. The task is now locked and frozen for you.");
+                window.location.href = 'dashboard.html'; // العودة لتجدها قد اختفت تماماً
+
+            } catch (error) {
+                alert("Error: " + error.message);
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Submit & Freeze Task";
+            }
+        });
+    </script>
+</body>
+</html>
