@@ -225,7 +225,7 @@
             }
         });
 
-        async function loadDashboardTasks() {
+       async function loadDashboardTasks() {
             const container = document.getElementById('tasks-container-display');
             
             try {
@@ -269,18 +269,19 @@
                     return;
                 }
 
-                // 4. بناء الكروت البرمجية المقتصرة على الإسم والربح وزر تنفيذ واحد
+                // 4. بناء الكروت البرمجية المقتصرة على الإسم والربح وزر الانتقال لصفحة التنفيذ
                 tasks.forEach(task => {
                     const card = document.createElement('div');
                     card.className = 'task-card';
 
+                    // التعديل السحري هنا: الزر الآن يقوم بالتوجيه التلقائي لصفحة execute-task.html مع الـ id
                     card.innerHTML = `
                         <div class="task-header">
                             <span class="task-title">${task.title}</span>
                             <span class="task-price">+$${parseFloat(task.reward || 0.00).toFixed(4)}</span>
                         </div>
                         <div style="margin-top: 5px;">
-                            <button onclick="handleTaskCompletion('${task.id}')" class="task-action-btn">Complete & Earn</button>
+                            <button onclick="window.location.href='execute-task.html?id=${task.id}'" class="task-action-btn">Complete & Earn</button>
                         </div>
                     `;
 
