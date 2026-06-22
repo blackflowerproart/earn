@@ -54,7 +54,6 @@
         .control-panel-bar .btn-blackflower {
             padding: 12px 25px;
             font-size: 0.95rem;
-            min-width: 150px;
             flex: 1;
             min-width: calc(20% - 15px); /* توزيع متناسق على الشاشات الكبيرة */
             text-align: center;
@@ -83,24 +82,20 @@
             padding-bottom: 10px;
         }
 
-        /* تنسيقات كروت المهام الديناميكية لتطابق الهوية البصرية */
+        /* تنسيقات كروت المهام الديناميكية المقتصرة على الاسم والربح فقط */
         .task-card {
             border: 1px solid #333333;
             background-color: #000000;
-            padding: 15px;
+            padding: 20px;
             margin-bottom: 15px;
-            position: relative;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 15px;
+            transition: border-color 0.3s ease;
         }
 
-        .task-media-preview {
-            width: 100%;
-            max-height: 150px;
-            object-cover: cover;
-            border: 1px solid #222222;
-            background-color: #111111;
+        .task-card:hover {
+            border-color: #ffffff;
         }
 
         .task-header {
@@ -114,28 +109,23 @@
             font-size: 1.2rem;
             font-weight: bold;
             text-transform: uppercase;
+            color: #ffffff;
         }
 
         .task-price {
             font-family: monospace;
-            color: #ffffff;
-            border: 1px solid #ffffff;
+            color: #00ff77; /* تمييز لون الربح بلون أخضر فخم مالي */
+            border: 1px solid #00ff77;
             padding: 2px 8px;
-            font-size: 0.9rem;
-        }
-
-        .task-details {
-            font-family: Arial, sans-serif;
-            font-size: 0.9rem;
-            color: #aaaaaa;
-            line-height: 1.4;
+            font-size: 0.95rem;
+            font-weight: bold;
         }
 
         .task-action-btn {
             background-color: #ffffff;
             color: #000000;
             border: 1px solid #ffffff;
-            padding: 8px;
+            padding: 10px;
             font-weight: bold;
             text-transform: uppercase;
             cursor: pointer;
@@ -143,43 +133,12 @@
             text-decoration: none;
             font-size: 0.85rem;
             transition: all 0.2s ease;
+            width: 100%;
         }
 
         .task-action-btn:hover {
             background-color: #000000;
             color: #ffffff;
-        }
-
-        /* تأثير التجميد والمربع الأسود الشفاف عند إتمام المهمة */
-        .task-completed-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.85);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 5;
-            pointer-events: auto;
-        }
-
-        .completed-badge {
-            color: #ff4444;
-            border: 2px solid #ff4444;
-            padding: 5px 15px;
-            font-weight: 900;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            font-family: monospace;
-            font-size: 1.3rem;
-            background-color: #000000;
-        }
-
-        .frozen-card {
-            pointer-events: none;
-            user-select: none;
         }
 
         /* التجاوب مع شاشات الهواتف */
@@ -258,9 +217,7 @@
     <script src="js/dashboard.js"></script>
 
     <script>
-        // التوجيه التلقائي للمهام وعرض الحالات الحية بعد تحميل الصفحة والتأكد من اتصال سوبابيز
         document.addEventListener("DOMContentLoaded", () => {
-            // فحص وجود كائن سوبابيز المنشأ في الملفات الخارجية
             if (typeof supabase !== 'undefined') {
                 loadDashboardTasks();
             } else {
@@ -279,15 +236,7 @@
                     return;
                 }
 
-                // 2. جلب قائمة المهام من جدول المهام الأساسي
-                const { data: tasks, error: tasksError } = await supabase
-                    .from('tasks')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
-                if (tasksError) throw tasksError;
-
-                // 3. جلب المهام التي أرسلها هذا المستخدم بالفعل لفحص التجميد
+                // 2. جلب المهام التي أرسلها هذا المستخدم بالفعل مسبقاً لاستثنائها تماماً
                 const { data: userSubmissions, error: subError } = await supabase
                     .from('task_submissions')
                     .select('task_id')
@@ -295,10 +244,24 @@
 
                 if (subError) throw subError;
 
-                // بناء مصفوفة سريعة بالـ IDs للمهام المكتملة
-                const completedTaskIds = new Set(userSubmissions ? userSubmissions.map(s => s.task_id) : []);
+                // تحويل قيم الـ IDs إلى مصفوفة بسيطة
+                const completedTaskIds = userSubmissions ? userSubmissions.map(s => s.task_id) : [];
 
-                // تنظيف الحاوية لبدء حقن البيانات المحدثة
+                // 3. بناء استعلام ذكي يجلب (المعرف، العنوان، والربح فقط) من جدول tasks
+                let tasksQuery = supabase
+                    .from('tasks')
+                    .select('id, title, reward')
+                    .order('created_at', { ascending: false });
+
+                // تجميد وحجب: إذا كان المستخدم قد نفذ أي مهام مسبقاً، نقوم بإخفائها تماماً من الاستعلام
+                if (completedTaskIds.length > 0) {
+                    tasksQuery = tasksQuery.not('id', 'in', `(${completedTaskIds.join(',')})`);
+                }
+
+                const { data: tasks, error: tasksError } = await tasksQuery;
+                if (tasksError) throw tasksError;
+
+                // تنظيف الحاوية لبدء العرض
                 container.innerHTML = "";
 
                 if (!tasks || tasks.length === 0) {
@@ -306,45 +269,20 @@
                     return;
                 }
 
-                // 4. حلقة تكرارية لإنشاء الكروت برمجياً وحقنها
+                // 4. بناء الكروت البرمجية المقتصرة على الإسم والربح وزر تنفيذ واحد
                 tasks.forEach(task => {
-                    const isDone = completedTaskIds.has(task.id);
-                    
-                    // إنشاء الكرت الرئيسي للمهمة
                     const card = document.createElement('div');
-                    card.className = `task-card ${isDone ? 'frozen-card' : ''}`;
+                    card.className = 'task-card';
 
-                    // تجهيز الوسائط التوضيحية إن وجدت (فيديو أو صورة)
-                    let mediaContent = '';
-                    if (task.media_url) {
-                        if (task.media_url.match(/\.(mp4|webm|mov|ogg)$/i)) {
-                            mediaContent = `<video src="${task.media_url}" controls class="task-media-preview"></video>`;
-                        } else {
-                            mediaContent = `<img src="${task.media_url}" class="task-media-preview" alt="Task Proof Orientation">`;
-                        }
-                    }
-
-                    // تصميم المحتوى الداخلي للكرت بالإنجليزية بالكامل
                     card.innerHTML = `
-                        ${mediaContent}
                         <div class="task-header">
                             <span class="task-title">${task.title}</span>
-                            <span class="task-price">$${parseFloat(task.price || 0.50).toFixed(2)}</span>
+                            <span class="task-price">+$${parseFloat(task.reward || 0.00).toFixed(4)}</span>
                         </div>
-                        <p class="task-details">${task.details}</p>
-                        <div style="display: flex; gap: 10px; margin-top: 5px;">
-                            <a href="${task.target_url}" target="_blank" class="task-action-btn" style="flex: 1;">Go To Link →</a>
-                            <button onclick="handleTaskCompletion('${task.id}')" class="task-action-btn" style="flex: 1;">Submit Proof</button>
+                        <div style="margin-top: 5px;">
+                            <button onclick="handleTaskCompletion('${task.id}')" class="task-action-btn">Complete & Earn</button>
                         </div>
                     `;
-
-                    // إذا كانت المهمة منفذة مسبقاً، يتم حجب الكرت بالمربع الشفاف فوراً وقفل العمليات
-                    if (isDone) {
-                        const overlay = document.createElement('div');
-                        overlay.className = "task-completed-overlay";
-                        overlay.innerHTML = `<div class="completed-badge">COMPLETED</div>`;
-                        card.appendChild(overlay);
-                    }
 
                     container.appendChild(card);
                 });
@@ -355,7 +293,7 @@
             }
         }
 
-        // دالة إرسال التثبيت والتنفيذ الفوري لتجميد الكرت
+        // دالة إرسال التثبيت وعند نجاحها تختفي المهمة تلقائياً من الـ Dashboard للأبد
         async function handleTaskCompletion(taskId) {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return alert("Session expired. Please log in again.");
@@ -364,7 +302,7 @@
             if (!confirmation) return;
 
             try {
-                // إدراج سجل في جدول تسليمات المهام لربطها وتجميدها للمستخدم الحالي
+                // إدراج السجل في جدول الـ submissions لتوثيق إتمام المستخدم للمهمة
                 const { error } = await supabase
                     .from('task_submissions')
                     .insert([
@@ -378,8 +316,8 @@
 
                 if (error) throw error;
 
-                alert("Success! The task has been recorded and is now locked for verification.");
-                loadDashboardTasks(); // إعادة تحميل القسم لتطبيق المربع الأسود الشفاف والتجميد فوراً
+                alert("Success! The task has been submitted and is now frozen for you.");
+                loadDashboardTasks(); // إعادة استدعاء الدالة لتحديث الواجهة واختفاء المهمة فوراً
 
             } catch (error) {
                 alert("Submission failed: " + error.message);
