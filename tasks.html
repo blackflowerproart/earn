@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tasks Management - The BlackFlower</title>
+    <title>My Tasks Hub - The BlackFlower</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* التنسيقات المخصصة لقسم المهام تماشياً مع طابع النيون والمظهر المظلم لصفحة الإعلانات */
         .tasks-wrapper {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -26,36 +25,26 @@
             padding-bottom: 10px;
             margin-bottom: 20px;
         }
-        /* كروت المهام المتاحة للتنفيذ */
+        /* كروت المهام الخاصة بالمستخدم */
         .task-card {
             border: 1px solid #333;
             background: #050505;
             padding: 20px;
             margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: border-color 0.3s;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
         .task-card:hover {
-            border-color: #ff00ff;
+            border-color: #00ff77;
+            background: #0a0a0a;
         }
-        .task-info h4 {
-            margin: 0 0 5px 0;
-            font-size: 1.2rem;
+        .task-card h4 {
+            margin: 0;
+            font-size: 1.3rem;
             color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .task-info p {
-            margin: 0 0 10px 0;
-            color: #888;
-            font-size: 0.9rem;
-        }
-        .task-meta {
-            font-size: 0.85rem;
-            color: #00ff77;
-            font-family: monospace;
-        }
-        /* فورم إضافة مهمة جديدة */
         .form-group {
             display: flex;
             flex-direction: column;
@@ -68,7 +57,7 @@
             letter-spacing: 1px;
             font-weight: bold;
         }
-        .form-group input, .form-group textarea, .form-group select {
+        .form-group input, .form-group textarea {
             background: #000;
             border: 1px solid #fff;
             color: #fff;
@@ -82,10 +71,9 @@
         .form-control-file {
             background-color: #000000;
             color: #aaaaaa;
-            padding: 10px 0;
+            padding: 10px;
             cursor: pointer;
             border: 1px dashed #333;
-            padding: 10px;
         }
         .live-calc {
             background: #111;
@@ -113,7 +101,7 @@
             <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
             <div class="header-text-block">
                 <div class="brand-title">The BlackFlower</div>
-                <div class="brand-subtitle">Tasks Hub</div>
+                <div class="brand-subtitle">My Created Tasks</div>
             </div>
         </div>
     </header>
@@ -126,9 +114,9 @@
         <div class="tasks-wrapper">
             
             <div class="tasks-panel">
-                <h2>📋 Available Tasks</h2>
+                <h2>📋 My Created Tasks (Click to Manage)</h2>
                 <div id="available-tasks-container">
-                    <p style="color:#555;">Loading active tasks...</p>
+                    <p style="color:#555;">Loading your tasks...</p>
                 </div>
             </div>
 
@@ -179,7 +167,6 @@
         const taskDaysInput = document.getElementById('taskDays');
         const totalCostSpan = document.getElementById('totalCost');
 
-        // حساب التكلفة الفورية
         taskDaysInput.addEventListener('input', () => {
             const days = parseInt(taskDaysInput.value) || 0;
             totalCostSpan.innerText = `$${(days * pricePerDay).toFixed(2)}`;
@@ -190,7 +177,7 @@
             document.getElementById('taskForm').addEventListener('submit', handlePublishTask);
         });
 
-        // 1. جلب المهام النشطة من جدول الـ tasks وعرضها
+        // 1. جلب المهام النشطة الخاصة بالمستخدم الحالي فقط
         async function loadActiveTasks() {
             const container = document.getElementById('available-tasks-container');
             
@@ -199,13 +186,21 @@
                 return;
             }
 
+            // جلب المستخدم الحالي أولاً للفلترة بناءً على الـ ID الخاص به
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError || !user) {
+                container.innerHTML = '<p style="color:red;">Please log in to view your tasks.</p>';
+                return;
+            }
+
             const { data: tasks, error } = await supabase
                 .from('tasks')
                 .select('*')
+                .eq('user_id', user.id) // جلب المهام التي أنشأها هذا المستخدم فقط
                 .order('created_at', { ascending: false });
 
             if (error || !tasks || tasks.length === 0) {
-                container.innerHTML = '<p style="color:#666;">No active tasks available right now.</p>';
+                container.innerHTML = '<p style="color:#666;">You haven\'t created any tasks yet.</p>';
                 return;
             }
 
@@ -213,19 +208,16 @@
             tasks.forEach(task => {
                 const card = document.createElement('div');
                 card.className = 'task-card';
-                card.innerHTML = `
-                    <div class="task-info">
-                        <h4>${task.title}</h4>
-                        <p>${task.details}</p>
-                        <div class="task-meta">📅 Duration: ${task.duration_days} Days | 💰 Cost: $${parseFloat(task.price).toFixed(2)}</div>
-                    </div>
-                    <button onclick="window.open('${task.target_url}', '_blank')" class="btn-blackflower" style="min-width:100px;">🚀 Start</button>
-                `;
+                // عند الضغط على الكرت يتم الانتقال لصفحة الإدارة وتمرير الـ id الخاص بالمهمة
+                card.onclick = () => {
+                    window.location.href = `manage-task.html?id=${task.id}`;
+                };
+                card.innerHTML = `<h4>📌 ${task.title}</h4>`; // يظهر اسم المهمة فقط بناءً على طلبك
                 container.appendChild(card);
             });
         }
 
-        // 2. منطق معالجة النشر ورفع الملفات
+        // 2. منطق معالجة النشر
         async function handlePublishTask(e) {
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
@@ -246,7 +238,6 @@
                     return;
                 }
 
-                // رفع الميديا إلى الـ Bucket إن وجدت
                 if (mediaFile) {
                     const fileExt = mediaFile.name.split('.').pop();
                     const fileName = `${Date.now()}.${fileExt}`;
@@ -265,7 +256,6 @@
                     mediaUrl = publicUrlData.publicUrl;
                 }
 
-                // إدخال البيانات في قاعدة البيانات
                 const { error: insertError } = await supabase
                     .from('tasks')
                     .insert([
@@ -283,10 +273,10 @@
 
                 if (insertError) throw insertError;
 
-                alert("Task created successfully and listed on the Hub!");
+                alert("Task created successfully!");
                 document.getElementById('taskForm').reset();
                 totalCostSpan.innerText = "$0.50";
-                loadActiveTasks(); // إعادة تحديث القائمة فوراً
+                loadActiveTasks(); 
 
             } catch (error) {
                 alert("Error: " + error.message);
