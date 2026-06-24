@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Task Responses - The BlackFlower</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .manage-panel {
+            border: 2px solid #ffffff;
+            background-color: #000000;
+            padding: 30px;
+            margin-top: 30px;
+        }
+        .task-title-header {
+            color: #ff00ff;
+            text-transform: uppercase;
+            border-bottom: 1px dashed #333;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        .submission-card {
+            border: 1px solid #333;
+            background: #050505;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .submission-info {
+            color: #ccc;
+        }
+        .submission-info span {
+            color: #888;
+            font-size: 0.85rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-accept {
+            background: #000;
+            border: 1px solid #00ff77;
+            color: #00ff77;
+            padding: 8px 15px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-accept:hover { background: #00ff77; color: #000; }
+        .btn-reject {
+            background: #000;
+            border: 1px solid #ff0055;
+            color: #ff0055;
+            padding: 8px 15px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-reject:hover { background: #ff0055; color: #000; }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-container">
+            <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
+            <div class="header-text-block">
+                <div class="brand-title">The BlackFlower</div>
+                <div class="brand-subtitle">Task Review Dashboard</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <button onclick="window.location.href='tasks.html'" class="btn-blackflower" style="margin-top:20px;">⬅️ Back to Tasks</button>
+        
+        <div class="manage-panel">
+            <h2 id="main-task-title" class="task-title-header">Loading Task Details...</h2>
+            
+            <h3>📥 User Submissions</h3>
+            <div id="submissions-container">
+                <p style="color: #555;">Checking for responses...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script>
+        // الحصول على معرف المهمة id من الـ URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const taskId = urlParams.get('id');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if(!taskId) {
+                alert("No Task ID provided.");
+                window.location.href = 'tasks.html';
+                return;
+            }
+            getTaskDetails();
+            loadSubmissions();
+        });
+
+        // جلب اسم المهمة
+        async function getTaskDetails() {
+            const { data: task, error } = await supabase.from('tasks').select('title').eq('id', taskId).single();
+            if(!error && task) {
+                document.getElementById('main-task-title').innerText = `⚙️ Managing: ${task.title}`;
+            }
+        }
+
+        // جلب الردود المعلقة للمراجعة
+        async function loadSubmissions() {
+            const container = document.getElementById('submissions-container');
+            
+            // افترضنا هنا جدول السوبابيز باسم task_submissions وحالة الطلب pending
+            const { data: submissions, error } = await supabase
+                .from('task_submissions') 
+                .select('*')
+                .eq('task_id', taskId)
+                .eq('status', 'pending');
+
+            if (error || !submissions || submissions.length === 0) {
+                container.innerHTML = '<p style="color:#666;">No pending submissions to review for this task.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            submissions.forEach(sub => {
+                const card = document.createElement('div');
+                card.className = 'submission-card';
+                card.innerHTML = `
+                    <div class="submission-info">
+                        <span>User ID: ${sub.user_id}</span>
+                        <p><strong>Proof/Text:</strong> ${sub.proof_text || 'No description provided.'}</p>
+                        ${sub.screenshot_url ? `<a href="${sub.screenshot_url}" target="_blank" style="color:#ff00ff; font-size:0.9rem;">🖼️ View Proof Screenshot</a>` : ''}
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn-accept" onclick="updateStatus('${sub.id}', 'approved')">✔️ Accept</button>
+                        <button class="btn-reject" onclick="updateStatus('${sub.id}', 'rejected')">❌ Reject</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // تحديث حالة الرد (قبول أو رفض)
+        async function updateStatus(submissionId, newStatus) {
+            const { error } = await supabase
+                .from('task_submissions')
+                .update({ status: newStatus })
+                .eq('id', submissionId);
+
+            if (error) {
+                alert("Error updating status: " + error.message);
+            } else {
+                alert(`Submission ${newStatus} successfully!`);
+                loadSubmissions(); // إعادة تحميل القائمة
+            }
+        }
+    </script>
+</body>
+</html>
