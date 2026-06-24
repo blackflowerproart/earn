@@ -3,101 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Task - The BlackFlower</title>
-    
+    <title>Tasks Management - The BlackFlower</title>
     <link rel="stylesheet" href="css/style.css">
-
     <style>
-        /* تنسيقات إضافية مخصصة للفورم تتماشى تماماً مع الهوية البصرية الفخمة للموقع */
-        .task-form-box {
-            width: 100%;
-            max-width: 600px;
-            background-color: #000000;
-            border: 2px solid #ffffff;
-            padding: 40px;
+        /* التنسيقات المخصصة لقسم المهام تماشياً مع طابع النيون والمظهر المظلم لصفحة الإعلانات */
+        .tasks-wrapper {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
             margin-top: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            width: 100%;
         }
-
-        .form-title {
-            font-family: 'Times New Roman', Times, serif;
-            font-size: 1.8rem;
-            font-weight: bold;
+        .tasks-panel {
+            border: 2px solid #ffffff;
+            background-color: #000000;
+            padding: 25px;
+        }
+        .tasks-panel h2 {
             text-transform: uppercase;
             letter-spacing: 2px;
-            text-align: center;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #222222;
-            padding-bottom: 15px;
+            border-bottom: 1px dashed #333;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
         }
-
-        .form-cost-badge {
-            text-align: center;
-            font-size: 1rem;
-            color: #aaaaaa;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 30px;
-            font-family: Arial, sans-serif;
+        /* كروت المهام المتاحة للتنفيذ */
+        .task-card {
+            border: 1px solid #333;
+            background: #050505;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: border-color 0.3s;
         }
-
-        .form-cost-badge span {
-            color: #ffffff;
+        .task-card:hover {
+            border-color: #ff00ff;
+        }
+        .task-info h4 {
+            margin: 0 0 5px 0;
+            font-size: 1.2rem;
+            color: #fff;
+        }
+        .task-info p {
+            margin: 0 0 10px 0;
+            color: #888;
+            font-size: 0.9rem;
+        }
+        .task-meta {
+            font-size: 0.85rem;
+            color: #00ff77;
             font-family: monospace;
-            font-weight: bold;
-            border: 1px solid #ffffff;
-            padding: 2px 6px;
-            margin-left: 5px;
         }
-
+        /* فورم إضافة مهمة جديدة */
         .form-group {
             display: flex;
             flex-direction: column;
             gap: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
-
         .form-group label {
-            font-family: Arial, sans-serif;
             font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: #ffffff;
             font-weight: bold;
         }
-
-        /* حقول الإدخال: سوداء، إطار رمادي دقيق، يتحول للأبيض عند التركيز وبزوايا حادة */
-        .form-control {
-            background-color: #050505;
-            color: #ffffff;
-            border: 1px solid #333333;
-            padding: 12px 15px;
-            font-size: 1rem;
-            font-family: Arial, sans-serif;
-            border-radius: 0px; /* زوايا حادة تماشياً مع الأزرار */
-            transition: border-color 0.3s ease;
-            width: 100%;
+        .form-group input, .form-group textarea, .form-group select {
+            background: #000;
+            border: 1px solid #fff;
+            color: #fff;
+            padding: 10px;
+            font-family: inherit;
         }
-
-        .form-control:focus {
+        .form-group input:focus, .form-group textarea:focus {
             outline: none;
-            border-color: #ffffff;
+            border-color: #ff00ff;
         }
-
-        /* تخصيص حقل رفع الملفات ليتناسب مع النمط المودرن للموقع */
         .form-control-file {
             background-color: #000000;
             color: #aaaaaa;
             padding: 10px 0;
             cursor: pointer;
-            font-family: Arial, sans-serif;
-            font-size: 0.9rem;
+            border: 1px dashed #333;
+            padding: 10px;
         }
-
-        /* زر النشر يأخذ كلاس موقعك الأصلي مع تعديل العرض ليصبح كاملاً */
-        .task-form-box .btn-blackflower {
-            width: 100%;
+        .live-calc {
+            background: #111;
+            padding: 15px;
+            border: 1px dashed #333;
             margin-top: 15px;
+            font-family: monospace;
+            font-size: 1rem;
+        }
+        .live-calc span {
+            color: #ff00ff;
+            font-weight: bold;
+        }
+        @media (max-width: 900px) {
+            .tasks-wrapper {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -108,84 +113,124 @@
             <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
             <div class="header-text-block">
                 <div class="brand-title">The BlackFlower</div>
-                <div class="brand-subtitle">Professional Art</div>
+                <div class="brand-subtitle">Tasks Hub</div>
             </div>
         </div>
     </header>
 
-    <div class="container">
+    <div class="container" style="max-width: 100%; padding: 0 20px;">
         
-        <div class="task-form-box">
-            <h2 class="form-title">Create New Task</h2>
-            <div class="form-cost-badge">Pricing: <span id="totalCost">$0.50</span> Per Day</div>
+        <button onclick="window.location.href='dashboard.html'" class="btn-blackflower" style="margin-top:20px; min-width: 150px;">🏠 Back to Dashboard</button>
+        
 
-            <form id="taskForm">
-                <div class="form-group">
-                    <label for="taskTitle">Task Title</label>
-                    <input type="text" id="taskTitle" class="form-control" placeholder="e.g., SUBSCRIBE TO MY CHANNEL" required>
+        <div class="tasks-wrapper">
+            
+            <div class="tasks-panel">
+                <h2>📋 Available Tasks</h2>
+                <div id="available-tasks-container">
+                    <p style="color:#555;">Loading active tasks...</p>
                 </div>
+            </div>
 
-                <div class="form-group">
-                    <label for="taskDetails">Task Details / Instructions</label>
-                    <textarea id="taskDetails" class="form-control" rows="4" placeholder="DESCRIBE THE STEPS REQUIRED..." required></textarea>
-                </div>
+            <div class="tasks-panel">
+                <h2>📢 Create New Task</h2>
+                <form id="taskForm">
+                    <div class="form-group">
+                        <label for="taskTitle">Task Title</label>
+                        <input type="text" id="taskTitle" placeholder="e.g., SUBSCRIBE TO MY CHANNEL" required>
+                    </div>
 
-                <div class="form-group">
-                    <label for="taskUrl">Target Website URL</label>
-                    <input type="url" id="taskUrl" class="form-control" placeholder="https://example.com" required>
-                </div>
+                    <div class="form-group">
+                        <label for="taskDetails">Task Details / Instructions</label>
+                        <textarea id="taskDetails" rows="4" placeholder="DESCRIBE THE STEPS REQUIRED..." required></textarea>
+                    </div>
 
-                <div class="form-group">
-                    <label for="taskDays">Duration (Days)</label>
-                    <input type="number" id="taskDays" class="form-control" min="1" value="1" required>
-                </div>
+                    <div class="form-group">
+                        <label for="taskUrl">Target Website URL</label>
+                        <input type="url" id="taskUrl" placeholder="https://example.com" required>
+                    </div>
 
-                <div class="form-group">
-                    <label for="taskMedia">Explanation Media (Image / Video)</label>
-                    <input type="file" id="taskMedia" class="form-control-file" accept="image/*,video/*">
-                </div>
+                    <div class="form-group">
+                        <label for="taskDays">Duration (Days)</label>
+                        <input type="number" id="taskDays" min="1" value="1" required>
+                    </div>
 
-                <button type="submit" id="submitBtn" class="btn-blackflower">Publish Task</button>
-            </form>
+                    <div class="form-group">
+                        <label for="taskMedia">Explanation Media (Image / Video)</label>
+                        <input type="file" id="taskMedia" class="form-control-file" accept="image/*,video/*">
+                    </div>
+
+                    <div class="live-calc">
+                        Total Task Cost: <span id="totalCost">$0.50</span>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="btn-blackflower" style="width: 100%; margin-top: 15px; border-color: #00ff77; color: #00ff77;">🚀 Publish Task</button>
+                </form>
+            </div>
+
         </div>
-
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     
     <script>
-        // حساب التكلفة الإجمالية ديناميكياً تماشياً مع الـ Inputs
         const pricePerDay = 0.50;
         const taskDaysInput = document.getElementById('taskDays');
         const totalCostSpan = document.getElementById('totalCost');
 
+        // حساب التكلفة الفورية
         taskDaysInput.addEventListener('input', () => {
             const days = parseInt(taskDaysInput.value) || 0;
             totalCostSpan.innerText = `$${(days * pricePerDay).toFixed(2)}`;
         });
 
-        // منطق رفع البيانات الحية إلى سوبابيز عند الضغط على الزر الفاخر
-        document.getElementById('taskForm').addEventListener('submit', async (e) => {
+        document.addEventListener('DOMContentLoaded', () => {
+            loadActiveTasks();
+            document.getElementById('taskForm').addEventListener('submit', handlePublishTask);
+        });
+
+        // 1. جلب المهام النشطة من جدول الـ tasks وعرضها
+        async function loadActiveTasks() {
+            const container = document.getElementById('available-tasks-container');
+            
+            if (typeof supabase === 'undefined') {
+                container.innerHTML = '<p style="color:red;">Supabase not initialized.</p>';
+                return;
+            }
+
+            const { data: tasks, error } = await supabase
+                .from('tasks')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error || !tasks || tasks.length === 0) {
+                container.innerHTML = '<p style="color:#666;">No active tasks available right now.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            tasks.forEach(task => {
+                const card = document.createElement('div');
+                card.className = 'task-card';
+                card.innerHTML = `
+                    <div class="task-info">
+                        <h4>${task.title}</h4>
+                        <p>${task.details}</p>
+                        <div class="task-meta">📅 Duration: ${task.duration_days} Days | 💰 Cost: $${parseFloat(task.price).toFixed(2)}</div>
+                    </div>
+                    <button onclick="window.open('${task.target_url}', '_blank')" class="btn-blackflower" style="min-width:100px;">🚀 Start</button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // 2. منطق معالجة النشر ورفع الملفات
+        async function handlePublishTask(e) {
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
             submitBtn.innerText = "PUBLISHING...";
-
-            if (typeof supabase === 'undefined') {
-                alert("Supabase is not initialized. Check your js/supabase-config.js file.");
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Publish Task";
-                return;
-            }
-
-            const { data: { user }, error: userError } = await supabase.auth.getUser();
-            if (userError || !user) {
-                alert("Please log in to your account first.");
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Publish Task";
-                return;
-            }
 
             const title = document.getElementById('taskTitle').value;
             const details = document.getElementById('taskDetails').value;
@@ -195,7 +240,13 @@
             let mediaUrl = null;
 
             try {
-                // رفع الميديا إلى الـ Bucket الخاص بك إن وجدت
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
+                if (userError || !user) {
+                    alert("Please log in to your account first.");
+                    return;
+                }
+
+                // رفع الميديا إلى الـ Bucket إن وجدت
                 if (mediaFile) {
                     const fileExt = mediaFile.name.split('.').pop();
                     const fileName = `${Date.now()}.${fileExt}`;
@@ -214,7 +265,7 @@
                     mediaUrl = publicUrlData.publicUrl;
                 }
 
-                // حقن البيانات في جدول الـ tasks الأساسي لجميع الأعضاء
+                // إدخال البيانات في قاعدة البيانات
                 const { error: insertError } = await supabase
                     .from('tasks')
                     .insert([
@@ -232,9 +283,10 @@
 
                 if (insertError) throw insertError;
 
-                alert("Task created successfully and listed on the Dashboard!");
+                alert("Task created successfully and listed on the Hub!");
                 document.getElementById('taskForm').reset();
                 totalCostSpan.innerText = "$0.50";
+                loadActiveTasks(); // إعادة تحديث القائمة فوراً
 
             } catch (error) {
                 alert("Error: " + error.message);
@@ -242,7 +294,7 @@
                 submitBtn.disabled = false;
                 submitBtn.innerText = "Publish Task";
             }
-        });
+        }
     </script>
 </body>
 </html>
