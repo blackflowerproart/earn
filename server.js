@@ -18,12 +18,11 @@ mongoose.connect(MONGO_URI, {
     console.error('MongoDB connection error:', err);
 });
 
-// تعريف نموذج المستخدم المحدث وشامل لبيانات الداشبورد (JSON Schema)
+// تعريف نموذج المستخدم وهيكل بيانات الـ JSON الخاص بالداشبورد
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    // بيانات لوحة التحكم الكاملة التي يتم إنشاؤها وتخزينها عند التسجيل لأول مرة
     dashboardData: {
         balance: { type: Number, default: 0.00 },
         level: { type: Number, default: 1 },
@@ -35,7 +34,7 @@ const userSchema = new mongoose.Schema({
         tasksCreated: { type: Number, default: 0 },
         isOnline: { type: Boolean, default: true },
         isBanned: { type: Boolean, default: false },
-        country: { type: String, default: 'Jordan (Amman)' },
+        country: { type: String, default: 'Global' },
         ipChanges: { type: Number, default: 0 },
         loginCount: { type: Number, default: 1 }
     },
@@ -44,30 +43,27 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-// تعريف نموذج الإشعارات (Notification Schema)
+// تعريف نموذج الإشعارات
 const notificationSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     message: { type: String, required: true },
     isRead: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now }
 });
-
 const Notification = mongoose.model('Notification', notificationSchema);
 
-// --- مسارات الـ API الأساسية ---
+// --- مسارات الـ API ---
 
-// 1. مسار التسجيل: إنشاء ملف JSON متكامل للبيانات والداشبورد في MongoDB عند التسجيل لأول مرة
+// 1. مسار التسجيل المفتوح (يسمح لأي شخص بالتسجيل وإنشاء ملف الداشبورد تلقائياً)
 app.post('/api/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
         
-        // التحقق من عدم وجود البريد مسبقاً
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ success: false, message: 'البريد الإلكتروني مستخدم مسبقاً' });
         }
 
-        // إنشاء مستخدم جديد يحتوي على هيكل JSON الشامل للبيانات والداشبورد
         const newUser = new User({
             username,
             email,
@@ -83,7 +79,7 @@ app.post('/api/register', async (req, res) => {
                 tasksCreated: 0,
                 isOnline: true,
                 isBanned: false,
-                country: 'Jordan (Amman)',
+                country: 'Global',
                 ipChanges: 0,
                 loginCount: 1
             }
@@ -93,7 +89,7 @@ app.post('/api/register', async (req, res) => {
 
         res.status(201).json({ 
             success: true, 
-            message: 'تم إنشاء الحساب وحفظ ملف البيانات في MongoDB بنجاح', 
+            message: 'تم إنشاء الحساب وحفظ البيانات بنجاح', 
             user: newUser 
         });
     } catch (err) {
@@ -111,7 +107,6 @@ app.post('/api/login', async (req, res) => {
             return res.status(401).json({ success: false, message: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' });
         }
 
-        // تحديث عدد مرات الدخول وحالة الاتصال داخل هيكل الـ JSON
         user.dashboardData.isOnline = true;
         user.dashboardData.loginCount = (user.dashboardData.loginCount || 0) + 1;
         await user.save();
@@ -122,70 +117,11 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// 3. جلب جميع المستخدمين (للوحة المدير التنفيذي)
+// 3. جلب جميع المستخدمين (للوحة المدير)
 app.get('/api/admin/users', async (req, res) => {
     try {
         const users = await User.find({});
         res.json({ success: true, users });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-});
-
-// 4. تعديل بيانات المستخدم في MongoDB (بواسطة المدير التنفيذي)
-app.put('/api/admin/user/:id', async (req, res) => {
-    try {
-        const { username, email, password, balance, level } = req.body;
-        const user = await User.findById(req.params.id);
-        
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
-        }
-
-        if (username) user.username = username;
-        if (email) user.email = email;
-        if (password && password.trim() !== '') user.password = password;
-        if (balance !== undefined) user.dashboardData.balance = balance;
-        if (level !== undefined) user.dashboardData.level = level;
-
-        await user.save();
-
-        res.json({ success: true, message: 'تم تحديث البيانات بنجاح', user });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-});
-
-// 5. إرسال النقود أو الرصيد للمستخدم مع إنشاء إشعار فوري تلقائي في واجهته
-app.post('/api/user/send-funds', async (req, res) => {
-    try {
-        const { userId, amount, reason } = req.body;
-        const user = await User.findById(userId);
-        
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
-        }
-
-        user.dashboardData.balance += parseFloat(amount);
-        await user.save();
-
-        const notifMessage = `تم إضافة مبلغ ${amount} BFP إلى رصيدك. السبب: ${reason || 'تحويل مباشر من الإدارة'}`;
-        await Notification.create({
-            userId: user._id,
-            message: notifMessage
-        });
-
-        res.json({ success: true, message: 'تم إرسال الأموال وإنشاء الإشعار بنجاح', newBalance: user.dashboardData.balance });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-});
-
-// 6. جلب إشعارات المستخدم الخاصة
-app.get('/api/notifications/:userId', async (req, res) => {
-    try {
-        const notifications = await Notification.find({ userId: req.params.userId }).sort({ createdAt: -1 });
-        res.json({ success: true, notifications });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
