@@ -83,8 +83,7 @@
     </div>
 
     <script>
-        // ⚠️ استبدل الرابط أدناه برابط سيرفرك الحقيقي على Render
-        const API_URL = 'https://your-backend-url.com/api';
+        const API_URL = 'https://earn-uq8k.onrender.com/api';
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -108,7 +107,6 @@
                     throw new Error(result.message || 'Login failed');
                 }
 
-                // حفظ بيانات المستخدم في التخزين المحلي
                 localStorage.setItem('user', JSON.stringify(result.user));
                 alert('Logged in successfully!');
                 window.location.href = 'dashboard.html';
