@@ -1,24 +1,3 @@
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: monospace, sans-serif; }
-body { background-color: #000; color: #fff; padding-top: 110px; padding-left: 20px; padding-right: 20px; padding-bottom: 20px; }
-
-/* ========================================== */
-/* الشريط العلوي الدائم (Permanent Top Header) */
-/* ========================================== */
-.site-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 95px; /* يقارب 5 سم تقريباً */
-    background-color: #050505;
-    border-bottom: 2px solid #fff;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 30px;
-    z-index: 2000;
-}
-
 /* قسم اليسار: الشعار وبجانبه الاسم */
 .header-left {
     display: flex;
@@ -27,10 +6,10 @@ body { background-color: #000; color: #fff; padding-top: 110px; padding-left: 20
 }
 
 .site-logo {
-    height: 60px; /* حجم مقبول ومناسب للشعار */
+    height: 40px; /* تم تصغير الارتفاع ليصبح بحجم صغير ومقبول تماماً داخل الشريط */
     width: auto;
     object-fit: contain;
-    border: 1px solid #333;
+    border: none; /* إزالة الإطار إذا كان غير مرغوب فيه للشعار الصغير */
 }
 
 .brand-title {
@@ -40,50 +19,3 @@ body { background-color: #000; color: #fff; padding-top: 110px; padding-left: 20
     font-weight: bold;
     color: #fff;
 }
-
-/* قسم اليمين: Professional Art */
-.header-right {
-    font-size: 0.95rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: #aaa;
-    border-left: 1px solid #333;
-    padding-left: 20px;
-}
-
-/* ========================================== */
-/* تنسيقات لوحة التحكم (Dashboard UI) */
-/* ========================================== */
-.dashboard-container { max-width: 1200px; margin: 0 auto; }
-
-.dash-header { border: 2px solid #fff; padding: 20px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; background: #000; }
-.dash-header h1 { text-transform: uppercase; font-size: 1.3rem; letter-spacing: 2px; }
-
-/* Level Progress Bar Styles */
-.level-container { border: 1px solid #333; padding: 15px; margin-bottom: 25px; background: #080808; }
-.level-info { display: flex; justify-content: space-between; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 8px; }
-.progress-bar-bg { width: 100%; height: 10px; background: #222; border: 1px solid #555; position: relative; overflow: hidden; }
-.progress-bar-fill { height: 100%; background: #fff; width: 0%; transition: width 0.5s ease; }
-
-/* Grid & Buttons */
-.dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 25px; }
-.dash-card { border: 1px solid #fff; padding: 20px; background: #050505; }
-.dash-card h3 { font-size: 0.8rem; text-transform: uppercase; color: #aaa; margin-bottom: 10px; }
-.dash-card .val { font-size: 1.8rem; font-weight: bold; }
-
-.btn { background: #000; color: #fff; border: 1px solid #fff; padding: 10px 15px; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; transition: 0.3s; text-decoration: none; display: inline-block; margin-right: 5px; margin-top: 5px; }
-.btn:hover { background: #fff; color: #000; }
-
-/* Notification Banner */
-.notification-banner { border: 1px solid #ff3333; background: #1a0000; color: #ff3333; padding: 15px; margin-bottom: 20px; display: none; }
-.notification-banner.active { display: block; }
-
-/* Modal Styles */
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 3000; }
-.modal-content { border: 2px solid #fff; background: #000; padding: 30px; width: 100%; max-width: 500px; }
-.modal-content h2 { text-transform: uppercase; font-size: 1.1rem; margin-bottom: 20px; border-bottom: 1px solid #fff; padding-bottom: 10px; }
-.form-group { margin-bottom: 15px; }
-label { display: block; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 5px; color: #aaa; }
-input, textarea { width: 100%; background: #000; border: 1px solid #fff; color: #fff; padding: 8px; font-size: 0.85rem; outline: none; }
-textarea { resize: vertical; height: 100px; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
