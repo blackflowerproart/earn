@@ -3,260 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Tasks Hub - The BlackFlower</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Tasks & Ads - The BlackFlower Pro Art</title>
     <style>
-        .tasks-wrapper {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 30px;
-            margin-top: 30px;
-            width: 100%;
-        }
-        .tasks-panel {
-            border: 2px solid #ffffff;
-            background-color: #000000;
-            padding: 25px;
-        }
-        .tasks-panel h2 {
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            border-bottom: 1px dashed #333;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-        .task-card {
-            border: 1px solid #333;
-            background: #050505;
-            padding: 20px;
-            margin-bottom: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .task-card:hover {
-            border-color: #00ff77;
-            background: #0a0a0a;
-        }
-        .task-card h4 {
-            margin: 0;
-            font-size: 1.3rem;
-            color: #fff;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: bold;
-        }
-        .form-group input, .form-group textarea {
-            background: #000;
-            border: 1px solid #fff;
-            color: #fff;
-            padding: 10px;
-            font-family: inherit;
-        }
-        .form-group input:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: #ff00ff;
-        }
-        .form-control-file {
-            background-color: #000000;
-            color: #aaaaaa;
-            padding: 10px;
-            cursor: pointer;
-            border: 1px dashed #333;
-        }
-        .live-calc {
-            background: #111;
-            padding: 15px;
-            border: 1px dashed #333;
-            margin-top: 15px;
-            font-family: monospace;
-            font-size: 1rem;
-        }
-        .live-calc span {
-            color: #ff00ff;
-            font-weight: bold;
-        }
-        @media (max-width: 900px) {
-            .tasks-wrapper {
-                grid-template-columns: 1fr;
-            }
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: monospace, sans-serif; }
+        body { background-color: #000; color: #fff; }
+        .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+        .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #fff; padding-bottom: 15px; margin-bottom: 30px; }
+        .header-bar h1 { text-transform: uppercase; font-size: 1.4rem; letter-spacing: 2px; }
+        .btn-back { background: #fff; color: #000; padding: 8px 15px; text-decoration: none; text-transform: uppercase; font-size: 0.75rem; font-weight: bold; }
+        
+        .task-form-card { border: 2px solid #fff; padding: 25px; margin-bottom: 30px; background: #000; }
+        .task-form-card h2 { text-transform: uppercase; font-size: 1.1rem; margin-bottom: 20px; letter-spacing: 1px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group.full { grid-column: span 2; }
+        label { display: block; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 5px; color: #aaa; }
+        input, textarea { width: 100%; background: #000; border: 1px solid #fff; color: #fff; padding: 10px; font-size: 0.9rem; outline: none; }
+        textarea { resize: vertical; height: 80px; }
+        .btn-submit { background: #fff; color: #000; border: 1px solid #fff; padding: 12px 20px; font-weight: bold; text-transform: uppercase; cursor: pointer; width: 100%; margin-top: 10px; }
+        .btn-submit:hover { background: #000; color: #fff; }
+
+        .tasks-list-section h2 { text-transform: uppercase; font-size: 1.1rem; margin-bottom: 15px; letter-spacing: 1px; }
+        .task-card { border: 1px solid #fff; padding: 20px; margin-bottom: 15px; background: #050505; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .task-info h3 { text-transform: uppercase; font-size: 1rem; margin-bottom: 5px; }
+        .task-info p { color: #aaa; font-size: 0.85rem; margin-bottom: 8px; }
+        .task-price { color: #fff; font-weight: bold; font-size: 1rem; }
+        .btn-action { background: #000; color: #fff; border: 1px solid #fff; padding: 8px 15px; text-decoration: none; text-transform: uppercase; font-size: 0.75rem; transition: 0.3s; }
+        .btn-action:hover { background: #fff; color: #000; }
+
+        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } .form-group.full { grid-column: span 1; } }
     </style>
 </head>
 <body>
 
-    <header class="main-header">
-        <div class="header-container">
-            <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
-            <div class="header-text-block">
-                <div class="brand-title">The BlackFlower</div>
-                <div class="brand-subtitle">My Created Tasks</div>
-            </div>
+    <div class="container">
+        <div class="header-bar">
+            <h1>Task Management</h1>
+            <a href="dashboard.html" class="btn-back">&larr; Dashboard</a>
         </div>
-    </header>
 
-    <div class="container" style="max-width: 100%; padding: 0 20px;">
-        
-        <button onclick="window.location.href='dashboard.html'" class="btn-blackflower" style="margin-top:20px; min-width: 150px;">🏠 Back to Dashboard</button>
-
-        <div class="tasks-wrapper">
-            
-            <div class="tasks-panel">
-                <h2>📋 My Created Tasks</h2>
-                <div id="available-tasks-container">
-                    <p style="color:#555;">Loading your tasks...</p>
+        <!-- نموذج إضافة مهمة جديدة -->
+        <div class="task-form-card">
+            <h2>Create New Task / Ad</h2>
+            <form id="taskForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Task Title</label>
+                        <input type="text" id="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Reward (BFP)</label>
+                        <input type="number" step="0.01" id="price" required>
+                    </div>
+                    <div class="form-group full">
+                        <label>Details & Instructions</label>
+                        <textarea id="details" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Target URL</label>
+                        <input type="url" id="target_url" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Duration (Days)</label>
+                        <input type="number" id="duration_days" value="7" required>
+                    </div>
                 </div>
+                <button type="submit" class="btn-submit">Publish Task</button>
+            </form>
+            <div id="formMsg" style="margin-top: 10px; font-size: 0.85rem;"></div>
+        </div>
+
+        <!-- قائمة المهام المتاحة -->
+        <div class="tasks-list-section">
+            <h2>Active Community Tasks</h2>
+            <div id="tasksContainer">
+                <p style="color: #666; font-size: 0.9rem;">Loading tasks...</p>
             </div>
-
-            <div class="tasks-panel">
-                <h2>📢 Create New Task</h2>
-                <form id="taskForm">
-                    <div class="form-group">
-                        <label for="taskTitle">Task Title</label>
-                        <input type="text" id="taskTitle" placeholder="e.g., SUBSCRIBE TO MY CHANNEL" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="taskDetails">Task Details / Instructions</label>
-                        <textarea id="taskDetails" rows="4" placeholder="DESCRIBE THE STEPS REQUIRED..." required></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="taskUrl">Target Website URL</label>
-                        <input type="url" id="taskUrl" placeholder="https://example.com" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="taskDays">Duration (Days)</label>
-                        <input type="number" id="taskDays" min="1" value="1" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="taskMedia">Explanation Media (Image / Video)</label>
-                        <input type="file" id="taskMedia" class="form-control-file" accept="image/*,video/*">
-                    </div>
-
-                    <div class="live-calc">
-                        Total Task Cost: <span id="totalCost">$0.50</span>
-                    </div>
-
-                    <button type="submit" id="submitBtn" class="btn-blackflower" style="width: 100%; margin-top: 15px; border-color: #00ff77; color: #00ff77;">🚀 Publish Task</button>
-                </form>
-            </div>
-
         </div>
     </div>
 
     <script>
         const API_URL = 'https://earn-uq8k.onrender.com/api';
-        const pricePerDay = 0.50;
-        const taskDaysInput = document.getElementById('taskDays');
-        const totalCostSpan = document.getElementById('totalCost');
-        let currentUser = null;
-
-        taskDaysInput.addEventListener('input', () => {
-            const days = parseInt(taskDaysInput.value) || 0;
-            totalCostSpan.innerText = `$${(days * pricePerDay).toFixed(2)}`;
-        });
 
         document.addEventListener('DOMContentLoaded', () => {
             const savedUser = localStorage.getItem('user');
             if (!savedUser) {
-                alert('Please login first');
                 window.location.href = 'login.html';
                 return;
             }
-            currentUser = JSON.parse(savedUser);
+            fetchTasks();
 
-            loadActiveTasks();
-            document.getElementById('taskForm').addEventListener('submit', handlePublishTask);
+            document.getElementById('taskForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const user = JSON.parse(savedUser);
+                const msg = document.getElementById('formMsg');
+
+                const taskData = {
+                    user_id: user.id || user._id,
+                    title: document.getElementById('title').value,
+                    details: document.getElementById('details').value,
+                    target_url: document.getElementById('target_url').value,
+                    price: document.getElementById('price').value,
+                    duration_days: document.getElementById('duration_days').value
+                };
+
+                msg.innerText = 'Publishing task...';
+
+                try {
+                    const res = await fetch(`${API_URL}/tasks`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(taskData)
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        msg.innerText = 'Task published successfully!';
+                        document.getElementById('taskForm').reset();
+                        fetchTasks();
+                    } else {
+                        msg.innerText = data.message || 'Failed to create task.';
+                    }
+                } catch (err) {
+                    msg.innerText = 'Server connection error.';
+                }
+            });
         });
 
-        async function loadActiveTasks() {
-            const container = document.getElementById('available-tasks-container');
-            
+        async function fetchTasks() {
             try {
-                const response = await fetch(`${API_URL}/tasks?user_id=${currentUser.id || currentUser._id}`);
-                const result = await response.json();
+                const res = await fetch(`${API_URL}/tasks`);
+                const data = await res.json();
+                const container = document.getElementById('tasksContainer');
 
-                if (!result.success || !result.tasks || result.tasks.length === 0) {
-                    container.innerHTML = '<p style="color:#666;">You haven\'t created any tasks yet.</p>';
-                    return;
+                if (data.success && data.tasks.length > 0) {
+                    container.innerHTML = data.tasks.map(task => `
+                        <div class="task-card">
+                            <div class="task-info">
+                                <h3>${escapeHtml(task.title)}</h3>
+                                <p>${escapeHtml(task.details)}</p>
+                                <span class="task-price">Reward: ${task.price} BFP</span>
+                            </div>
+                            <a href="${escapeHtml(task.target_url)}" target="_blank" class="btn-action">Start Task &rarr;</a>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<p style="color: #666; font-size: 0.9rem;">No active tasks found.</p>';
                 }
-
-                container.innerHTML = '';
-                result.tasks.forEach(task => {
-                    const card = document.createElement('div');
-                    card.className = 'task-card';
-                    card.onclick = () => {
-                        window.location.href = `manage-task.html?id=${task._id || task.id}`;
-                    };
-                    card.innerHTML = `<h4>📌 ${task.title}</h4>`;
-                    container.appendChild(card);
-                });
-            } catch (error) {
-                console.error("Error loading tasks:", error);
-                container.innerHTML = '<p style="color:#ff4444;">Error connecting to server.</p>';
+            } catch (err) {
+                document.getElementById('tasksContainer').innerHTML = '<p style="color: #666;">Error loading tasks.</p>';
             }
         }
 
-        async function handlePublishTask(e) {
-            e.preventDefault();
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerText = "PUBLISHING...";
-
-            const title = document.getElementById('taskTitle').value;
-            const details = document.getElementById('taskDetails').value;
-            const url = document.getElementById('taskUrl').value;
-            const days = parseInt(taskDaysInput.value);
-            const mediaFile = document.getElementById('taskMedia').files[0];
-
-            try {
-                const formData = new FormData();
-                formData.append('user_id', currentUser.id || currentUser._id);
-                formData.append('title', title);
-                formData.append('details', details);
-                formData.append('target_url', url);
-                formData.append('price', pricePerDay * days);
-                formData.append('duration_days', days);
-                
-                if (mediaFile) {
-                    formData.append('media', mediaFile);
-                }
-
-                const response = await fetch(`${API_URL}/tasks`, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.json();
-
-                if (!result.success) {
-                    throw new Error(result.message || "Failed to create task");
-                }
-
-                alert("Task created successfully!");
-                document.getElementById('taskForm').reset();
-                totalCostSpan.innerText = "$0.50";
-                loadActiveTasks(); 
-
-            } catch (error) {
-                alert("Error: " + error.message);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerText = "🚀 Publish Task";
-            }
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
     </script>
 </body>
