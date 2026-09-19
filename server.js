@@ -18,7 +18,7 @@ mongoose.connect(MONGO_URI, {
     console.error('MongoDB connection error:', err);
 });
 
-// تعريف نموذج المستخدم (User Schema)
+// تعريف نموذج المستخدم (User Schema) مع دعم بيانات الداشبورد الأساسية
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -53,28 +53,65 @@ const Notification = mongoose.model('Notification', notificationSchema);
 
 // --- مسارات الـ API الأساسية ---
 
-// مسار التحقق أو تسجيل الدخول
+// 1. مسار تسجيل حساب جديد لأول مرة (يحفظ البيانات ويجهز معلومات الداشبورد تلقائياً)
+app.post('/api/register', async (req, res) => {
+    try {
+        const { username, email, password } = req.body;
+        
+        // التحقق مما إذا كان البريد مسجلاً مسبقاً
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ success: false, message: 'البريد الإلكتروني مستخدم مسبقاً' });
+        }
+
+        // إنشاء مستخدم جديد ببيانات الداشبورد الافتراضية
+        const newUser = new User({
+            username,
+            email,
+            password,
+            balance: 0.00,
+            level: 1,
+            tasksDone: 0,
+            adsViewed: 0,
+            isOnline: true,
+            loginCount: 1,
+            country: 'Jordan (Amman)'
+        });
+
+        await newUser.save();
+
+        res.status(201).json({ 
+            success: true, 
+            message: 'تم إنشاء الحساب بنجاح', 
+            user: newUser 
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// 2. مسار تسجيل الدخول للمستخدمين المسجلين مسبقاً
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
         
         if (!user || user.password !== password) {
-            return res.status(401).json({ success: false, message: 'Invalid email or password' });
+            return res.status(401).json({ success: false, message: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' });
         }
 
-        // تحديث حالة الاتصال للمستخدم عند تسجيل الدخول
+        // تحديث حالة الاتصال وعدد مرات الدخول
         user.isOnline = true;
         user.loginCount = (user.loginCount || 0) + 1;
         await user.save();
 
-        res.json({ success: true, message: 'Login successful', user });
+        res.json({ success: true, message: 'تم تسجيل الدخول بنجاح', user });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 });
 
-// جلب جميع المستخدمين (للوحة المدير التنفيذي)
+// 3. جلب جميع المستخدمين (للوحة المدير التنفيذي)
 app.get('/api/admin/users', async (req, res) => {
     try {
         const users = await User.find({});
@@ -84,7 +121,7 @@ app.get('/api/admin/users', async (req, res) => {
     }
 });
 
-// تعديل بيانات المستخدم في MongoDB (بواسطة المدير التنفيذي)
+// 4. تعديل بيانات المستخدم في MongoDB (بواسطة المدير التنفيذي)
 app.put('/api/admin/user/:id', async (req, res) => {
     try {
         const { username, email, password, balance, level } = req.body;
@@ -96,23 +133,23 @@ app.put('/api/admin/user/:id', async (req, res) => {
 
         const updatedUser = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
         if (!updatedUser) {
-            return res.status(404).json({ success: false, message: 'User not found' });
+            return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
         }
 
-        res.json({ success: true, message: 'User updated successfully', user: updatedUser });
+        res.json({ success: true, message: 'تم تحديث بيانات المستخدم بنجاح', user: updatedUser });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 });
 
-// إرسال النقود أو الرصيد للمستخدم مع إنشاء إشعار فوري تلقائي في واجهته
+// 5. إرسال النقود أو الرصيد للمستخدم مع إنشاء إشعار فوري تلقائي في واجهته
 app.post('/api/user/send-funds', async (req, res) => {
     try {
         const { userId, amount, reason } = req.body;
         const user = await User.findById(userId);
         
         if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
+            return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
         }
 
         user.balance += parseFloat(amount);
@@ -125,13 +162,13 @@ app.post('/api/user/send-funds', async (req, res) => {
             message: notifMessage
         });
 
-        res.json({ success: true, message: 'Funds sent and notification created successfully', newBalance: user.balance });
+        res.json({ success: true, message: 'تم إرسال الأموال وإنشاء الإشعار بنجاح', newBalance: user.balance });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 });
 
-// جلب إشعارات المستخدم الخاصة بناءً على الـ ID
+// 6. جلب إشعارات المستخدم الخاصة بناءً على الـ ID
 app.get('/api/notifications/:userId', async (req, res) => {
     try {
         const notifications = await Notification.find({ userId: req.params.userId }).sort({ createdAt: -1 });
@@ -141,7 +178,7 @@ app.get('/api/notifications/:userId', async (req, res) => {
     }
 });
 
-// جلب أحدث الإشعارات العامة
+// 7. جلب أحدث الإشعارات العامة
 app.get('/api/notifications', async (req, res) => {
     try {
         const notifications = await Notification.find({}).sort({ createdAt: -1 }).limit(5);
