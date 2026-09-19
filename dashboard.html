@@ -3,55 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - The BlackFlower</title>
+    <title>Dashboard - The BlackFlower Pro Art</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        .dashboard-container {
-            max-width: 800px;
-            margin: 40px auto;
-            border: 2px solid #ffffff;
-            background-color: #000000;
-            padding: 30px;
-            text-align: center;
-        }
-        .dashboard-container h1 {
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-        }
-        .welcome-msg {
-            color: #00ff77;
-            font-size: 1.2rem;
-            margin-bottom: 30px;
-            font-family: monospace;
-        }
-        .dashboard-actions {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 30px;
-        }
+        .dashboard-wrapper { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+        .user-profile-card { border: 2px solid #ffffff; background-color: #000000; padding: 30px; text-align: center; margin-bottom: 30px; }
+        .user-profile-card h1 { text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; color: #fff; }
+        .user-level-badge { display: inline-block; background: #111; border: 1px solid #ff00ff; color: #ff00ff; padding: 5px 15px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
+        .balance-box { background: #050505; border: 1px dashed #333; padding: 15px; margin: 15px 0; font-family: monospace; }
+        .balance-box .bfp-val { color: #00ff77; font-size: 1.5rem; font-weight: bold; }
+        .balance-box .usd-val { color: #aaa; font-size: 0.9rem; margin-top: 5px; }
+        .profile-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+        .btn-action { background: #000; border: 1px solid #fff; color: #fff; padding: 8px 15px; cursor: pointer; text-transform: uppercase; font-size: 0.8rem; text-decoration: none; transition: 0.3s; }
+        .btn-action:hover { background: #fff; color: #000; }
+        .btn-logout { border-color: #ff4444; color: #ff4444; }
+        .btn-logout:hover { background: #ff4444; color: #fff; }
+        .btn-wallet { border-color: #00ff77; color: #00ff77; }
+        .btn-wallet:hover { background: #00ff77; color: #000; }
+        .marketplace-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .market-panel { border: 2px solid #ffffff; background-color: #000000; padding: 20px; }
+        .market-panel h3 { text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px dashed #333; padding-bottom: 10px; margin-bottom: 15px; color: #fff; }
+        .market-item { border: 1px solid #333; background: #080808; padding: 12px; margin-bottom: 10px; }
+        @media (max-width: 768px) { .marketplace-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="dashboard-container">
-            <h1>Control Panel</h1>
-            <div id="welcomeUser" class="welcome-msg">Welcome back!</div>
+    <div class="dashboard-wrapper">
+        <div class="user-profile-card">
+            <h1 id="usernameDisplay">LOADING...</h1>
+            <div style="margin-bottom: 10px;">
+                <a href="dashboard.html" class="btn-action btn-wallet" style="font-size: 0.75rem; padding: 4px 10px;">Control Panel (لوحة التحكم)</a>
+            </div>
+            <div id="userLevelDisplay" class="user-level-badge">Tier: Rookie | Level: 1</div>
             
-            <p style="color: #aaa; margin-bottom: 20px;">Manage your tasks, create new advertising campaigns, and control your activities from here.</p>
+            <div class="balance-box">
+                <div>Current Balance (BFP):</div>
+                <div class="bfp-val" id="bfpBalance">0.00 BFP</div>
+                <div class="usd-val" id="usdBalance">≈ $0.0000 USD (1 BFP = $0.001)</div>
+            </div>
 
-            <div class="dashboard-actions">
-                <button onclick="window.location.href='tasks.html'" class="btn-blackflower" style="border-color: #00ff77; color: #00ff77;">📋 Manage My Tasks</button>
-                <button onclick="logout()" class="btn-blackflower" style="border-color: #ff4444; color: #ff4444;">🚪 Logout</button>
+            <div class="profile-actions">
+                <button onclick="alert('Deposit feature coming soon!')" class="btn-action btn-wallet">Deposit (تعبئة الرصيد)</button>
+                <button onclick="alert('Withdraw feature coming soon!')" class="btn-action btn-wallet">Withdraw (سحب الرصيد)</button>
+                <a href="tasks.html" class="btn-action">Manage Tasks</a>
+                <button onclick="logout()" class="btn-action btn-logout">Logout (خروج)</button>
+            </div>
+        </div>
+
+        <div class="marketplace-grid">
+            <div class="market-panel">
+                <h3>📢 Member Advertisements</h3>
+                <div id="member-ads-container">
+                    <div class="market-item">
+                        <strong>PROMOTION #1</strong>
+                        <p style="color:#aaa; font-size:0.85rem; margin:5px 0;">Check out the latest digital art design assets.</p>
+                        <a href="https://earn-uq8k.onrender.com" target="_blank" style="color:#00ff77; font-size:0.8rem;">View Advertisement &rarr;</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="market-panel">
+                <h3>📋 Available Member Tasks</h3>
+                <div id="member-tasks-container">
+                    <div class="market-item">
+                        <strong>SUBSCRIBE & ENGAGE</strong>
+                        <p style="color:#aaa; font-size:0.85rem; margin:5px 0;">Reward: 10.00 BFP ($0.010)</p>
+                        <a href="tasks.html" style="color:#ff00ff; font-size:0.8rem;">Participate &rarr;</a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        const API_URL = 'https://earn-uq8k.onrender.com/api';
+        const BFP_TO_USD = 0.001;
+
+        document.addEventListener('DOMContentLoaded', async () => {
             const savedUser = localStorage.getItem('user');
             if (!savedUser) {
                 alert('Please login first');
@@ -59,9 +88,48 @@
                 return;
             }
 
-            const user = JSON.parse(savedUser);
-            document.getElementById('welcomeUser').innerText = `Welcome, ${user.username || user.email}!`;
+            const localUser = JSON.parse(savedUser);
+            const userId = localUser.id || localUser._id;
+
+            try {
+                const response = await fetch(`${API_URL}/user?id=${userId}`);
+                const result = await response.json();
+                if (result.success && result.user) {
+                    updateUI(result.user);
+                } else {
+                    updateUI(localUser);
+                }
+            } catch (error) {
+                updateUI(localUser);
+            }
         });
+
+        function updateUI(user) {
+            document.getElementById('usernameDisplay').innerText = user.username || user.email;
+
+            // نظام المستويات (3 مستويات رئيسية، كل مستوى 10 ليفيلات بإجمالي 30 ليفيل)
+            const userXp = user.xp || 0;
+            let currentLevel = Math.floor(userXp / 100) + 1;
+            if (currentLevel > 30) currentLevel = 30;
+
+            let tierName = "Rookie";
+            let tierLevel = currentLevel;
+
+            if (currentLevel > 20) {
+                tierName = "Master";
+                tierLevel = currentLevel - 20;
+            } else if (currentLevel > 10) {
+                tierName = "Expert";
+                tierLevel = currentLevel - 10;
+            }
+
+            document.getElementById('userLevelDisplay').innerText = `Tier: ${tierName} | Level ${tierLevel} (Total Lvl: ${currentLevel})`;
+
+            const bfpBalance = user.balance !== undefined ? user.balance : 0.00;
+            const usdBalance = bfpBalance * BFP_TO_USD;
+            document.getElementById('bfpBalance').innerText = `${bfpBalance.toFixed(2)} BFP`;
+            document.getElementById('usdBalance').innerText = `≈ $${usdBalance.toFixed(4)} USD (1 BFP = $0.001)`;
+        }
 
         function logout() {
             localStorage.removeItem('user');
