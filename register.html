@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - The BlackFlower</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <!-- رابط كود الستايل الخارجي الخاص بك -->
     <link rel="stylesheet" href="css/style.css">
     
@@ -43,6 +41,23 @@
             text-align: center;
             font-size: 0.9rem;
         }
+        /* تنسيق رسائل الرد (نجاح / خطأ) */
+        #reg-response-message {
+            margin-top: 20px;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.9rem;
+            max-width: 400px;
+            width: 100%;
+        }
+        #reg-response-message.success {
+            color: #4CAF50;
+            border: 1px solid #4CAF50;
+        }
+        #reg-response-message.error {
+            color: #f44336;
+            border: 1px solid #f44336;
+        }
     </style>
 </head>
 <body>
@@ -57,7 +72,7 @@
         </div>
     </header>
 
-    <div class="container">
+    <div class="container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px;">
         <h2 style="text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Create New Account</h2>
         <p style="color: #aaaaaa; margin-bottom: 40px; font-size: 0.9rem;">Join us today and start collecting digital profits.</p>
         
@@ -77,20 +92,67 @@
                 <input type="password" id="reg-password" placeholder="At least 6 characters" minlength="6" required>
             </div>
 
-            <div class="auth-buttons-container" style="margin-top: 20px;">
-                <!-- استخدام كلاس الزر الفخم الخاص بك هنا -->
-                <button type="submit" id="register-btn" class="btn-blackflower">Register</button>
+            <div class="auth-buttons-container" style="margin-top: 20px; width: 100%;">
+                <button type="submit" id="register-btn" class="btn-blackflower" style="width: 100%;">Register</button>
             </div>
         </form>
 
-        <div class="account-links">
-            <p>Already have an account? <a href="login.html">Login here</a></p>
-        </div>
+        <p id="reg-response-message" style="display: none;"></p>
 
-        <p id="reg-response-message" class="msg" style="display: none;"></p>
+        <div class="account-links">
+            <p>Already have an account? <a href="login.html" style="color: #fff; text-decoration: underline;">Login here</a></p>
+        </div>
     </div>
 
-    <script src="js/supabase-config.js"></script>
-    <script src="js/auth.js"></script>
+    <!-- كود الجافاسكريبت لإرسال بيانات التسجيل عبر JSON إلى السيرفر و MongoDB -->
+    <script>
+        document.getElementById('register-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('reg-username').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const msgBox = document.getElementById('reg-response-message');
+            const submitBtn = document.getElementById('register-btn');
+
+            submitBtn.textContent = 'Creating Account...';
+            submitBtn.disabled = true;
+
+            try {
+                // إرسال طلب ببيانات المستخدم إلى مسار التسجيل في السيرفر
+                const response = await fetch('http://localhost:5000/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const result = await response.json();
+
+                msgBox.style.display = 'block';
+                if (result.success) {
+                    msgBox.className = 'success';
+                    msgBox.textContent = 'Account created successfully! Redirecting to login...';
+                    
+                    setTimeout(() => {
+                        window.location.href = 'login.html'; // الانتقال لصفحة الدخول بعد النجاح
+                    }, 2000);
+                } else {
+                    msgBox.className = 'error';
+                    msgBox.textContent = result.message || 'Registration failed.';
+                    submitBtn.textContent = 'Register';
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                msgBox.style.display = 'block';
+                msgBox.className = 'error';
+                msgBox.textContent = 'Server connection error. Please make sure the backend is active.';
+                submitBtn.textContent = 'Register';
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
 </body>
 </html>
