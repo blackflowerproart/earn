@@ -46,7 +46,7 @@ const withdrawalSchema = new mongoose.Schema({
     amountUsd: { type: Number, required: true },
     method: { type: String, required: true },
     account: { type: String, required: true },
-    status: { type: String, default: 'Pending' },
+    status: { type: String, default: 'Completed' },
     createdAt: { type: Date, default: Date.now }
 });
 
@@ -150,7 +150,7 @@ app.post('/api/payment/faucetpay-ipn', async (req, res) => {
     }
 });
 
-// 5. مسار طلب سحب الأرباح وحفظه في MongoDB
+// 5. مسار طلب سحب الأرباح الفوري وحفظه في MongoDB (مع احتساب رسوم FaucetPay و PayPal)
 app.post('/api/withdraw', async (req, res) => {
     try {
         const { userId, amountBfp, method, account } = req.body;
@@ -160,7 +160,7 @@ app.post('/api/withdraw', async (req, res) => {
         }
 
         if (amountBfp < 1000) {
-            return.status(400).json({ success: false, message: 'Minimum withdrawal amount is 1,000 BFP.' });
+            return.status(400).json({ success: false, message: 'Minimum withdrawal amount is 1,000 BFP ($1.00 USD).' });
         }
 
         const user = await User.findById(userId);
@@ -172,25 +172,35 @@ app.post('/api/withdraw', async (req, res) => {
             return.status(400).json({ success: false, message: 'Insufficient balance.' });
         }
 
+        // حساب الرسوم (0.50 دولار لباي بال، 0.10 دولار لفوسيت باي)
+        const grossUsd = amountBfp * 0.001;
+        const feeUsd = method === 'paypal' ? 0.50 : 0.10;
+
+        if (grossUsd <= feeUsd) {
+            return.status(400).json({ success: false, message: 'Withdrawal amount is too low to cover transaction fees.' });
+        }
+
+        const netUsd = grossUsd - feeUsd;
+
+        // خصم المبلغ كاملاً من رصيد المستخدم
         user.balance -= Number(amountBfp);
         await user.save();
 
-        const amountUsd = amountBfp * 0.001;
-
+        // حفظ سجل عملية السحب في قاعدة البيانات
         const newWithdrawal = new Withdrawal({
             userId: user._id,
             amountBfp,
-            amountUsd,
+            amountUsd: netUsd,
             method,
             account,
-            status: 'Pending'
+            status: 'Completed'
         });
 
         await newWithdrawal.save();
 
         res.json({
             success: true,
-            message: 'Withdrawal request submitted successfully.',
+            message: `Withdrawal of $${netUsd.toFixed(2)} USD processed successfully via ${method.toUpperCase()} (Fee: $${feeUsd.toFixed(2)})!`,
             newBalance: user.balance
         });
 
