@@ -7,7 +7,7 @@ app.use(express.json());
 app.use(cors());
 
 // الاتصال بقاعدة بيانات MongoDB
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/blackflower_db';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://blackflower:cluster0@cluster0.mongodb.net/blackflower_art?retryWrites=true&w=majority';
 
 mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
@@ -18,200 +18,119 @@ mongoose.connect(MONGO_URI, {
     console.error('MongoDB connection error:', err);
 });
 
-// نموذج المستخدم (User Schema)
+// تعريف نموذج المستخدم (User Schema)
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    balance: { type: Number, default: 0 },
+    balance: { type: Number, default: 0.00 },
     level: { type: Number, default: 1 },
     tasksDone: { type: Number, default: 0 },
-    adsViewed: { type: Number, default: 0 }
+    adsViewed: { type: Number, default: 0 },
+    depositsCount: { type: Number, default: 0 },
+    withdrawalsCount: { type: Number, default: 0 },
+    adsPosted: { type: Number, default: 0 },
+    tasksCreated: { type: Number, default: 0 },
+    isOnline: { type: Boolean, default: false },
+    isBanned: { type: Boolean, default: false },
+    country: { type: String, default: 'Jordan (Amman)' },
+    ipChanges: { type: Number, default: 0 },
+    loginCount: { type: Number, default: 1 },
+    createdAt: { type: Date, default: Date.now }
 });
 
 const User = mongoose.model('User', userSchema);
 
-// نموذج الإشعارات أو التنبيهات (Notification Schema)
+// تعريف نموذج الإشعارات (Notification Schema)
 const notificationSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     message: { type: String, required: true },
+    isRead: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now }
 });
 
 const Notification = mongoose.model('Notification', notificationSchema);
 
-// نموذج عمليات السحب (Withdrawal Schema)
-const withdrawalSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    amountBfp: { type: Number, required: true },
-    amountUsd: { type: Number, required: true },
-    method: { type: String, required: true },
-    account: { type: String, required: true },
-    status: { type: String, default: 'Completed' },
-    createdAt: { type: Date, default: Date.now }
+// --- مسارات الـ API ---
+
+// جلب جميع المستخدمين (للوحة المدير التنفيذي)
+app.get('/api/admin/users', async (req, res) => {
+    try {
+        const users = await User.find({});
+        res.json({ success: true, users });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
 });
 
-const Withdrawal = mongoose.model('Withdrawal', withdrawalSchema);
-
-// ================= API Routes =================
-
-// 1. مسار تسجيل الدخول
-app.post('/api/login', async (req, res) => {
+// تعديل بيانات المستخدم واستبدالها في MongoDB (بواسطة المدير التنفيذي)
+app.put('/api/admin/user/:id', async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { username, email, password, balance, level } = req.body;
+        const updateData = { username, email, balance, level };
         
-        const user = await User.findOne({ $or: [{ email: email }, { username: email }] });
-        
-        if (!user) {
-            return.status(400).json({ success: false, message: 'Invalid email or username.' });
+        if (password && password.trim() !== '') {
+            updateData.password = password; // يُفضل تشفير كلمة المرور في الإنتاج
         }
 
-        if (user.password !== password) {
-            return.status(400).json({ success: false, message: 'Incorrect password.' });
+        const updatedUser = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
+        if (!updatedUser) {
+            return res.status(404).json({ success: false, message: 'User not found' });
         }
 
-        res.json({
-            success: true,
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                balance: user.balance,
-                level: user.level,
-                tasksDone: user.tasksDone,
-                adsViewed: user.adsViewed
-            }
-        });
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ success: false, message: 'Server error during login.' });
+        res.json({ success: true, message: 'User updated successfully', user: updatedUser });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
     }
 });
 
-// 2. مسار جلب الإشعارات العامة
-app.get('/api/notifications', async (req, res) => {
+// إرسال النقود أو الرصيد للمستخدم مع إنشاء إشعار فوري تلقائي في واجهته
+app.post('/api/user/send-funds', async (req, res) => {
     try {
-        const notifications = await Notification.find().sort({ createdAt: -1 }).limit(5);
-        res.json({ success: true, notifications });
-    } catch (error) {
-        console.error('Error fetching notifications:', error);
-        res.status(500).json({ success: false, message: 'Server error.' });
-    }
-});
-
-// 3. مسار معالجة الدفع عبر FaucetPay Merchant
-app.post('/api/payment/faucetpay', async (req, res) => {
-    try {
-        const { userId, bfpAmount, usdAmount, packageName } = req.body;
-
-        if (!userId || !usdAmount) {
-            return.status(400).json({ success: false, message: 'Invalid data provided.' });
-        }
-
-        const merchantUsername = 'mohabramzi'; 
-        const callbackUrl = 'https://earn-uq8k.onrender.com/api/payment/faucetpay-ipn';
-        const customData = JSON.stringify({ userId, bfpAmount });
-
-        const faucetPayUrl = `https://faucetpay.io/merchant/to?merchant=${encodeURIComponent(merchantUsername)}&amount=${usdAmount}&currency=USD&item_description=${encodeURIComponent(packageName)}&custom=${encodeURIComponent(customData)}&callback_url=${encodeURIComponent(callbackUrl)}`;
-
-        res.json({
-            success: true,
-            redirectUrl: faucetPayUrl
-        });
-
-    } catch (error) {
-        console.error('FaucetPay payment error:', error);
-        res.status(500).json({ success: false, message: 'Server error processing payment.' });
-    }
-});
-
-// 4. مسار استقبال التأكيد التلقائي IPN من FaucetPay لتحديث MongoDB
-app.post('/api/payment/faucetpay-ipn', async (req, res) => {
-    try {
-        const ipnData = req.body;
-
-        if (ipnData && ipnData.valid === true) {
-            const customInfo = JSON.parse(ipnData.custom || '{}');
-            const { userId, bfpAmount } = customInfo;
-
-            if (userId && bfpAmount) {
-                const user = await User.findById(userId);
-                if (user) {
-                    user.balance = (user.balance || 0) + Number(bfpAmount);
-                    user.level = Math.floor(user.balance / 10) + 1;
-                    await user.save();
-                }
-            }
-        }
-
-        res.status(200).send('IPN OK');
-    } catch (error) {
-        console.error('IPN processing error:', error);
-        res.status(500).send('IPN Error');
-    }
-});
-
-// 5. مسار طلب سحب الأرباح الفوري وحفظه في MongoDB (مع احتساب رسوم FaucetPay و PayPal)
-app.post('/api/withdraw', async (req, res) => {
-    try {
-        const { userId, amountBfp, method, account } = req.body;
-
-        if (!userId || !amountBfp || !method || !account) {
-            return.status(400).json({ success: false, message: 'Missing required withdrawal fields.' });
-        }
-
-        if (amountBfp < 1000) {
-            return.status(400).json({ success: false, message: 'Minimum withdrawal amount is 1,000 BFP ($1.00 USD).' });
-        }
-
+        const { userId, amount, reason } = req.body;
         const user = await User.findById(userId);
+        
         if (!user) {
-            return.status(404).json({ success: false, message: 'User not found.' });
+            return res.status(404).json({ success: false, message: 'User not found' });
         }
 
-        if (user.balance < amountBfp) {
-            return.status(400).json({ success: false, message: 'Insufficient balance.' });
-        }
-
-        // حساب الرسوم (0.50 دولار لباي بال، 0.10 دولار لفوسيت باي)
-        const grossUsd = amountBfp * 0.001;
-        const feeUsd = method === 'paypal' ? 0.50 : 0.10;
-
-        if (grossUsd <= feeUsd) {
-            return.status(400).json({ success: false, message: 'Withdrawal amount is too low to cover transaction fees.' });
-        }
-
-        const netUsd = grossUsd - feeUsd;
-
-        // خصم المبلغ كاملاً من رصيد المستخدم
-        user.balance -= Number(amountBfp);
+        user.balance += parseFloat(amount);
         await user.save();
 
-        // حفظ سجل عملية السحب في قاعدة البيانات
-        const newWithdrawal = new Withdrawal({
+        // إنشاء إشعار فوري يظهر في واجهة المستخدم
+        const notifMessage = `تم إضافة مبلغ ${amount} BFP إلى رصيدك. السبب: ${reason || 'تحويل مباشر من الإدارة'}`;
+        await Notification.create({
             userId: user._id,
-            amountBfp,
-            amountUsd: netUsd,
-            method,
-            account,
-            status: 'Completed'
+            message: notifMessage
         });
 
-        await newWithdrawal.save();
-
-        res.json({
-            success: true,
-            message: `Withdrawal of $${netUsd.toFixed(2)} USD processed successfully via ${method.toUpperCase()} (Fee: $${feeUsd.toFixed(2)})!`,
-            newBalance: user.balance
-        });
-
-    } catch (error) {
-        console.error('Withdrawal error:', error);
-        res.status(500).json({ success: false, message: 'Server error during withdrawal processing.' });
+        res.json({ success: true, message: 'Funds sent and notification created successfully', newBalance: user.balance });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
     }
 });
 
-// تشغيل السيرفر
-const PORT = process.env.PORT || 3000;
+// جلب إشعارات المستخدم الخاصة
+app.get('/api/notifications/:userId', async (req, res) => {
+    try {
+        const notifications = await Notification.find({ userId: req.params.userId }).sort({ createdAt: -1 });
+        res.json({ success: true, notifications });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// بث إشعار عام
+app.get('/api/notifications', async (req, res) => {
+    try {
+        const notifications = await Notification.find({}).sort({ createdAt: -1 }).limit(5);
+        res.json({ success: true, notifications });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
