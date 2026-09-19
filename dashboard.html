@@ -3,14 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Dashboard - The BlackFlower Pro Art</title>
-    <!-- ربط ملف التصميم الخارجي -->
+    <title>Dashboard - The Black Flower Pro Art</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <!-- الشريط العلوي الموحد الثابت -->
+    <header class="site-header">
+        <div class="header-left">
+            <img src="black.jpg" alt="Logo" class="site-logo">
+            <span class="brand-title">The Black Flower</span>
+        </div>
+        <div class="header-right">
+            <span>Professional Art</span>
+        </div>
+    </header>
+
     <div class="dashboard-container">
-        <!-- إشعار الرسائل الواردة من المدير التنفيذي -->
         <div id="adminNotification" class="notification-banner">
             <strong>[System / Executive Notice]:</strong> <span id="notificationText"></span>
         </div>
@@ -18,11 +27,11 @@
         <div class="dash-header">
             <div>
                 <h1 id="welcomeUser">Welcome, User</h1>
-                <span style="color: #888; font-size: 0.75rem;" id="userEmail">email@domain.com</span>
+                <span style="color: #888; font-size: 0.75rem;" id="userEmail">user@domain.com</span>
             </div>
             <div>
-                <button class="btn" onclick="openInboxModal()">Inbox & Outbox</button>
-                <button class="btn" onclick="logout()" style="border-color: #ff3333; color: #ff3333;">Logout</button>
+                <button class="btn" style="width: auto; margin-top: 0; display: inline-block;" onclick="openInboxModal()">Inbox</button>
+                <button class="btn" style="width: auto; margin-top: 0; display: inline-block; border-color: #ff3333; color: #ff3333;" onclick="logout()">Logout</button>
             </div>
         </div>
 
@@ -53,82 +62,74 @@
         </div>
     </div>
 
-    <!-- Modal البريد الوارد والصادر والمراسلة -->
+    <!-- Modal البريد الوارد والصادر -->
     <div id="inboxModal" class="modal">
         <div class="modal-content">
             <h2>Internal Messaging System</h2>
-            <div style="margin-bottom: 15px; max-height: 200px; overflow-y:auto; border: 1px solid #333; padding: 10px;" id="messagesBox">
+            <div style="margin-bottom: 15px; max-height: 180px; overflow-y:auto; border: 1px solid #333; padding: 10px;" id="messagesBox">
                 <p style="color: #666; font-size: 0.8rem;">No messages yet.</p>
             </div>
             <form id="sendMessageForm">
                 <div class="form-group">
-                    <label>Send Message to Member / Admin</label>
-                    <textarea id="msgContent" required placeholder="Write your message here..."></textarea>
+                    <label>Send Message</label>
+                    <textarea id="msgContent" required placeholder="Write your message..."></textarea>
                 </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn" onclick="closeInboxModal()">Close</button>
-                    <button type="submit" class="btn" style="background:#fff; color:#000; font-weight:bold;">Send Message</button>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn" onclick="closeInboxModal()" style="border-color:#555;">Close</button>
+                    <button type="submit" class="btn" style="background:#fff; color:#000; font-weight:bold;">Send</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        const API_URL = 'https://earn-uq8k.onrender.com/api';
-
         document.addEventListener('DOMContentLoaded', () => {
             loadUserData();
             checkNotifications();
         });
 
         function loadUserData() {
-            // جلب بيانات المستخدم المخزنة محلياً بعد تسجيل الدخول
             const user = JSON.parse(localStorage.getItem('currentUser')) || {
-                username: 'Demo User',
-                email: 'user@blackflower.art',
-                balance: 15.50,
-                level: 2,
-                tasksDone: 12,
-                adsViewed: 45
+                username: 'Demo Member',
+                email: 'member@blackflower.art',
+                balance: 0.00,
+                level: 1,
+                tasksDone: 0,
+                adsViewed: 0
             };
 
             document.getElementById('welcomeUser').innerText = `Welcome, ${user.username}`;
             document.getElementById('userEmail').innerText = user.email;
-            document.getElementById('userBalance').innerText = `${user.balance.toFixed(2)} BFP`;
+            document.getElementById('userBalance').innerText = `${(user.balance || 0).toFixed(2)} BFP`;
             document.getElementById('userTasks').innerText = user.tasksDone || 0;
             document.getElementById('userAds').innerText = user.adsViewed || 0;
 
-            // تحديث شريط المستويات الرسومي (افتراض كل مستوى يحتاج 10 مستويات أو نسب معينة)
             const currentLvl = user.level || 1;
             document.getElementById('currentLevelText').innerText = `Level ${currentLvl}`;
-            
-            // حساب نسبة تقدم افتراضية للمستوى (مثلاً بناءً على المهام)
-            const progressPercent = Math.min(((user.tasksDone % 10) * 10), 100);
+            const progressPercent = Math.min((((user.tasksDone || 0) % 10) * 10), 100);
             document.getElementById('levelProgressBar').style.width = `${progressPercent}%`;
             document.getElementById('nextLevelProgressText').innerText = `${progressPercent}% to Level ${currentLvl + 1}`;
         }
 
-        function checkNotifications() {
-            // محاكاة جلب إشعار مرسل من المدير التنفيذي
-            const notice = localStorage.getItem('executiveNotice');
-            if (notice) {
-                document.getElementById('notificationText').innerText = notice;
-                document.getElementById('adminNotification').classList.add('active');
+        async function checkNotifications() {
+            try {
+                const res = await fetch('https://earn-uq8k.onrender.com/api/notifications');
+                const data = await res.json();
+                if (data.success && data.notifications.length > 0) {
+                    document.getElementById('notificationText').innerText = data.notifications[0].message;
+                    document.getElementById('adminNotification').classList.add('active');
+                }
+            } catch (e) {
+                console.error('Error fetching notifications');
             }
         }
 
-        function openInboxModal() {
-            document.getElementById('inboxModal').style.display = 'flex';
-        }
-
-        function closeInboxModal() {
-            document.getElementById('inboxModal').style.display = 'none';
-        }
+        function openInboxModal() { document.getElementById('inboxModal').style.display = 'flex'; }
+        function closeInboxModal() { document.getElementById('inboxModal').style.display = 'none'; }
 
         document.getElementById('sendMessageForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            const text = document.getElementById('msgContent').value;
-            alert('Message sent successfully through the internal network!');
+            alert('Message sent successfully!');
             document.getElementById('msgContent').value = '';
             closeInboxModal();
         });
