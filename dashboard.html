@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="css/style.css">
 
     <style>
-        /* التنسيقات الإضافية للإطار العريض والأقسام السفلية تماشياً مع التصميم الأساسي */
         .control-panel-bar {
             width: 100%;
             background-color: #000000;
@@ -50,12 +49,11 @@
             justify-content: flex-start;
         }
 
-        /* تخصيص أزرار لوحة التحكم بنفس الكلاس الأصلي لتأثير الهوفر المنعكس */
         .control-panel-bar .btn-blackflower {
             padding: 12px 25px;
             font-size: 0.95rem;
             flex: 1;
-            min-width: calc(20% - 15px); /* توزيع متناسق على الشاشات الكبيرة */
+            min-width: calc(20% - 15px);
             text-align: center;
         }
 
@@ -82,8 +80,7 @@
             padding-bottom: 10px;
         }
 
-        /* تنسيقات كروت المهام الديناميكية المقتصرة على الاسم والربح فقط */
-        .task-card {
+        .task-card, .ad-card-item {
             border: 1px solid #333333;
             background-color: #000000;
             padding: 20px;
@@ -94,7 +91,7 @@
             transition: border-color 0.3s ease;
         }
 
-        .task-card:hover {
+        .task-card:hover, .ad-card-item:hover {
             border-color: #ffffff;
         }
 
@@ -114,7 +111,7 @@
 
         .task-price {
             font-family: monospace;
-            color: #00ff77; /* تمييز لون الربح بلون أخضر فخم مالي */
+            color: #00ff77;
             border: 1px solid #00ff77;
             padding: 2px 8px;
             font-size: 0.95rem;
@@ -141,7 +138,6 @@
             color: #ffffff;
         }
 
-        /* التجاوب مع شاشات الهواتف */
         @media (max-width: 768px) {
             .user-stats-row {
                 flex-direction: column;
@@ -173,7 +169,7 @@
             <div class="user-stats-row">
                 <div class="stat-item">👤 Username: <span id="user-display-name">Loading...</span></div>
                 <div class="stat-item">💰 Wallet Balance: <span id="wallet-balance">0.0000</span> $</div>
-                <div class="stat-item">🛡️ Rank: <span id="account-type-status">Loading...</span></div>
+                <div class="stat-item">🛡️ Rank: <span id="account-type-status">Member</span></div>
             </div>
 
             <div class="navigation-buttons-row">
@@ -188,7 +184,7 @@
                 
                 <button id="admin-panel-btn" onclick="window.location.href='admin.html'" class="btn-blackflower" style="display: none; border-color: #00ff77; color: #00ff77;">👑 Admin Panel</button>
                 
-                <button id="logout-link" class="btn-blackflower" style="border-color: #ff4444; color: #ff4444;">🚪 Logout</button>
+                <button id="logout-btn" class="btn-blackflower" style="border-color: #ff4444; color: #ff4444;">🚪 Logout</button>
             </div>
         </div>
 
@@ -212,116 +208,121 @@
 
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase-config.js"></script>
-    <script src="js/dashboard.js"></script>
-
     <script>
+        const API_URL = 'http://localhost:5000/api';
+
         document.addEventListener("DOMContentLoaded", () => {
-            if (typeof supabase !== 'undefined') {
-                loadDashboardTasks();
-            } else {
-                console.error("Supabase client is not initialized. Please check supabase-config.js");
+            const savedUser = localStorage.getItem('user');
+            if (!savedUser) {
+                alert('Please login first');
+                window.location.href = 'login.html';
+                return;
             }
+
+            const currentUser = JSON.parse(savedUser);
+            
+            // تعبئة البيانات الأساسية للمستخدم من التخزين المحلي والسيرفر
+            document.getElementById('user-display-name').textContent = currentUser.username || currentUser.email;
+            if (currentUser.balance !== undefined) {
+                document.getElementById('wallet-balance').textContent = parseFloat(currentUser.balance).toFixed(4);
+            }
+            if (currentUser.role === 'admin') {
+                document.getElementById('admin-panel-btn').style.display = 'block';
+            }
+
+            // جلب البيانات المحدثة من MongoDB وسحب المهام والإعلانات
+            loadUserDataFromMongo(currentUser.email);
+            loadDashboardTasks(currentUser.email);
+            loadDashboardAds();
+
+            // زر تسجيل الخروج
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            });
         });
 
-       async function loadDashboardTasks() {
+        // جلب أحدث بيانات المستخدم (الرصيد وغيرها) من السيرفر المحلي
+        async function loadUserDataFromMongo(email) {
+            try {
+                const response = await fetch(`${API_URL}/user-profile?email=${encodeURIComponent(email)}`);
+                const result = await response.json();
+                if (result.success && result.user) {
+                    document.getElementById('wallet-balance').textContent = parseFloat(result.user.balance || 0).toFixed(4);
+                    if (result.user.role === 'admin') {
+                        document.getElementById('admin-panel-btn').style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching user profile:", error);
+            }
+        }
+
+        // جلب المهام الفعالة بصيغة JSON من قاعدة البيانات
+        async function loadDashboardTasks(email) {
             const container = document.getElementById('tasks-container-display');
             
             try {
-                // 1. جلب بيانات المستخدم الحالي المسجل
-                const { data: { user }, error: userError } = await supabase.auth.getUser();
-                if (userError || !user) {
-                    container.innerHTML = `<p style="color: #ff4444; font-size: 0.9rem;">Please log in to see available tasks.</p>`;
-                    return;
-                }
+                const response = await fetch(`${API_URL}/tasks?email=${encodeURIComponent(email)}`);
+                const result = await response.json();
 
-                // 2. جلب المهام التي أرسلها هذا المستخدم بالفعل مسبقاً لاستثنائها تماماً
-                const { data: userSubmissions, error: subError } = await supabase
-                    .from('task_submissions')
-                    .select('task_id')
-                    .eq('user_id', user.id);
-
-                if (subError) throw subError;
-
-                // تحويل قيم الـ IDs إلى مصفوفة بسيطة
-                const completedTaskIds = userSubmissions ? userSubmissions.map(s => s.task_id) : [];
-
-                // 3. بناء استعلام ذكي يجلب (المعرف، العنوان، والربح فقط) من جدول tasks
-                let tasksQuery = supabase
-                    .from('tasks')
-                    .select('id, title, reward')
-                    .order('created_at', { ascending: false });
-
-                // تجميد وحجب: إذا كان المستخدم قد نفذ أي مهام مسبقاً، نقوم بإخفائها تماماً من الاستعلام
-                if (completedTaskIds.length > 0) {
-                    tasksQuery = tasksQuery.not('id', 'in', `(${completedTaskIds.join(',')})`);
-                }
-
-                const { data: tasks, error: tasksError } = await tasksQuery;
-                if (tasksError) throw tasksError;
-
-                // تنظيف الحاوية لبدء العرض
-                container.innerHTML = "";
-
-                if (!tasks || tasks.length === 0) {
+                if (!result.success || !result.tasks || result.tasks.length === 0) {
                     container.innerHTML = `<p style="color: #666; font-size: 0.95rem;">No tasks active for today.</p>`;
                     return;
                 }
 
-                // 4. بناء الكروت البرمجية المقتصرة على الإسم والربح وزر الانتقال لصفحة التنفيذ
-                tasks.forEach(task => {
+                container.innerHTML = "";
+                result.tasks.forEach(task => {
                     const card = document.createElement('div');
                     card.className = 'task-card';
-
-                    // التعديل السحري هنا: الزر الآن يقوم بالتوجيه التلقائي لصفحة execute-task.html مع الـ id
                     card.innerHTML = `
                         <div class="task-header">
                             <span class="task-title">${task.title}</span>
                             <span class="task-price">+$${parseFloat(task.reward || 0.00).toFixed(4)}</span>
                         </div>
                         <div style="margin-top: 5px;">
-                            <button onclick="window.location.href='execute-task.html?id=${task.id}'" class="task-action-btn">Complete & Earn</button>
+                            <button onclick="window.location.href='execute-task.html?id=${task._id}'" class="task-action-btn">Complete & Earn</button>
                         </div>
                     `;
-
                     container.appendChild(card);
                 });
 
             } catch (err) {
-                console.error("Error building dashboard tasks:", err);
-                container.innerHTML = `<p style="color: #ff4444; font-size: 0.9rem;">Error loading tasks: ${err.message}</p>`;
+                console.error("Error loading dashboard tasks:", err);
+                container.innerHTML = `<p style="color: #ff4444; font-size: 0.9rem;">Error loading tasks from local server.</p>`;
             }
         }
 
-        // دالة إرسال التثبيت وعند نجاحها تختفي المهمة تلقائياً من الـ Dashboard للأبد
-        async function handleTaskCompletion(taskId) {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return alert("Session expired. Please log in again.");
-
-            const confirmation = confirm("Are you sure you have completed all requirements for this task?");
-            if (!confirmation) return;
-
+        // جلب الإعلانات المميزة لعرضها في لوحة التحكم
+        async function loadDashboardAds() {
+            const adsContainer = document.getElementById('ads-container-display');
             try {
-                // إدراج السجل في جدول الـ submissions لتوثيق إتمام المستخدم للمهمة
-                const { error } = await supabase
-                    .from('task_submissions')
-                    .insert([
-                        { 
-                            task_id: taskId, 
-                            user_id: user.id, 
-                            status: 'pending',
-                            created_at: new Date() 
-                        }
-                    ]);
+                const response = await fetch(`${API_URL}/ads`);
+                const result = await response.json();
 
-                if (error) throw error;
+                if (!result.success || !result.ads || result.ads.length === 0) {
+                    adsContainer.innerHTML = `<p style="color: #666; font-size: 0.95rem;">No active advertisements available.</p>`;
+                    return;
+                }
 
-                alert("Success! The task has been submitted and is now frozen for you.");
-                loadDashboardTasks(); // إعادة استدعاء الدالة لتحديث الواجهة واختفاء المهمة فوراً
-
+                adsContainer.innerHTML = "";
+                // عرض أول إعلانين أو ثلاثة كنموذج في الداشبورد
+                result.ads.slice(0, 3).forEach(ad => {
+                    const adCard = document.createElement('div');
+                    adCard.className = 'ad-card-item';
+                    adCard.innerHTML = `
+                        <div class="task-header">
+                            <span class="task-title">${ad.title}</span>
+                            <span class="task-price" style="color: #ff00ff; border-color: #ff00ff;">📺 ${ad.ad_type}</span>
+                        </div>
+                        <p style="color: #aaa; font-size: 0.85rem; margin: 0;">${ad.description}</p>
+                        <button onclick="window.location.href='ads.html'" class="task-action-btn" style="border-color: #ff00ff; color: #ff00ff;">Watch & Earn</button>
+                    `;
+                    adsContainer.appendChild(adCard);
+                });
             } catch (error) {
-                alert("Submission failed: " + error.message);
+                console.error("Error loading ads:", error);
+                adsContainer.innerHTML = `<p style="color: #666; font-size: 0.95rem;">Failed to load advertisements.</p>`;
             }
         }
     </script>
