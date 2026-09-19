@@ -48,6 +48,9 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
+// تخزين مؤقت للرسائل والإشعارات الخاصة بالنظام والمدير التنفيذي
+let systemNotifications = [];
+
 // ==========================================
 // مسارات المصادقة وتسجيل الدخول (Authentication APIs)
 // ==========================================
@@ -89,7 +92,9 @@ app.post('/api/login', async (req, res) => {
                 username: user.username,
                 email: user.email,
                 balance: user.balance,
-                level: user.level
+                level: user.level,
+                tasksDone: user.tasksDone,
+                adsViewed: user.adsViewed
             }
         });
 
@@ -150,6 +155,40 @@ app.put('/api/admin/user/:id', async (req, res) => {
     } catch (error) {
         console.error('Error updating user:', error);
         res.status(500).json({ success: false, message: 'Error updating user in MongoDB.' });
+    }
+});
+
+// 3. إرسال إشعار أو رسالة عامة من المدير التنفيذي لتظهر في واجهة المستخدمين
+app.post('/api/admin/broadcast', async (req, res) => {
+    try {
+        const { message } = req.body;
+        if (!message) {
+            return res.status(400).json({ success: false, message: 'Message content is required.' });
+        }
+        
+        systemNotifications.unshift({ message, date: new Date() });
+        
+        // الاحتفاظ بآخر 20 إشعاراً فقط لتوفير الذاكرة
+        if (systemNotifications.length > 20) {
+            systemNotifications.pop();
+        }
+
+        res.json({ success: true, message: 'Executive notification broadcasted successfully!' });
+    } catch (error) {
+        console.error('Broadcast error:', error);
+        res.status(500).json({ success: false, message: 'Error sending broadcast notification.' });
+    }
+});
+
+// ==========================================
+// مسارات الإشعارات والرسائل للأعضاء
+// ==========================================
+
+app.get('/api/notifications', async (req, res) => {
+    try {
+        res.json({ success: true, notifications: systemNotifications });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error fetching notifications.' });
     }
 });
 
