@@ -22,8 +22,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// الاتصال بقاعدة بيانات MongoDB (استبدل الرابط برابط MongoDB Atlas الخاص بك)
-const MONGO_URI = process.env.MONGO_URI || 'YOUR_MONGODB_CONNECTION_STRING_HERE';
+const MONGO_URI = 'mongodb+srv://blackflowerproart_db_user:As123456789@membersinfo.tmqa7zr.mongodb.net/?appName=Membersinfo';
 
 mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
