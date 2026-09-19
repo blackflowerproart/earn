@@ -3,39 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The BlackFlower - Professional Art</title>
-    
-    <link rel="stylesheet" href="css/style.css">
+    <title>Login - The Black Flower Pro Art</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <header class="main-header">
-        <div class="header-container">
-            <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
-            <div class="header-text-block">
-                <div class="brand-title">The BlackFlower</div>
-                <div class="brand-subtitle">Professional Art</div>
-            </div>
+    <!-- الشريط العلوي الموحد الثابت -->
+    <header class="site-header">
+        <div class="header-left">
+            <img src="black.jpg" alt="Logo" class="site-logo">
+            <span class="brand-title">The Black Flower</span>
+        </div>
+        <div class="header-right">
+            <span>Professional Art</span>
         </div>
     </header>
 
-    <div class="container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh;">
-        <h2 style="text-transform: uppercase; letter-spacing: 3px; margin-bottom: 15px; text-align: center;">Welcome to The BlackFlower</h2>
-        <p style="color: #aaaaaa; margin-bottom: 40px; font-size: 1.1rem; text-align: center; letter-spacing: 1px; max-width: 600px;">Join the professional art community and start your journey.</p>
-        
-        <div class="auth-buttons-container" style="display: flex; gap: 20px; width: 100%; max-width: 400px; justify-content: center;">
-            <button onclick="window.location.href='login.html'" class="btn-blackflower" style="flex: 1; padding: 14px;">Login</button>
-            <button onclick="window.location.href='register.html'" class="btn-blackflower" style="flex: 1; padding: 14px;">Register</button>
-        </div>
+    <div class="page-container">
+        <h2>Member Login</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Email or Username</label>
+                <input type="text" id="loginEmail" required placeholder="Enter your email">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" required placeholder="********">
+            </div>
+            <button type="submit" class="btn">Login to Dashboard</button>
+        </form>
     </div>
 
     <script>
-        // التحقق السريع: إذا كان المستخدم مسجل الدخول مسبقاً، يمكنك توجيهه تلقائياً للوحة التحكم
-        document.addEventListener("DOMContentLoaded", () => {
-            const savedUser = localStorage.getItem('user');
-            if (savedUser) {
-                // اختيارية: إذا أردت توجيه العضو للداشبورد مباشرة إذا كان مسجلاً مسبقاً
-                // window.location.href = 'dashboard.html';
+        const API_URL = 'https://earn-uq8k.onrender.com/api';
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem('currentUser', JSON.stringify(data.user));
+                    window.location.href = 'dashboard.html';
+                } else {
+                    alert(data.message || 'Login failed.');
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Connection error with server.');
             }
         });
     </script>
