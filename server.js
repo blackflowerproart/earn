@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-const MONGO_URI = 'mongodb+srv://blackflowerproart_db_user:As123456789@membersinfo.tmqa7zr.mongodb.net/?appName=Membersinfo';
+const MONGO_URI = 'mongodb+srv://blackflowerproart_db_user:Er123456789@membersinfo.tmqa7zr.mongodb.net/?appName=Membersinfo';
 
 mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
