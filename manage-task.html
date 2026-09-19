@@ -86,14 +86,23 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase-config.js"></script>
     <script>
+        const API_URL = 'http://localhost:5000/api';
+
         // الحصول على معرف المهمة id من الـ URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const taskId = urlParams.get('id');
+        let currentUser = null;
 
         document.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('user');
+            if (!savedUser) {
+                alert('Please login first');
+                window.location.href = 'login.html';
+                return;
+            }
+            currentUser = JSON.parse(savedUser);
+
             if(!taskId) {
                 alert("No Task ID provided.");
                 window.location.href = 'tasks.html';
@@ -103,61 +112,83 @@
             loadSubmissions();
         });
 
-        // جلب اسم المهمة
+        // جلب اسم المهمة من السيرفر
         async function getTaskDetails() {
-            const { data: task, error } = await supabase.from('tasks').select('title').eq('id', taskId).single();
-            if(!error && task) {
-                document.getElementById('main-task-title').innerText = `⚙️ Managing: ${task.title}`;
+            try {
+                const response = await fetch(`${API_URL}/task-details?id=${taskId}`);
+                const result = await response.json();
+                
+                if (result.success && result.task) {
+                    document.getElementById('main-task-title').innerText = `⚙️ Managing: ${result.task.title}`;
+                } else {
+                    document.getElementById('main-task-title').innerText = `⚙️ Task Management`;
+                }
+            } catch (err) {
+                console.error("Error fetching task details:", err);
             }
         }
 
-        // جلب الردود المعلقة للمراجعة
+        // جلب الردود المعلقة للمراجعة من السيرفر المحلي (MongoDB)
         async function loadSubmissions() {
             const container = document.getElementById('submissions-container');
             
-            // افترضنا هنا جدول السوبابيز باسم task_submissions وحالة الطلب pending
-            const { data: submissions, error } = await supabase
-                .from('task_submissions') 
-                .select('*')
-                .eq('task_id', taskId)
-                .eq('status', 'pending');
+            try {
+                const response = await fetch(`${API_URL}/task-submissions?task_id=${taskId}&status=pending`);
+                const result = await response.json();
 
-            if (error || !submissions || submissions.length === 0) {
-                container.innerHTML = '<p style="color:#666;">No pending submissions to review for this task.</p>';
-                return;
+                if (!result.success || !result.submissions || result.submissions.length === 0) {
+                    container.innerHTML = '<p style="color:#666;">No pending submissions to review for this task.</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                result.submissions.forEach(sub => {
+                    const card = document.createElement('div');
+                    card.className = 'submission-card';
+                    card.innerHTML = `
+                        <div class="submission-info">
+                            <span>User Email: ${sub.user_email || sub.user_id}</span>
+                            <p><strong>Proof/Text:</strong> ${sub.proof_text || 'No description provided.'}</p>
+                            ${sub.proof_image || sub.screenshot_url ? `<a href="${sub.proof_image || sub.screenshot_url}" target="_blank" style="color:#ff00ff; font-size:0.9rem;">🖼️ View Proof Screenshot</a>` : ''}
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn-accept" onclick="updateStatus('${sub._id || sub.id}', 'approved')">✔️ Accept</button>
+                            <button class="btn-reject" onclick="updateStatus('${sub._id || sub.id}', 'rejected')">❌ Reject</button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error("Error loading submissions:", error);
+                container.innerHTML = '<p style="color:#ff4444;">Error loading submissions from server.</p>';
             }
-
-            container.innerHTML = '';
-            submissions.forEach(sub => {
-                const card = document.createElement('div');
-                card.className = 'submission-card';
-                card.innerHTML = `
-                    <div class="submission-info">
-                        <span>User ID: ${sub.user_id}</span>
-                        <p><strong>Proof/Text:</strong> ${sub.proof_text || 'No description provided.'}</p>
-                        ${sub.screenshot_url ? `<a href="${sub.screenshot_url}" target="_blank" style="color:#ff00ff; font-size:0.9rem;">🖼️ View Proof Screenshot</a>` : ''}
-                    </div>
-                    <div class="action-buttons">
-                        <button class="btn-accept" onclick="updateStatus('${sub.id}', 'approved')">✔️ Accept</button>
-                        <button class="btn-reject" onclick="updateStatus('${sub.id}', 'rejected')">❌ Reject</button>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
         }
 
-        // تحديث حالة الرد (قبول أو رفض)
+        // تحديث حالة الرد (قبول أو رفض) عبر الـ API
         async function updateStatus(submissionId, newStatus) {
-            const { error } = await supabase
-                .from('task_submissions')
-                .update({ status: newStatus })
-                .eq('id', submissionId);
+            try {
+                const response = await fetch(`${API_URL}/update-submission`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        submission_id: submissionId,
+                        status: newStatus
+                    })
+                });
 
-            if (error) {
-                alert("Error updating status: " + error.message);
-            } else {
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.message || "Error updating status");
+                }
+
                 alert(`Submission ${newStatus} successfully!`);
                 loadSubmissions(); // إعادة تحميل القائمة
+
+            } catch (error) {
+                alert("Error: " + error.message);
             }
         }
     </script>
