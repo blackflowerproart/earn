@@ -166,44 +166,50 @@
         </div>
 
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase-config.js"></script>
     
     <script>
+        const API_URL = 'http://localhost:5000/api';
+
         // 1. استخراج الـ ID الخاص بالمهمة من رابط الصفحة URL
         const urlParams = new URLSearchParams(window.location.search);
         const taskId = urlParams.get('id');
+        let currentUser = null;
 
         document.addEventListener("DOMContentLoaded", () => {
+            const savedUser = localStorage.getItem('user');
+            if (!savedUser) {
+                alert('Please login first');
+                window.location.href = 'login.html';
+                return;
+            }
+            currentUser = JSON.parse(savedUser);
+
             if (!taskId) {
                 alert("Invalid URL. Returning to Dashboard.");
                 window.location.href = 'dashboard.html';
                 return;
             }
-            if (typeof supabase !== 'undefined') {
-                fetchTaskDetails();
-            } else {
-                console.error("Supabase not loaded.");
-            }
+
+            fetchTaskDetails();
         });
 
-        // 2. جلب تفاصيل المهمة المحددة من جدول tasks لعرضها للمستخدم
+        // 2. جلب تفاصيل المهمة المحددة من السيرفر المحلي (MongoDB) لعرضها للمستخدم
         async function fetchTaskDetails() {
             try {
-                const { data: task, error } = await supabase
-                    .from('tasks')
-                    .select('*')
-                    .eq('id', taskId)
-                    .single(); // جلب سطر واحد فقط متطابق
+                const response = await fetch(`${API_URL}/task-details?id=${taskId}`);
+                const result = await response.json();
 
-                if (error || !task) throw new Error("Task not found or has been archived.");
+                if (!result.success || !result.task) {
+                    throw new Error(result.message || "Task not found or has been archived.");
+                }
+
+                const task = result.task;
 
                 // حقن البيانات في الـ HTML
                 document.getElementById('display-title').innerText = task.title;
                 document.getElementById('display-reward').innerText = `$${parseFloat(task.reward || 0.00).toFixed(4)}`;
-                document.getElementById('display-details').innerText = task.details;
-                document.getElementById('target-link-btn').href = task.target_url;
+                document.getElementById('display-details').innerText = task.details || task.description;
+                document.getElementById('target-link-btn').href = task.target_url || '#';
 
                 // إظهار الصندوق الرئيسي وإخفاء كلمة Loading
                 document.getElementById('loading-fallback').style.display = 'none';
@@ -215,7 +221,7 @@
             }
         }
 
-        // 3. معالجة إرسال الإثبات لجدول task_submissions لتجميدها للمستخدم للأبد
+        // 3. معالجة إرسال الإثبات للسيرفر لتجميد المهمة للمستخدم وتسجيل الإرسالية
         document.getElementById('submissionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
@@ -223,51 +229,36 @@
             submitBtn.innerText = "SUBMITTING PROOF...";
 
             try {
-                // التأكد من أن الجلسة نشطة والمستخدم مسجل
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) throw new Error("Session expired. Please log in again.");
-
                 const proofFile = document.getElementById('proofMedia').files[0];
-                let proofUrl = null;
+                let proofBase64 = null;
 
-                // إذا كان العضو قد رفع صورة إثبات، نقوم برفعها للـ Bucket الخاص بالإثباتات
+                // إذا قام المستخدم برفع صورة إثبات، نقوم بتحويلها إلى Base64 أو رفعها عبر FormData للسيرفر
                 if (proofFile) {
-                    const fileExt = proofFile.name.split('.').pop();
-                    const fileName = `${Date.now()}.${fileExt}`;
-                    const filePath = `submissions/${user.id}/${fileName}`;
-
-                    // يتم الرفع إلى باكت افتراضي اسمه 'task-proofs' (تأكد من وجوده أو إنشائه في Storage بسوبابيز)
-                    let { error: uploadError } = await supabase.storage
-                        .from('task-proofs')
-                        .upload(filePath, proofFile);
-
-                    if (!uploadError) {
-                        const { data: publicUrlData } = supabase.storage
-                            .from('task-proofs')
-                            .getPublicUrl(filePath);
-                        proofUrl = publicUrlData.publicUrl;
-                    }
+                    proofBase64 = await convertFileToBase64(proofFile);
                 }
 
-                // حقن السجل في جدول الـ submissions لتجميد المهمة فوراً
-                const { error: insertError } = await supabase
-                    .from('task_submissions')
-                    .insert([
-                        {
-                            task_id: parseInt(taskId),
-                            user_id: user.id,
-                            status: 'pending',
-                            // إذا أردت حفظ رابط الصورة المرفوعة في جدول الإرساليات، تأكد من وجود عمود باسم proof_url بنوع text في جدولك
-                            // وإذا لم يكن موجوداً، يمكنك إزالة السطر أدناه دون مشاكل
-                            proof_url: proofUrl, 
-                            created_at: new Date()
-                        }
-                    ]);
+                const payload = {
+                    task_id: taskId,
+                    user_email: currentUser.email,
+                    proof_image: proofBase64
+                };
 
-                if (insertError) throw insertError;
+                const response = await fetch(`${API_URL}/submit-task`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.message || "Failed to submit task.");
+                }
 
                 alert("Success! Your submission is recorded. The task is now locked and frozen for you.");
-                window.location.href = 'dashboard.html'; // العودة لتجدها قد اختفت تماماً
+                window.location.href = 'dashboard.html'; // العودة للوحة التحكم
 
             } catch (error) {
                 alert("Error: " + error.message);
@@ -275,6 +266,16 @@
                 submitBtn.innerText = "Submit & Freeze Task";
             }
         });
+
+        // دالة مساعدة لتحويل الملف إلى Base64 لتخزينه بسهولة مع الـ JSON
+        function convertFileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
     </script>
 </body>
 </html>
