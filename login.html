@@ -1,157 +1,50 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - The BlackFlower</title>
-    
-    <!-- رابط كود الستايل الخارجي الخاص بك -->
-    <link rel="stylesheet" href="css/style.css">
-    
-    <style>
-        /* ستايلات مخصصة فقط للفورم تتماشى مع طابعك الفخم */
-        .form-group {
-            margin-bottom: 20px;
-            width: 100%;
-            max-width: 400px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            background-color: #000000;
-            border: 1px solid #444444;
-            color: #ffffff;
-            font-family: inherit;
-        }
-        .form-group input:focus {
-            outline: none;
-            border-color: #ffffff;
-        }
-        .account-links {
-            margin-top: 30px; 
-            border-top: 1px dashed #333333; 
-            padding-top: 20px;
-            text-align: center;
-            font-size: 0.9rem;
-            line-height: 2;
-        }
-        /* تنسيق رسائل الرد (نجاح / خطأ) */
-        #response-message {
-            margin-top: 20px;
-            padding: 10px;
-            text-align: center;
-            font-size: 0.9rem;
-            max-width: 400px;
-            width: 100%;
-        }
-        #response-message.success {
-            color: #4CAF50;
-            border: 1px solid #4CAF50;
-        }
-        #response-message.error {
-            color: #f44336;
-            border: 1px solid #f44336;
-        }
-    </style>
-</head>
-<body>
+<script>
+    document.getElementById('login-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
 
-    <header class="main-header">
-        <div class="header-container">
-            <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
-            <div class="header-text-block">
-                <div class="brand-title">The BlackFlower</div>
-                <div class="brand-subtitle">Professional Art</div>
-            </div>
-        </div>
-    </header>
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        const msgBox = document.getElementById('response-message');
+        const submitBtn = document.getElementById('login-btn');
 
-    <div class="container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px;">
-        <h2 style="text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Login</h2>
-        <p style="color: #aaaaaa; margin-bottom: 40px; font-size: 0.9rem;">Enter your details to access your art account.</p>
-        
-        <form id="login-form" style="width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center;">
-            <div class="form-group">
-                <label for="login-email">Email Address</label>
-                <input type="email" id="login-email" placeholder="name@example.com" required>
-            </div>
+        submitBtn.textContent = 'Authenticating...';
+        submitBtn.disabled = true;
 
-            <div class="form-group">
-                <label for="login-password">Password</label>
-                <input type="password" id="login-password" placeholder="••••••••" required>
-            </div>
+        try {
+            // إرسال البيانات إلى السيرفر (استبدل الرابط برابط سيرفرك المستضاف لاحقاً)
+            const response = await fetch('http://localhost:5000/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
 
-            <div class="auth-buttons-container" style="margin-top: 20px; width: 100%;">
-                <button type="submit" id="login-btn" class="btn-blackflower" style="width: 100%;">Login</button>
-            </div>
-        </form>
+            const result = await response.json();
 
-        <p id="response-message" style="display: none;"></p>
+            msgBox.style.display = 'block';
+            if (response.ok && result.success) {
+                msgBox.style.color = '#4CAF50';
+                msgBox.textContent = `Welcome back, ${result.user.username}! Redirecting...`;
+                
+                localStorage.setItem('user', JSON.stringify(result.user));
 
-        <div class="account-links">
-            <p>Don't have an account? <a href="register.html" style="color: #fff; text-decoration: underline;">Create New Account</a></p>
-            <p>Forgot your password? <a href="forgot-password.html" style="color: #aaa;">Recover your account here</a></p>
-        </div>
-    </div>
-
-    <!-- كود الجافاسكريبت للربط مع السيرفر و MongoDB -->
-    <script>
-        document.getElementById('login-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            const msgBox = document.getElementById('response-message');
-            const submitBtn = document.getElementById('login-btn');
-
-            submitBtn.textContent = 'Authenticating...';
-            submitBtn.disabled = true;
-
-            try {
-                // إرسال البيانات كملف JSON إلى السيرفر الخلفي
-                const response = await fetch('http://localhost:5000/api/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                });
-
-                const result = await response.json();
-
-                msgBox.style.display = 'block';
-                if (result.success) {
-                    msgBox.className = 'success';
-                    msgBox.textContent = `Welcome back, ${result.user.username}! Redirecting...`;
-                    
-                    // حفظ بيانات المستخدم في الـ LocalStorage إذا أردت استخدامها في الموقع
-                    localStorage.setItem('user', JSON.stringify(result.user));
-
-                    setTimeout(() => {
-                        window.location.href = 'index.html'; // الانتقال للصفحة الرئيسية للموقع بعد النجاح
-                    }, 1500);
-                } else {
-                    msgBox.className = 'error';
-                    msgBox.textContent = result.message || 'Invalid email or password.';
-                    submitBtn.textContent = 'Login';
-                    submitBtn.disabled = false;
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                msgBox.style.display = 'block';
-                msgBox.className = 'error';
-                msgBox.textContent = 'Server connection error. Please check if the backend is running.';
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+            } else {
+                msgBox.style.color = '#f44336';
+                msgBox.textContent = result.message || 'Invalid email or password.';
                 submitBtn.textContent = 'Login';
                 submitBtn.disabled = false;
             }
-        });
-    </script>
-</body>
-</html>
+        } catch (error) {
+            console.error('Error:', error);
+            msgBox.style.display = 'block';
+            msgBox.style.color = '#f44336';
+            msgBox.textContent = 'Server connection error. Make sure the backend is running.';
+            submitBtn.textContent = 'Login';
+            submitBtn.disabled = false;
+        }
+    });
+</script>
