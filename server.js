@@ -32,11 +32,11 @@ const userSchema = new mongoose.Schema({
         withdrawalsCount: { type: Number, default: 0 },
         adsPosted: { type: Number, default: 0 },
         tasksCreated: { type: Number, default: 0 },
-        isOnline: { type: Boolean, default: true },
+        isOnline: { type: Boolean, default: false },
         isBanned: { type: Boolean, default: false },
-        country: { type: String, default: 'Global' },
+        country: { type: String, default: 'Jordan (Amman)' },
         ipChanges: { type: Number, default: 0 },
-        loginCount: { type: Number, default: 1 }
+        loginCount: { type: Number, default: 0 }
     },
     createdAt: { type: Date, default: Date.now }
 });
@@ -52,10 +52,31 @@ const notificationSchema = new mongoose.Schema({
 });
 const Notification = mongoose.model('Notification', notificationSchema);
 
-// --- مسارات الـ API ---
+// --- مسارات الـ API الأساسية ---
 
-// 1. مسار التسجيل المفتوح (يسمح لأي شخص بالتسجيل وإنشاء ملف الداشبورد تلقائياً)
-app.post('/api/register', async (req, res) => {
+// 1. مسار تسجيل الدخول (مخصص للمستخدمين الذين أنشأت لهم الإدارة حسابات مسبقاً)
+app.post('/api/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const user = await User.findOne({ email });
+        
+        if (!user || user.password !== password) {
+            return res.status(401).json({ success: false, message: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' });
+        }
+
+        // تحديث حالة الاتصال وعدد مرات الدخول داخل ملف الـ JSON
+        user.dashboardData.isOnline = true;
+        user.dashboardData.loginCount = (user.dashboardData.loginCount || 0) + 1;
+        await user.save();
+
+        res.json({ success: true, message: 'تم تسجيل الدخول بنجاح', user });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// 2. مسار إنشاء حساب جديد (يُستدعى حصرياً بواسطة مدير النظام لإنشاء حساب وتوليد ملف الداشبورد في MongoDB)
+app.post('/api/admin/create-user', async (req, res) => {
     try {
         const { username, email, password } = req.body;
         
@@ -77,11 +98,11 @@ app.post('/api/register', async (req, res) => {
                 withdrawalsCount: 0,
                 adsPosted: 0,
                 tasksCreated: 0,
-                isOnline: true,
+                isOnline: false,
                 isBanned: false,
-                country: 'Global',
+                country: 'Jordan (Amman)',
                 ipChanges: 0,
-                loginCount: 1
+                loginCount: 0
             }
         });
 
@@ -89,7 +110,7 @@ app.post('/api/register', async (req, res) => {
 
         res.status(201).json({ 
             success: true, 
-            message: 'تم إنشاء الحساب وحفظ البيانات بنجاح', 
+            message: 'تم إنشاء الحساب وملف الداشبورد في MongoDB بنجاح بواسطة الإدارة', 
             user: newUser 
         });
     } catch (err) {
@@ -97,31 +118,36 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
-// 2. مسار تسجيل الدخول للمستخدمين المسجلين مسبقاً
-app.post('/api/login', async (req, res) => {
+// 3. جلب جميع المستخدمين (للوحة تحكم المدير)
+app.get('/api/admin/users', async (req, res) => {
     try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
-        
-        if (!user || user.password !== password) {
-            return res.status(401).json({ success: false, message: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' });
-        }
-
-        user.dashboardData.isOnline = true;
-        user.dashboardData.loginCount = (user.dashboardData.loginCount || 0) + 1;
-        await user.save();
-
-        res.json({ success: true, message: 'تم تسجيل الدخول بنجاح', user });
+        const users = await User.find({});
+        res.json({ success: true, users });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 });
 
-// 3. جلب جميع المستخدمين (للوحة المدير)
-app.get('/api/admin/users', async (req, res) => {
+// 4. إرسال الأموال أو الأرصدة للمستخدم مع إنشاء إشعار فوري
+app.post('/api/user/send-funds', async (req, res) => {
     try {
-        const users = await User.find({});
-        res.json({ success: true, users });
+        const { userId, amount, reason } = req.body;
+        const user = await User.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
+        }
+
+        user.dashboardData.balance += parseFloat(amount);
+        await user.save();
+
+        const notifMessage = `تم إضافة مبلغ ${amount} BFP إلى رصيدك. السبب: ${reason || 'تحويل مباشر من الإدارة'}`;
+        await Notification.create({
+            userId: user._id,
+            message: notifMessage
+        });
+
+        res.json({ success: true, message: 'تم إرسال الأموال وإنشاء الإشعار بنجاح', newBalance: user.dashboardData.balance });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
