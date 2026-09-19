@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - The BlackFlower</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <!-- رابط كود الستايل الخارجي الخاص بك -->
     <link rel="stylesheet" href="css/style.css">
     
@@ -44,6 +42,23 @@
             font-size: 0.9rem;
             line-height: 2;
         }
+        /* تنسيق رسائل الرد (نجاح / خطأ) */
+        #response-message {
+            margin-top: 20px;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.9rem;
+            max-width: 400px;
+            width: 100%;
+        }
+        #response-message.success {
+            color: #4CAF50;
+            border: 1px solid #4CAF50;
+        }
+        #response-message.error {
+            color: #f44336;
+            border: 1px solid #f44336;
+        }
     </style>
 </head>
 <body>
@@ -58,7 +73,7 @@
         </div>
     </header>
 
-    <div class="container">
+    <div class="container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px;">
         <h2 style="text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Login</h2>
         <p style="color: #aaaaaa; margin-bottom: 40px; font-size: 0.9rem;">Enter your details to access your art account.</p>
         
@@ -73,21 +88,70 @@
                 <input type="password" id="login-password" placeholder="••••••••" required>
             </div>
 
-            <div class="auth-buttons-container" style="margin-top: 20px;">
-                <!-- استخدام كلاس الزر الفخم الخاص بك هنا -->
-                <button type="submit" id="login-btn" class="btn-blackflower">Login</button>
+            <div class="auth-buttons-container" style="margin-top: 20px; width: 100%;">
+                <button type="submit" id="login-btn" class="btn-blackflower" style="width: 100%;">Login</button>
             </div>
         </form>
 
-        <div class="account-links">
-            <p>Don't have an account? <a href="register.html">Create New Account</a></p>
-            <p>Forgot your password? <a href="forgot-password.html">Recover your account here</a></p>
-        </div>
+        <p id="response-message" style="display: none;"></p>
 
-        <p id="response-message" class="msg" style="display: none;"></p>
+        <div class="account-links">
+            <p>Don't have an account? <a href="register.html" style="color: #fff; text-decoration: underline;">Create New Account</a></p>
+            <p>Forgot your password? <a href="forgot-password.html" style="color: #aaa;">Recover your account here</a></p>
+        </div>
     </div>
 
-    <script src="js/supabase-config.js"></script>
-    <script src="js/auth.js"></script>
+    <!-- كود الجافاسكريبت للربط مع السيرفر و MongoDB -->
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const msgBox = document.getElementById('response-message');
+            const submitBtn = document.getElementById('login-btn');
+
+            submitBtn.textContent = 'Authenticating...';
+            submitBtn.disabled = true;
+
+            try {
+                // إرسال البيانات كملف JSON إلى السيرفر الخلفي
+                const response = await fetch('http://localhost:5000/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                msgBox.style.display = 'block';
+                if (result.success) {
+                    msgBox.className = 'success';
+                    msgBox.textContent = `Welcome back, ${result.user.username}! Redirecting...`;
+                    
+                    // حفظ بيانات المستخدم في الـ LocalStorage إذا أردت استخدامها في الموقع
+                    localStorage.setItem('user', JSON.stringify(result.user));
+
+                    setTimeout(() => {
+                        window.location.href = 'index.html'; // الانتقال للصفحة الرئيسية للموقع بعد النجاح
+                    }, 1500);
+                } else {
+                    msgBox.className = 'error';
+                    msgBox.textContent = result.message || 'Invalid email or password.';
+                    submitBtn.textContent = 'Login';
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                msgBox.style.display = 'block';
+                msgBox.className = 'error';
+                msgBox.textContent = 'Server connection error. Please check if the backend is running.';
+                submitBtn.textContent = 'Login';
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
 </body>
 </html>
