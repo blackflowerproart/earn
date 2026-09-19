@@ -15,15 +15,16 @@
         input:focus { border-color: #aaa; }
         .btn-submit { width: 100%; background: #fff; color: #000; border: 1px solid #fff; padding: 12px; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: 10px; }
         .btn-submit:hover { background: #000; color: #fff; }
-        .auth-links { margin-top: 20px; font-size: 0.8rem; }
+        .auth-links { margin-top: 20px; font-size: 0.8rem; display: flex; justify-content: space-between; }
         .auth-links a { color: #fff; text-decoration: underline; }
-        #message { margin-top: 15px; font-size: 0.85rem; }
+        .auth-links a:hover { color: #aaa; }
+        #message { margin-top: 15px; font-size: 0.85rem; color: #fff; }
     </style>
 </head>
 <body>
 
     <div class="auth-card">
-        <h1>Register</h1>
+        <h1>Create Account</h1>
         <form id="registerForm">
             <div class="form-group">
                 <label>Username</label>
@@ -37,11 +38,11 @@
                 <label>Password</label>
                 <input type="password" id="password" required>
             </div>
-            <button type="submit" class="btn-submit">Create Account</button>
+            <button type="submit" class="btn-submit">Sign Up</button>
         </form>
         <div id="message"></div>
         <div class="auth-links">
-            <a href="login.html">Already have an account? Login</a>
+            <a href="login.html">Already have an account? Sign In</a>
         </div>
     </div>
 
@@ -66,10 +67,10 @@
                 const data = await res.json();
 
                 if (res.ok && data.success) {
-                    msg.innerText = 'Account created successfully! Redirecting to login...';
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 1500);
+                    // حفظ بيانات المستخدم والداشبورد في الـ localStorage لتسجيل الدخول التلقائي
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    // الانتقال التلقائي للداشبورد مباشرة بعد التسجيل لأول مرة
+                    window.location.href = 'dashboard.html';
                 } else {
                     msg.innerText = data.message || 'Registration failed.';
                 }
