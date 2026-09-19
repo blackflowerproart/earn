@@ -4,214 +4,54 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - The BlackFlower</title>
-    
     <link rel="stylesheet" href="css/style.css">
-
     <style>
-        .control-panel-bar {
-            width: 100%;
-            background-color: #000000;
+        .dashboard-container {
+            max-width: 800px;
+            margin: 40px auto;
             border: 2px solid #ffffff;
-            margin-top: 20px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .user-stats-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            border-bottom: 1px dashed #333333;
-            padding-bottom: 15px;
-        }
-
-        .stat-item {
-            font-size: 1.1rem;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-
-        .stat-item span {
-            color: #aaaaaa;
-            font-family: monospace;
-            transition: all 0.3s ease;
-        }
-
-        .navigation-buttons-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            justify-content: flex-start;
-        }
-
-        .control-panel-bar .btn-blackflower {
-            padding: 12px 25px;
-            font-size: 0.95rem;
-            flex: 1;
-            min-width: calc(20% - 15px);
+            background-color: #000000;
+            padding: 30px;
             text-align: center;
         }
-
-        .bottom-content-section {
-            width: 100%;
-            margin-top: 40px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-        }
-
-        .content-box {
-            border: 1px solid #ffffff;
-            background-color: #050505;
-            padding: 25px;
-            min-height: 250px;
-        }
-
-        .content-box h3 {
+        .dashboard-container h1 {
             text-transform: uppercase;
             letter-spacing: 2px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #222222;
-            padding-bottom: 10px;
+            margin-bottom: 10px;
         }
-
-        .task-card, .ad-card-item {
-            border: 1px solid #333333;
-            background-color: #000000;
-            padding: 20px;
-            margin-bottom: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            transition: border-color 0.3s ease;
-        }
-
-        .task-card:hover, .ad-card-item:hover {
-            border-color: #ffffff;
-        }
-
-        .task-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .task-title {
-            font-family: "Times New Roman", Times, serif;
-            font-size: 1.2rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            color: #ffffff;
-        }
-
-        .task-price {
-            font-family: monospace;
+        .welcome-msg {
             color: #00ff77;
-            border: 1px solid #00ff77;
-            padding: 2px 8px;
-            font-size: 0.95rem;
-            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            font-family: monospace;
         }
-
-        .task-action-btn {
-            background-color: #ffffff;
-            color: #000000;
-            border: 1px solid #ffffff;
-            padding: 10px;
-            font-weight: bold;
-            text-transform: uppercase;
-            cursor: pointer;
-            text-align: center;
-            text-decoration: none;
-            font-size: 0.85rem;
-            transition: all 0.2s ease;
-            width: 100%;
-        }
-
-        .task-action-btn:hover {
-            background-color: #000000;
-            color: #ffffff;
-        }
-
-        @media (max-width: 768px) {
-            .user-stats-row {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            .control-panel-bar .btn-blackflower {
-                min-width: 100%;
-            }
+        .dashboard-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
         }
     </style>
 </head>
 <body>
 
-    <header class="main-header">
-        <div class="header-container">
-            <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
-            <div class="header-text-block">
-                <div class="brand-title">The BlackFlower</div>
-                <div class="brand-subtitle">Professional Art</div>
-            </div>
-        </div>
-    </header>
-
-    <div class="container" style="margin-top: 30px; max-width: 100%;">
-        
-        <div class="control-panel-bar">
+    <div class="container">
+        <div class="dashboard-container">
+            <h1>Control Panel</h1>
+            <div id="welcomeUser" class="welcome-msg">Welcome back!</div>
             
-            <div class="user-stats-row">
-                <div class="stat-item">👤 Username: <span id="user-display-name">Loading...</span></div>
-                <div class="stat-item">💰 Wallet Balance: <span id="wallet-balance">0.0000</span> $</div>
-                <div class="stat-item">🛡️ Rank: <span id="account-type-status">Member</span></div>
-            </div>
+            <p style="color: #aaa; margin-bottom: 20px;">Manage your tasks, create new advertising campaigns, and control your activities from here.</p>
 
-            <div class="navigation-buttons-row">
-                <button onclick="window.location.href='dashboard.html'" class="btn-blackflower">🏠 Dashboard</button>
-                <button onclick="window.location.href='tasks.html'" class="btn-blackflower">📋 Tasks</button>
-                <button onclick="window.location.href='ads.html'" class="btn-blackflower">📺 Advertisements</button>
-                <button onclick="window.location.href='mining.html'" class="btn-blackflower">⛏️ Mining Room</button>
-                <button onclick="window.location.href='faucet.html'" class="btn-blackflower">🚰 Faucet Gift</button>
-                <button onclick="window.location.href='wallet-io.html'" class="btn-blackflower">💳 Wallet Transfer</button>
-                <button onclick="window.location.href='live-chat.html'" class="btn-blackflower">💬 Live Support</button>
-                <button onclick="window.location.href='settings.html'" class="btn-blackflower">⚙️ Account Settings</button>
-                
-                <button id="admin-panel-btn" onclick="window.location.href='admin.html'" class="btn-blackflower" style="display: none; border-color: #00ff77; color: #00ff77;">👑 Admin Panel</button>
-                
-                <button id="logout-btn" class="btn-blackflower" style="border-color: #ff4444; color: #ff4444;">🚪 Logout</button>
+            <div class="dashboard-actions">
+                <button onclick="window.location.href='tasks.html'" class="btn-blackflower" style="border-color: #00ff77; color: #00ff77;">📋 Manage My Tasks</button>
+                <button onclick="logout()" class="btn-blackflower" style="border-color: #ff4444; color: #ff4444;">🚪 Logout</button>
             </div>
         </div>
-
-        <div class="bottom-content-section">
-            
-            <div class="content-box">
-                <h3>📋 Available Tasks</h3>
-                <div id="tasks-container-display">
-                    <p style="color: #666; font-size: 0.95rem;">Active tasks will load here directly...</p>
-                </div>
-            </div>
-
-            <div class="content-box">
-                <h3>📺 Featured Ads</h3>
-                <div id="ads-container-display">
-                    <p style="color: #666; font-size: 0.95rem;">Sponsored advertisements will stream here...</p>
-                </div>
-            </div>
-
-        </div>
-
     </div>
 
     <script>
-        const API_URL = 'http://localhost:5000/api';
-
-        document.addEventListener("DOMContentLoaded", () => {
+        document.addEventListener('DOMContentLoaded', () => {
             const savedUser = localStorage.getItem('user');
             if (!savedUser) {
                 alert('Please login first');
@@ -219,111 +59,13 @@
                 return;
             }
 
-            const currentUser = JSON.parse(savedUser);
-            
-            // تعبئة البيانات الأساسية للمستخدم من التخزين المحلي والسيرفر
-            document.getElementById('user-display-name').textContent = currentUser.username || currentUser.email;
-            if (currentUser.balance !== undefined) {
-                document.getElementById('wallet-balance').textContent = parseFloat(currentUser.balance).toFixed(4);
-            }
-            if (currentUser.role === 'admin') {
-                document.getElementById('admin-panel-btn').style.display = 'block';
-            }
-
-            // جلب البيانات المحدثة من MongoDB وسحب المهام والإعلانات
-            loadUserDataFromMongo(currentUser.email);
-            loadDashboardTasks(currentUser.email);
-            loadDashboardAds();
-
-            // زر تسجيل الخروج
-            document.getElementById('logout-btn').addEventListener('click', () => {
-                localStorage.removeItem('user');
-                window.location.href = 'login.html';
-            });
+            const user = JSON.parse(savedUser);
+            document.getElementById('welcomeUser').innerText = `Welcome, ${user.username || user.email}!`;
         });
 
-        // جلب أحدث بيانات المستخدم (الرصيد وغيرها) من السيرفر المحلي
-        async function loadUserDataFromMongo(email) {
-            try {
-                const response = await fetch(`${API_URL}/user-profile?email=${encodeURIComponent(email)}`);
-                const result = await response.json();
-                if (result.success && result.user) {
-                    document.getElementById('wallet-balance').textContent = parseFloat(result.user.balance || 0).toFixed(4);
-                    if (result.user.role === 'admin') {
-                        document.getElementById('admin-panel-btn').style.display = 'block';
-                    }
-                }
-            } catch (error) {
-                console.error("Error fetching user profile:", error);
-            }
-        }
-
-        // جلب المهام الفعالة بصيغة JSON من قاعدة البيانات
-        async function loadDashboardTasks(email) {
-            const container = document.getElementById('tasks-container-display');
-            
-            try {
-                const response = await fetch(`${API_URL}/tasks?email=${encodeURIComponent(email)}`);
-                const result = await response.json();
-
-                if (!result.success || !result.tasks || result.tasks.length === 0) {
-                    container.innerHTML = `<p style="color: #666; font-size: 0.95rem;">No tasks active for today.</p>`;
-                    return;
-                }
-
-                container.innerHTML = "";
-                result.tasks.forEach(task => {
-                    const card = document.createElement('div');
-                    card.className = 'task-card';
-                    card.innerHTML = `
-                        <div class="task-header">
-                            <span class="task-title">${task.title}</span>
-                            <span class="task-price">+$${parseFloat(task.reward || 0.00).toFixed(4)}</span>
-                        </div>
-                        <div style="margin-top: 5px;">
-                            <button onclick="window.location.href='execute-task.html?id=${task._id}'" class="task-action-btn">Complete & Earn</button>
-                        </div>
-                    `;
-                    container.appendChild(card);
-                });
-
-            } catch (err) {
-                console.error("Error loading dashboard tasks:", err);
-                container.innerHTML = `<p style="color: #ff4444; font-size: 0.9rem;">Error loading tasks from local server.</p>`;
-            }
-        }
-
-        // جلب الإعلانات المميزة لعرضها في لوحة التحكم
-        async function loadDashboardAds() {
-            const adsContainer = document.getElementById('ads-container-display');
-            try {
-                const response = await fetch(`${API_URL}/ads`);
-                const result = await response.json();
-
-                if (!result.success || !result.ads || result.ads.length === 0) {
-                    adsContainer.innerHTML = `<p style="color: #666; font-size: 0.95rem;">No active advertisements available.</p>`;
-                    return;
-                }
-
-                adsContainer.innerHTML = "";
-                // عرض أول إعلانين أو ثلاثة كنموذج في الداشبورد
-                result.ads.slice(0, 3).forEach(ad => {
-                    const adCard = document.createElement('div');
-                    adCard.className = 'ad-card-item';
-                    adCard.innerHTML = `
-                        <div class="task-header">
-                            <span class="task-title">${ad.title}</span>
-                            <span class="task-price" style="color: #ff00ff; border-color: #ff00ff;">📺 ${ad.ad_type}</span>
-                        </div>
-                        <p style="color: #aaa; font-size: 0.85rem; margin: 0;">${ad.description}</p>
-                        <button onclick="window.location.href='ads.html'" class="task-action-btn" style="border-color: #ff00ff; color: #ff00ff;">Watch & Earn</button>
-                    `;
-                    adsContainer.appendChild(adCard);
-                });
-            } catch (error) {
-                console.error("Error loading ads:", error);
-                adsContainer.innerHTML = `<p style="color: #666; font-size: 0.95rem;">Failed to load advertisements.</p>`;
-            }
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
         }
     </script>
 </body>
