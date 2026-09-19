@@ -6,14 +6,14 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// الاتصال بقاعدة بيانات MongoDB
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://blackflower:cluster0@cluster0.mongodb.net/blackflower_art?retryWrites=true&w=majority';
+// الاتصال بقاعدة بيانات MongoDB الخاصة بك (تأكد من وضع كلمة المرور مكان <db_password>)
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://blackflowerproart_db_user:En123456789@membersinfo.tmqa7zr.mongodb.net/blackflower_art?retryWrites=true&w=majority&appName=Membersinfo';
 
 mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
 }).then(() => {
-    console.log('Connected to MongoDB successfully.');
+    console.log('Connected to MongoDB (Membersinfo) successfully.');
 }).catch(err => {
     console.error('MongoDB connection error:', err);
 });
@@ -64,7 +64,6 @@ app.post('/api/login', async (req, res) => {
             return res.status(401).json({ success: false, message: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' });
         }
 
-        // تحديث حالة الاتصال وعدد مرات الدخول في ملف الـ JSON الخاص بالداشبورد
         user.dashboardData.isOnline = true;
         user.dashboardData.loginCount = (user.dashboardData.loginCount || 0) + 1;
         await user.save();
@@ -75,7 +74,7 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// 2. مسار إنشاء الحساب وإصدار ملف الداشبورد في MongoDB (يُدار ويُنفذ عبر مدير النظام)
+// 2. مسار إنشاء الحساب وإصدار ملف الداشبورد (يُدار حصرياً بواسطة مدير النظام)
 app.post('/api/admin/create-user', async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -118,7 +117,7 @@ app.post('/api/admin/create-user', async (req, res) => {
     }
 });
 
-// 3. جلب كافة المستخدمين للوحة الإدارة
+// 3. جلب كافة المستخدمين لوحة الإدارة
 app.get('/api/admin/users', async (req, res) => {
     try {
         const users = await User.find({});
