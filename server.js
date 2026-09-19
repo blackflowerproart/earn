@@ -3,18 +3,17 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
-const path = require('path');
 
 const app = express();
 
 // إعدادات الـ Middleware
-app.use(cors()); // السماح بالاتصالات الخارجية من موقعك
-app.use(express.json()); // قراءة البيانات بصيغة JSON
+app.use(cors());
+app.use(express.json());
 
-// إعداد رفع الملفات (Multer) لتخزين الصور مؤقتاً أو حفظها
+// إعداد رفع الملفات (Multer)
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/'); // تأكد من وجود مجلد uploads أو سيتم التعامل معه
+        cb(null, 'uploads/');
     },
     filename: function (req, file, cb) {
         cb(null, Date.now() + '-' + file.originalname);
@@ -22,7 +21,8 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-const MONGO_URI = 'mongodb+srv://blackflowerproart_db_user:Er123456789@membersinfo.tmqa7zr.mongodb.net/?appName=Membersinfo';
+// الاتصال بقاعدة بيانات MongoDB Atlas
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://blackflowerproart_db_user:كلمة_مرور_القاعدة@membersinfo.tmqa7zr.mongodb.net/?appName=Membersinfo';
 
 mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
@@ -31,16 +31,18 @@ mongoose.connect(MONGO_URI, {
 .then(() => console.log('✅ Connected to MongoDB successfully'))
 .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// 1. نموذج المستخدم (User Schema)
+// نموذج المستخدم (User Schema) مع دعم الرصيد والنقاط والمستويات
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    balance: { type: Number, default: 100.00 }, // الرصيد الافتراضي بعملة BFP
+    xp: { type: Number, default: 0 },          // النقاط لتحديد المستوى
     createdAt: { type: Date, default: Date.now }
 });
 const User = mongoose.model('User', userSchema);
 
-// 2. نموذج المهام (Task Schema)
+// نموذج المهام (Task Schema)
 const taskSchema = new mongoose.Schema({
     user_id: { type: String, required: true },
     title: { type: String, required: true },
@@ -53,30 +55,21 @@ const taskSchema = new mongoose.Schema({
 });
 const Task = mongoose.model('Task', taskSchema);
 
-
 // ==================== مسارات الـ API ====================
 
-// أ. مسار التسجيل (Register)
+// أ. مسار التسجيل
 app.post('/api/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
-        
-        // التحقق مما إذا كان المستخدم موجوداً مسبقاً
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ success: false, message: 'Email already registered.' });
         }
 
-        // تشفير كلمة المرور
         const hashedPassword = await bcrypt.hash(password, 10);
-
-        const newUser = new User({
-            username,
-            email,
-            password: hashedPassword
-        });
-
+        const newUser = new User({ username, email, password: hashedPassword });
         await newUser.save();
+
         res.status(201).json({ success: true, message: 'Account created successfully!' });
     } catch (error) {
         console.error(error);
@@ -84,11 +77,10 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
-// ب. مسار تسجيل الدخول (Login)
+// ب. مسار تسجيل الدخول (مع إعادة بيانات الرصيد والنقاط)
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(400).json({ success: false, message: 'Invalid email or password.' });
@@ -105,7 +97,9 @@ app.post('/api/login', async (req, res) => {
             user: {
                 id: user._id,
                 username: user.username,
-                email: user.email
+                email: user.email,
+                balance: user.balance,
+                xp: user.xp
             }
         });
     } catch (error) {
@@ -114,59 +108,64 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// ج. مسار إعادة تعيين كلمة المرور (Reset Password)
+// ج. مسار جلب معلومات المستخدم بالتحديد
+app.get('/api/user', async (req, res) => {
+    try {
+        const { id } = req.query;
+        if (!id) return res.status(400).json({ success: false, message: 'User ID is required.' });
+
+        const user = await User.findById(id);
+        if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
+
+        res.json({
+            success: true,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                balance: user.balance,
+                xp: user.xp
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error fetching user data.' });
+    }
+});
+
+// د. مسار إعادة تعيين كلمة المرور
 app.post('/api/reset-password', async (req, res) => {
     try {
         const { email, newPassword } = req.body;
-
         const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found.' });
-        }
+        if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
 
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        user.password = hashedPassword;
+        user.password = await bcrypt.hash(newPassword, 10);
         await user.save();
 
         res.json({ success: true, message: 'Password updated successfully!' });
     } catch (error) {
-        console.error(error);
         res.status(500).json({ success: false, message: 'Server error.' });
     }
 });
 
-// د. مسار جلب المهام الخاصة بالمستخدم (Get Tasks)
+// هـ. مسار جلب المهام
 app.get('/api/tasks', async (req, res) => {
     try {
-        const { user_id } = req.query;
-        if (!user_id) {
-            return res.status(400).json({ success: false, message: 'User ID is required.' });
-        }
-
-        const tasks = await Task.find({ user_id }).sort({ created_at: -1 });
+        const tasks = await Task.find().sort({ created_at: -1 });
         res.json({ success: true, tasks });
     } catch (error) {
-        console.error(error);
         res.status(500).json({ success: false, message: 'Error fetching tasks.' });
     }
 });
 
-// هـ. مسار إنشاء ونشر مهمة جديدة (Create Task)
+// و. مسار إنشاء مهمة جديدة
 app.post('/api/tasks', upload.single('media'), async (req, res) => {
     try {
         const { user_id, title, details, target_url, price, duration_days } = req.body;
-        
-        let mediaUrl = null;
-        if (req.file) {
-            // يمكنك رفع الرابط على خدمة تخزين سحابي مثل Cloudinary أو حفظ مساره المحلي
-            mediaUrl = `/uploads/${req.file.filename}`;
-        }
+        let mediaUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
         const newTask = new Task({
-            user_id,
-            title,
-            details,
-            target_url,
+            user_id, title, details, target_url,
             price: parseFloat(price),
             duration_days: parseInt(duration_days),
             media_url: mediaUrl
@@ -175,13 +174,9 @@ app.post('/api/tasks', upload.single('media'), async (req, res) => {
         await newTask.save();
         res.status(201).json({ success: true, message: 'Task created successfully!', task: newTask });
     } catch (error) {
-        console.error(error);
         res.status(500).json({ success: false, message: 'Error creating task.' });
     }
 });
 
-// تشغيل السيرفر على البورت المحدد من المنصة السحابية أو بورت افتراضي
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
