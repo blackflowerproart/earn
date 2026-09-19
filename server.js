@@ -1,92 +1,118 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
 const cors = require('cors');
 
 const app = express();
-
-// Middleware
 app.use(express.json());
 app.use(cors());
 
-// تجاهل طلب أيقونة المتصفح لمنع أخطاء 404
-app.get('/favicon.ico', (req, res) => res.status(204).end());
-
-// الاتصال بقاعدة بيانات MongoDB (استبدل الرابط برابط الاتصال الخاص بك أو المتغيرات البيئية)
-const MONGO_URI = process.env.MONGO_URI || 'YOUR_MONGODB_CONNECTION_STRING_HERE';
+// الاتصال بقاعدة بيانات MongoDB (يمكنك استبدال الرابط برابط الاتصال الخاص بك)
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/blackflower_db';
 
 mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
 }).then(() => {
     console.log('Connected to MongoDB successfully.');
-}).catch((err) => {
+}).catch(err => {
     console.error('MongoDB connection error:', err);
 });
 
-// تعريف مخطط المستخدم (User Schema) الشامل
+// نموذج المستخدم (User Schema)
 const userSchema = new mongoose.Schema({
-    username: { type: String, required: true, unique: true },
+    username: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     balance: { type: Number, default: 0 },
     level: { type: Number, default: 1 },
-    isOnline: { type: Boolean, default: false },
-    country: { type: String, default: 'Jordan' },
-    ipChanges: { type: Number, default: 0 },
-    lastIp: { type: String, default: '' },
-    loginCount: { type: Number, default: 0 },
-    adsViewed: { type: Number, default: 0 },
     tasksDone: { type: Number, default: 0 },
-    depositsCount: { type: Number, default: 0 },
-    withdrawalsCount: { type: Number, default: 0 },
-    adsPosted: { type: Number, default: 0 },
-    tasksCreated: { type: Number, default: 0 },
-    isBanned: { type: Boolean, default: false },
-    createdAt: { type: Date, default: Date.now }
+    adsViewed: { type: Number, default: 0 }
 });
 
 const User = mongoose.model('User', userSchema);
 
-// تخزين مؤقت للرسائل والإشعارات الخاصة بالنظام والمدير التنفيذي
-let systemNotifications = [];
+// نموذج الإشعارات أو التنبيهات (Notification Schema)
+const notificationSchema = new mongoose.Schema({
+    message: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now }
+});
 
-// ==========================================
-// مسارات المصادقة وتسجيل الدخول (Authentication APIs)
-// ==========================================
+const Notification = mongoose.model('Notification', notificationSchema);
 
+// ================= API Routes =================
+
+// 1. مسار تسجيل الدخول
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-
-        // البحث عن المستخدم بواسطة البريد أو اسم المستخدم
-        const user = await User.findOne({ 
-            $or: [{ email: email }, { username: email }] 
-        });
-
+        
+        // البحث عن المستخدم بالبريد الإلكتروني أو اسم المستخدم
+        const user = await User.findOne({ $or: [{ email: email }, { username: email }] });
+        
         if (!user) {
-            return res.status(400).json({ success: false, message: 'Invalid email or password.' });
+            return.status(400).json({ success: false, message: 'Invalid email or username.' });
         }
 
-        // التحقق مما إذا كان الحساب محظوراً
-        if (user.isBanned) {
-            return res.status(403).json({ success: false, message: 'This account has been suspended by the executive admin.' });
+        // ملاحظة: يمكنك إضافة التحقق من كلمة المرور المشفرة هنا لاحقاً
+        if (user.password !== password) {
+            return.status(400).json({ success: false, message: 'Incorrect password.' });
         }
 
-        // التحقق من صحة كلمة المرور
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ success: false, message: 'Invalid email or password.' });
+        res.json({
+            success: true,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                balance: user.balance,
+                level: user.level,
+                tasksDone: user.tasksDone,
+                adsViewed: user.adsViewed
+            }
+        });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ success: false, message: 'Server error during login.' });
+    }
+});
+
+// 2. مسار جلب الإشعارات العامة للبث
+app.get('/api/notifications', async (req, res) => {
+    try {
+        const notifications = await Notification.find().sort({ createdAt: -1 }).limit(5);
+        res.json({ success: true, notifications });
+    } catch (error) {
+        console.error('Error fetching notifications:', error);
+        res.status(500).json({ success: false, message: 'Server error.' });
+    }
+});
+
+// 3. مسار شراء وتعبئة رصيد BFP وتحديثه مباشرة في MongoDB
+app.post('/api/user/buy-bfp', async (req, res) => {
+    try {
+        const { userId, bfpAmount, usdAmount, packageName } = req.body;
+
+        if (!userId || !bfpAmount) {
+            return.status(400).json({ success: false, message: 'User ID and BFP amount are required.' });
         }
 
-        // تحديث حالة الأونلاين وعداد الدخول
-        user.isOnline = true;
-        user.loginCount = (user.loginCount || 0) + 1;
+        // البحث عن المستخدم وتحديث رصيده في قاعدة البيانات
+        const user = await User.findById(userId);
+        if (!user) {
+            return.status(404).json({ success: false, message: 'User not found.' });
+        }
+
+        // زيادة الرصيد
+        user.balance = (user.balance || 0) + bfpAmount;
+        
+        // حساب المستوى الجديد تلقائياً بناءً على الرصيد (كل 10 BFP = مستوى جديد)
+        user.level = Math.floor(user.balance / 10) + 1;
+
         await user.save();
 
         res.json({
             success: true,
-            message: 'Logged in successfully',
+            message: `Successfully purchased ${bfpAmount} BFP via package: ${packageName}`,
             user: {
                 id: user._id,
                 username: user.username,
@@ -99,100 +125,12 @@ app.post('/api/login', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ success: false, message: 'Server error during login.' });
+        console.error('Error processing BFP purchase:', error);
+        res.status(500).json({ success: false, message: 'Server error during BFP purchase.' });
     }
 });
 
-// ==========================================
-// مسارات لوحة تحكم المدير التنفيذي (Executive Admin APIs)
-// ==========================================
-
-// 1. جلب كافة المستخدمين
-app.get('/api/admin/users', async (req, res) => {
-    try {
-        const users = await User.find({}, '-password'); // جلب المستخدمين باستثناء كلمة المرور للأمان
-        res.json({ success: true, users });
-    } catch (error) {
-        console.error('Error fetching users:', error);
-        res.status(500).json({ success: false, message: 'Error fetching users from database.' });
-    }
-});
-
-// 2. تحديث واستبدال بيانات المستخدم مباشرة في MongoDB
-app.put('/api/admin/user/:id', async (req, res) => {
-    try {
-        const { username, email, password, balance, level } = req.body;
-        
-        const updateData = { 
-            username, 
-            email, 
-            balance: parseFloat(balance), 
-            level: parseInt(level) 
-        };
-
-        // إذا أدخل المدير كلمة مرور جديدة، يتم تشفيرها واستبدال القديمة
-        if (password && password.trim() !== "") {
-            updateData.password = await bcrypt.hash(password, 10);
-        }
-
-        const updatedUser = await User.findByIdAndUpdate(
-            req.params.id, 
-            updateData, 
-            { new: true, runValidators: true }
-        ).select('-password');
-
-        if (!updatedUser) {
-            return res.status(404).json({ success: false, message: 'User not found in database.' });
-        }
-
-        res.json({ 
-            success: true, 
-            message: 'User data successfully updated and replaced in MongoDB!', 
-            user: updatedUser 
-        });
-
-    } catch (error) {
-        console.error('Error updating user:', error);
-        res.status(500).json({ success: false, message: 'Error updating user in MongoDB.' });
-    }
-});
-
-// 3. إرسال إشعار أو رسالة عامة من المدير التنفيذي لتظهر في واجهة المستخدمين
-app.post('/api/admin/broadcast', async (req, res) => {
-    try {
-        const { message } = req.body;
-        if (!message) {
-            return res.status(400).json({ success: false, message: 'Message content is required.' });
-        }
-        
-        systemNotifications.unshift({ message, date: new Date() });
-        
-        // الاحتفاظ بآخر 20 إشعاراً فقط لتوفير الذاكرة
-        if (systemNotifications.length > 20) {
-            systemNotifications.pop();
-        }
-
-        res.json({ success: true, message: 'Executive notification broadcasted successfully!' });
-    } catch (error) {
-        console.error('Broadcast error:', error);
-        res.status(500).json({ success: false, message: 'Error sending broadcast notification.' });
-    }
-});
-
-// ==========================================
-// مسارات الإشعارات والرسائل للأعضاء
-// ==========================================
-
-app.get('/api/notifications', async (req, res) => {
-    try {
-        res.json({ success: true, notifications: systemNotifications });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Error fetching notifications.' });
-    }
-});
-
-// تشغيل الخادم
+// تشغيل السيرفر
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
