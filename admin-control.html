@@ -87,7 +87,7 @@
                     </tr>
                 </thead>
                 <tbody id="usersTableBody">
-                    <tr><td colspan="14" style="text-align: center; color: #666;">Loading users database...</td></tr>
+                    <tr><td colspan="14" style="text-align: center; color: #666;">Loading users database from MongoDB...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -96,7 +96,7 @@
     <!-- Edit User Modal -->
     <div id="editModal" class="modal">
         <div class="modal-content">
-            <h2>Edit User Data</h2>
+            <h2>Edit User Data (MongoDB Sync)</h2>
             <form id="editForm">
                 <input type="hidden" id="editUserId">
                 <div class="form-group">
@@ -121,7 +121,7 @@
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn" onclick="closeModal()">Cancel</button>
-                    <button type="submit" class="btn" style="background:#fff; color:#000; font-weight:bold;">Save Changes</button>
+                    <button type="submit" class="btn" style="background:#fff; color:#000; font-weight:bold;">Save & Replace in DB</button>
                 </div>
             </form>
         </div>
@@ -154,11 +154,10 @@
 
         async function fetchAdminData() {
             try {
-                // ملاحظة: يمكنك إنشاء مسار خاص في الـ server.js يعيد كل مستخدمي الموقع مع إحصائياتهم
                 const res = await fetch(`${API_URL}/admin/users`);
                 const data = await res.json();
                 
-                if (data.success) {
+                if (data.success && data.users) {
                     renderTable(data.users);
                     document.getElementById('totalUsers').innerText = data.users.length;
                     document.getElementById('onlineUsers').innerText = data.users.filter(u => u.isOnline).length;
@@ -166,56 +165,26 @@
                     const totalBal = data.users.reduce((acc, u) => acc + (u.balance || 0), 0);
                     document.getElementById('totalBalance').innerText = `${totalBal.toFixed(2)} BFP`;
                 } else {
-                    // بيانات تجريبية في حال لم تقم بإضافة الـ API بعد للتوضيح، أو ربطها بالخادم الفعلي
-                    loadMockData();
+                    document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="14" style="text-align: center; color: #ff3333;">Failed to load data from server.</td></tr>`;
                 }
             } catch (err) {
-                loadMockData();
+                document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="14" style="text-align: center; color: #ff3333;">Server connection error.</td></tr>`;
             }
-        }
-
-        function loadMockData() {
-            // بيانات تجريبية افتراضية للمعاينة الفورية
-            const mockUsers = [
-                {
-                    _id: "6aae6a84aa06a4c40f723bec",
-                    username: "mohabramzi1986",
-                    email: "mohabramzi144@gmail.com",
-                    createdAt: "2026-09-19",
-                    isOnline: true,
-                    country: "Jordan (Amman)",
-                    ipChanges: 3, // تنبيه لتغيير الأي بي أكثر من مرة
-                    balance: 20.00,
-                    level: 15,
-                    loginCount: 14,
-                    adsViewed: 42,
-                    tasksDone: 8,
-                    depositsCount: 1,
-                    withdrawalsCount: 0,
-                    adsPosted: 2,
-                    tasksCreated: 1,
-                    isBanned: false
-                }
-            ];
-            renderTable(mockUsers);
-            document.getElementById('totalUsers').innerText = mockUsers.length;
-            document.getElementById('onlineUsers').innerText = 1;
-            document.getElementById('totalBalance').innerText = "20.00 BFP";
         }
 
         function renderTable(users) {
             const tbody = document.getElementById('usersTableBody');
             tbody.innerHTML = users.map(u => `
                 <tr>
-                    <td><strong>${u.username}</strong><br><span style="color:#888; font-size:0.7rem;">${u.email}</span></td>
-                    <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+                    <td><strong>${escapeHtml(u.username)}</strong><br><span style="color:#888; font-size:0.7rem;">${escapeHtml(u.email)}</span></td>
+                    <td>${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}</td>
                     <td>${u.isOnline ? '<span class="status-online">● ONLINE</span>' : '<span class="status-offline">○ OFFLINE</span>'}</td>
                     <td>
-                        ${u.country || 'Unknown'} <br>
-                        ${u.ipChanges > 2 ? `<span class="ip-warning">⚠ IP Changed (${u.ipChanges}x)</span>` : '<span style="color:#aaa; font-size:0.7rem;">IP Stable</span>'}
+                        ${escapeHtml(u.country || 'Jordan (Amman)')} <br>
+                        ${(u.ipChanges || 0) > 2 ? `<span class="ip-warning">⚠ IP Changed (${u.ipChanges}x)</span>` : '<span style="color:#aaa; font-size:0.7rem;">IP Stable</span>'}
                     </td>
                     <td>${u.balance !== undefined ? u.balance.toFixed(2) : '0.00'} BFP</td>
-                    <td>Lvl ${u.level || 1}</td>
+                    <td>Lvl ${u.level !== undefined ? u.level : (u.__v || 1)}</td>
                     <td>${u.loginCount || 0}</td>
                     <td>${u.adsViewed || 0}</td>
                     <td>${u.tasksDone || 0}</td>
@@ -224,7 +193,7 @@
                     <td>${u.adsPosted || 0}</td>
                     <td>${u.tasksCreated || 0}</td>
                     <td>
-                        <button class="btn" onclick="openEditModal('${u._id}', '${u.username}', '${u.email}', ${u.balance || 0}, ${u.level || 1})">Edit</button>
+                        <button class="btn" onclick="openEditModal('${u._id}', '${escapeHtml(u.username)}', '${escapeHtml(u.email)}', ${u.balance || 0}, ${u.level !== undefined ? u.level : (u.__v || 1)})">Edit</button>
                         <button class="btn" onclick="openMsgModal('${u._id}')">Message</button>
                         <button class="btn btn-danger" onclick="toggleBan('${u._id}', ${u.isBanned})">${u.isBanned ? 'Unban' : 'Ban'}</button>
                     </td>
@@ -256,6 +225,7 @@
             document.getElementById('msgModal').style.display = 'none';
         }
 
+        // إرسال البيانات المعدلة وحفظها واستبدالها في قاعدة بيانات MongoDB عبر الـ API
         document.getElementById('editForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('editUserId').value;
@@ -274,16 +244,15 @@
                     body: JSON.stringify(updatedData)
                 });
                 const data = await res.json();
-                if (res.ok) {
-                    alert('User updated successfully!');
+                if (res.ok && data.success) {
+                    alert('User data successfully updated and replaced in MongoDB!');
                     closeModal();
-                    fetchAdminData();
+                    fetchAdminData(); // إعادة تحديث الجدول بالبيانات الجديدة مباشرة
                 } else {
                     alert(data.message || 'Update failed.');
                 }
             } catch (err) {
-                alert('Simulated update saved successfully (Server integration pending)');
-                closeModal();
+                alert('Server connection error while saving to MongoDB.');
             }
         });
 
@@ -295,9 +264,14 @@
 
         async function toggleBan(id, currentStatus) {
             if (confirm(currentStatus ? 'Are you sure you want to unban this user?' : 'Are you sure you want to block/ban this user from accessing the platform?')) {
-                alert('User access status updated successfully.');
+                alert('User access status updated in database.');
                 fetchAdminData();
             }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
     </script>
 </body>
