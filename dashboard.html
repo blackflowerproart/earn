@@ -113,24 +113,24 @@
         function updateUI(user) {
             document.getElementById('usernameDisplay').innerText = user.username || user.email;
 
-            // حساب الليفيل والمستويات الثلاثة بناءً على البيانات من MongoDB (تعتمد على حقل xp أو level)
-            // إذا كان المستخدم يملك حقل level مباشرة، أو يتم احتسابه من الـ xp (كل 100 نقطة ليفيل)
-            let totalLevel = user.level !== undefined ? user.level : Math.floor((user.xp || 0) / 100) + 1;
+            // قراءة الليفيل بدقة من قاعدة البيانات (سواء من حقل level أو __v)
+            let totalLevel = user.level !== undefined ? user.level : (user.__v !== undefined ? user.__v : 1);
             if (totalLevel > 30) totalLevel = 30;
             if (totalLevel < 1) totalLevel = 1;
 
+            // تقسيم الـ 30 ليفيل إلى 3 مستويات رئيسية (بواقع 10 ليفيلات لكل مستوى)
             let tierName = "Bronze";
             let subLevel = totalLevel;
 
             if (totalLevel > 20) {
-                tierName = "Gold";
-                subLevel = totalLevel - 20; // مستويات من 1 إلى 10 داخل الـ Gold
+                tierName = "Gold";       // المستوى الثالث (ليفيلات 21 إلى 30)
+                subLevel = totalLevel - 20; 
             } else if (totalLevel > 10) {
-                tierName = "Silver";
-                subLevel = totalLevel - 10; // مستويات من 1 إلى 10 داخل الـ Silver
+                tierName = "Silver";     // المستوى الثاني (ليفيلات 11 إلى 20)
+                subLevel = totalLevel - 10; 
             } else {
-                tierName = "Bronze";
-                subLevel = totalLevel; // مستويات من 1 إلى 10 داخل الـ Bronze
+                tierName = "Bronze";     // المستوى الأول (ليفيلات 1 إلى 10)
+                subLevel = totalLevel; 
             }
 
             document.getElementById('userLevelDisplay').innerText = `Tier: ${tierName} | Level: ${subLevel} (Total Lvl: ${totalLevel})`;
