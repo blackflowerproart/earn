@@ -25,7 +25,6 @@
             padding-bottom: 10px;
             margin-bottom: 20px;
         }
-        /* كروت المهام الخاصة بالمستخدم */
         .task-card {
             border: 1px solid #333;
             background: #050505;
@@ -109,12 +108,11 @@
     <div class="container" style="max-width: 100%; padding: 0 20px;">
         
         <button onclick="window.location.href='dashboard.html'" class="btn-blackflower" style="margin-top:20px; min-width: 150px;">🏠 Back to Dashboard</button>
-        
 
         <div class="tasks-wrapper">
             
             <div class="tasks-panel">
-                <h2>📋 My Created Tasks (Click to Manage)</h2>
+                <h2>📋 My Created Tasks</h2>
                 <div id="available-tasks-container">
                     <p style="color:#555;">Loading your tasks...</p>
                 </div>
@@ -159,13 +157,12 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase-config.js"></script>
-    
     <script>
+        const API_URL = 'https://earn-uq8k.onrender.com/api';
         const pricePerDay = 0.50;
         const taskDaysInput = document.getElementById('taskDays');
         const totalCostSpan = document.getElementById('totalCost');
+        let currentUser = null;
 
         taskDaysInput.addEventListener('input', () => {
             const days = parseInt(taskDaysInput.value) || 0;
@@ -173,51 +170,46 @@
         });
 
         document.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('user');
+            if (!savedUser) {
+                alert('Please login first');
+                window.location.href = 'login.html';
+                return;
+            }
+            currentUser = JSON.parse(savedUser);
+
             loadActiveTasks();
             document.getElementById('taskForm').addEventListener('submit', handlePublishTask);
         });
 
-        // 1. جلب المهام النشطة الخاصة بالمستخدم الحالي فقط
         async function loadActiveTasks() {
             const container = document.getElementById('available-tasks-container');
             
-            if (typeof supabase === 'undefined') {
-                container.innerHTML = '<p style="color:red;">Supabase not initialized.</p>';
-                return;
+            try {
+                const response = await fetch(`${API_URL}/tasks?user_id=${currentUser.id || currentUser._id}`);
+                const result = await response.json();
+
+                if (!result.success || !result.tasks || result.tasks.length === 0) {
+                    container.innerHTML = '<p style="color:#666;">You haven\'t created any tasks yet.</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                result.tasks.forEach(task => {
+                    const card = document.createElement('div');
+                    card.className = 'task-card';
+                    card.onclick = () => {
+                        window.location.href = `manage-task.html?id=${task._id || task.id}`;
+                    };
+                    card.innerHTML = `<h4>📌 ${task.title}</h4>`;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error("Error loading tasks:", error);
+                container.innerHTML = '<p style="color:#ff4444;">Error connecting to server.</p>';
             }
-
-            // جلب المستخدم الحالي أولاً للفلترة بناءً على الـ ID الخاص به
-            const { data: { user }, error: userError } = await supabase.auth.getUser();
-            if (userError || !user) {
-                container.innerHTML = '<p style="color:red;">Please log in to view your tasks.</p>';
-                return;
-            }
-
-            const { data: tasks, error } = await supabase
-                .from('tasks')
-                .select('*')
-                .eq('user_id', user.id) // جلب المهام التي أنشأها هذا المستخدم فقط
-                .order('created_at', { ascending: false });
-
-            if (error || !tasks || tasks.length === 0) {
-                container.innerHTML = '<p style="color:#666;">You haven\'t created any tasks yet.</p>';
-                return;
-            }
-
-            container.innerHTML = '';
-            tasks.forEach(task => {
-                const card = document.createElement('div');
-                card.className = 'task-card';
-                // عند الضغط على الكرت يتم الانتقال لصفحة الإدارة وتمرير الـ id الخاص بالمهمة
-                card.onclick = () => {
-                    window.location.href = `manage-task.html?id=${task.id}`;
-                };
-                card.innerHTML = `<h4>📌 ${task.title}</h4>`; // يظهر اسم المهمة فقط بناءً على طلبك
-                container.appendChild(card);
-            });
         }
 
-        // 2. منطق معالجة النشر
         async function handlePublishTask(e) {
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
@@ -229,49 +221,30 @@
             const url = document.getElementById('taskUrl').value;
             const days = parseInt(taskDaysInput.value);
             const mediaFile = document.getElementById('taskMedia').files[0];
-            let mediaUrl = null;
 
             try {
-                const { data: { user }, error: userError } = await supabase.auth.getUser();
-                if (userError || !user) {
-                    alert("Please log in to your account first.");
-                    return;
-                }
-
+                const formData = new FormData();
+                formData.append('user_id', currentUser.id || currentUser._id);
+                formData.append('title', title);
+                formData.append('details', details);
+                formData.append('target_url', url);
+                formData.append('price', pricePerDay * days);
+                formData.append('duration_days', days);
+                
                 if (mediaFile) {
-                    const fileExt = mediaFile.name.split('.').pop();
-                    const fileName = `${Date.now()}.${fileExt}`;
-                    const filePath = `tasks/${user.id}/${fileName}`;
-
-                    let { error: uploadError } = await supabase.storage
-                        .from('task-media')
-                        .upload(filePath, mediaFile);
-
-                    if (uploadError) throw uploadError;
-
-                    const { data: publicUrlData } = supabase.storage
-                        .from('task-media')
-                        .getPublicUrl(filePath);
-                    
-                    mediaUrl = publicUrlData.publicUrl;
+                    formData.append('media', mediaFile);
                 }
 
-                const { error: insertError } = await supabase
-                    .from('tasks')
-                    .insert([
-                        {
-                            user_id: user.id,
-                            title: title,
-                            details: details,
-                            target_url: url,
-                            price: pricePerDay * days,
-                            duration_days: days,
-                            media_url: mediaUrl,
-                            created_at: new Date()
-                        }
-                    ]);
+                const response = await fetch(`${API_URL}/tasks`, {
+                    method: 'POST',
+                    body: formData
+                });
 
-                if (insertError) throw insertError;
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.message || "Failed to create task");
+                }
 
                 alert("Task created successfully!");
                 document.getElementById('taskForm').reset();
@@ -282,7 +255,7 @@
                 alert("Error: " + error.message);
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.innerText = "Publish Task";
+                submitBtn.innerText = "🚀 Publish Task";
             }
         }
     </script>
