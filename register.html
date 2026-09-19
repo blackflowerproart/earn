@@ -1,158 +1,48 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - The BlackFlower</title>
-    
-    <!-- رابط كود الستايل الخارجي الخاص بك -->
-    <link rel="stylesheet" href="css/style.css">
-    
-    <style>
-        /* ستايلات مخصصة فقط للفورم تتماشى مع طابعك الفخم */
-        .form-group {
-            margin-bottom: 20px;
-            width: 100%;
-            max-width: 400px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            background-color: #000000;
-            border: 1px solid #444444;
-            color: #ffffff;
-            font-family: inherit;
-        }
-        .form-group input:focus {
-            outline: none;
-            border-color: #ffffff;
-        }
-        .account-links {
-            margin-top: 30px; 
-            border-top: 1px dashed #333333; 
-            padding-top: 20px;
-            text-align: center;
-            font-size: 0.9rem;
-        }
-        /* تنسيق رسائل الرد (نجاح / خطأ) */
-        #reg-response-message {
-            margin-top: 20px;
-            padding: 10px;
-            text-align: center;
-            font-size: 0.9rem;
-            max-width: 400px;
-            width: 100%;
-        }
-        #reg-response-message.success {
-            color: #4CAF50;
-            border: 1px solid #4CAF50;
-        }
-        #reg-response-message.error {
-            color: #f44336;
-            border: 1px solid #f44336;
-        }
-    </style>
-</head>
-<body>
+<script>
+    document.getElementById('register-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
 
-    <header class="main-header">
-        <div class="header-container">
-            <img src="logo.png" alt="BlackFlower Logo" class="header-logo">
-            <div class="header-text-block">
-                <div class="brand-title">The BlackFlower</div>
-                <div class="brand-subtitle">Professional Art</div>
-            </div>
-        </div>
-    </header>
+        const username = document.getElementById('reg-username').value;
+        const email = document.getElementById('reg-email').value;
+        const password = document.getElementById('reg-password').value;
+        const msgBox = document.getElementById('reg-response-message');
+        const submitBtn = document.getElementById('register-btn');
 
-    <div class="container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px;">
-        <h2 style="text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Create New Account</h2>
-        <p style="color: #aaaaaa; margin-bottom: 40px; font-size: 0.9rem;">Join us today and start collecting digital profits.</p>
-        
-        <form id="register-form" style="width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center;">
-            <div class="form-group">
-                <label for="reg-username">Username</label>
-                <input type="text" id="reg-username" placeholder="e.g., blackflower_user" required>
-            </div>
+        submitBtn.textContent = 'Creating Account...';
+        submitBtn.disabled = true;
 
-            <div class="form-group">
-                <label for="reg-email">Email Address</label>
-                <input type="email" id="reg-email" placeholder="name@example.com" required>
-            </div>
+        try {
+            const response = await fetch('http://localhost:5000/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, email, password })
+            });
 
-            <div class="form-group">
-                <label for="reg-password">Password</label>
-                <input type="password" id="reg-password" placeholder="At least 6 characters" minlength="6" required>
-            </div>
+            const result = await response.json();
 
-            <div class="auth-buttons-container" style="margin-top: 20px; width: 100%;">
-                <button type="submit" id="register-btn" class="btn-blackflower" style="width: 100%;">Register</button>
-            </div>
-        </form>
-
-        <p id="reg-response-message" style="display: none;"></p>
-
-        <div class="account-links">
-            <p>Already have an account? <a href="login.html" style="color: #fff; text-decoration: underline;">Login here</a></p>
-        </div>
-    </div>
-
-    <!-- كود الجافاسكريبت لإرسال بيانات التسجيل عبر JSON إلى السيرفر و MongoDB -->
-    <script>
-        document.getElementById('register-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const username = document.getElementById('reg-username').value;
-            const email = document.getElementById('reg-email').value;
-            const password = document.getElementById('reg-password').value;
-            const msgBox = document.getElementById('reg-response-message');
-            const submitBtn = document.getElementById('register-btn');
-
-            submitBtn.textContent = 'Creating Account...';
-            submitBtn.disabled = true;
-
-            try {
-                // إرسال طلب ببيانات المستخدم إلى مسار التسجيل في السيرفر
-                const response = await fetch('http://localhost:5000/api/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ username, email, password })
-                });
-
-                const result = await response.json();
-
-                msgBox.style.display = 'block';
-                if (result.success) {
-                    msgBox.className = 'success';
-                    msgBox.textContent = 'Account created successfully! Redirecting to login...';
-                    
-                    setTimeout(() => {
-                        window.location.href = 'login.html'; // الانتقال لصفحة الدخول بعد النجاح
-                    }, 2000);
-                } else {
-                    msgBox.className = 'error';
-                    msgBox.textContent = result.message || 'Registration failed.';
-                    submitBtn.textContent = 'Register';
-                    submitBtn.disabled = false;
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                msgBox.style.display = 'block';
-                msgBox.className = 'error';
-                msgBox.textContent = 'Server connection error. Please make sure the backend is active.';
+            msgBox.style.display = 'block';
+            if (response.ok && result.success) {
+                msgBox.style.color = '#4CAF50';
+                msgBox.textContent = 'Account created successfully! Redirecting to login...';
+                
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+            } else {
+                msgBox.style.color = '#f44336';
+                msgBox.textContent = result.message || 'Registration failed.';
                 submitBtn.textContent = 'Register';
                 submitBtn.disabled = false;
             }
-        });
-    </script>
-</body>
-</html>
+        } catch (error) {
+            console.error('Error:', error);
+            msgBox.style.display = 'block';
+            msgBox.style.color = '#f44336';
+            msgBox.textContent = 'Server connection error. Please make sure the backend is active.';
+            submitBtn.textContent = 'Register';
+            submitBtn.disabled = false;
+        }
+    });
+</script>
