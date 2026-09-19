@@ -67,9 +67,9 @@
                 const data = await res.json();
 
                 if (res.ok && data.success) {
-                    // حفظ بيانات المستخدم والداشبورد في الـ localStorage لتسجيل الدخول التلقائي
+                    // حفظ بيانات المستخدم والداشبورد في المتصفح
                     localStorage.setItem('user', JSON.stringify(data.user));
-                    // الانتقال التلقائي للداشبورد مباشرة بعد التسجيل لأول مرة
+                    // الدخول التلقائي إلى الواجهة بعد التسجيل لأول مرة
                     window.location.href = 'dashboard.html';
                 } else {
                     msg.innerText = data.message || 'Registration failed.';
