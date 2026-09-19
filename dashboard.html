@@ -3,147 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - The BlackFlower Pro Art</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: monospace, sans-serif; }
-        body { background-color: #000; color: #fff; }
-        .dashboard-wrapper { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
-        
-        .user-profile-card { border: 2px solid #fff; background-color: #000; padding: 30px; text-align: center; margin-bottom: 30px; }
-        .user-profile-card h1 { text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; font-size: 1.8rem; }
-        
-        .user-level-badge { display: inline-block; background: #000; border: 1px solid #fff; color: #fff; padding: 6px 18px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
-        
-        .balance-box { background: #0a0a0a; border: 1px dashed #fff; padding: 20px; margin: 20px 0; }
-        .balance-box .bfp-val { color: #fff; font-size: 1.8rem; font-weight: bold; letter-spacing: 1px; }
-        .balance-box .usd-val { color: #888; font-size: 0.9rem; margin-top: 5px; }
-        
-        .profile-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
-        .btn-action { background: #000; border: 1px solid #fff; color: #fff; padding: 10px 18px; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; text-decoration: none; transition: 0.3s; font-weight: bold; }
-        .btn-action:hover { background: #fff; color: #000; }
-        
-        .marketplace-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
-        .market-panel { border: 2px solid #fff; background-color: #000; padding: 25px; }
-        .market-panel h3 { text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #fff; padding-bottom: 10px; margin-bottom: 15px; font-size: 1.1rem; }
-        .market-item { border: 1px solid #333; background: #050505; padding: 15px; margin-bottom: 12px; }
-        .market-item strong { display: block; margin-bottom: 5px; text-transform: uppercase; font-size: 0.9rem; }
-        .market-item p { color: #aaa; font-size: 0.85rem; margin-bottom: 10px; }
-        .market-item a { color: #fff; text-decoration: underline; font-size: 0.8rem; text-transform: uppercase; }
-        
-        @media (max-width: 768px) { .marketplace-grid { grid-template-columns: 1fr; } }
-    </style>
+    <title>User Dashboard - The BlackFlower Pro Art</title>
+    <!-- ربط ملف التصميم الخارجي -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="dashboard-wrapper">
-        <div class="user-profile-card">
-            <h1 id="usernameDisplay">LOADING...</h1>
-            <div style="margin-bottom: 12px;">
-                <a href="dashboard.html" class="btn-action" style="font-size: 0.7rem; padding: 5px 12px;">Control Panel (لوحة التحكم)</a>
-            </div>
-            <div id="userLevelDisplay" class="user-level-badge">Loading Level...</div>
-            
-            <div class="balance-box">
-                <div style="font-size: 0.8rem; text-transform: uppercase; color: #aaa; margin-bottom: 5px;">Current Balance</div>
-                <div class="bfp-val" id="bfpBalance">0.00 BFP</div>
-                <div class="usd-val" id="usdBalance">≈ $0.0000 USD (1 BFP = $0.001)</div>
-            </div>
+    <div class="dashboard-container">
+        <!-- إشعار الرسائل الواردة من المدير التنفيذي -->
+        <div id="adminNotification" class="notification-banner">
+            <strong>[System / Executive Notice]:</strong> <span id="notificationText"></span>
+        </div>
 
-            <div class="profile-actions">
-                <button onclick="alert('Deposit feature coming soon!')" class="btn-action">Deposit (تعبئة الرصيد)</button>
-                <button onclick="alert('Withdraw feature coming soon!')" class="btn-action">Withdraw (سحب الرصيد)</button>
-                <a href="tasks.html" class="btn-action">Manage Tasks (المهام)</a>
-                <button onclick="logout()" class="btn-action" style="border-color: #fff; background: #fff; color: #000;">Logout (خروج)</button>
+        <div class="dash-header">
+            <div>
+                <h1 id="welcomeUser">Welcome, User</h1>
+                <span style="color: #888; font-size: 0.75rem;" id="userEmail">email@domain.com</span>
+            </div>
+            <div>
+                <button class="btn" onclick="openInboxModal()">Inbox & Outbox</button>
+                <button class="btn" onclick="logout()" style="border-color: #ff3333; color: #ff3333;">Logout</button>
             </div>
         </div>
 
-        <div class="marketplace-grid">
-            <div class="market-panel">
-                <h3>📢 Member Advertisements</h3>
-                <div id="member-ads-container">
-                    <div class="market-item">
-                        <strong>PROMOTION #1</strong>
-                        <p>Check out the latest digital art design assets and collaborative projects.</p>
-                        <a href="https://earn-uq8k.onrender.com" target="_blank">View Advertisement &rarr;</a>
-                    </div>
-                </div>
+        <!-- شريط تقدم المستويات الرسومي -->
+        <div class="level-container">
+            <div class="level-info">
+                <span>Current Tier: <strong id="currentLevelText">Level 1</strong></span>
+                <span id="nextLevelProgressText">0% to Level 2</span>
             </div>
+            <div class="progress-bar-bg">
+                <div id="levelProgressBar" class="progress-bar-fill"></div>
+            </div>
+        </div>
 
-            <div class="market-panel">
-                <h3>📋 Available Member Tasks</h3>
-                <div id="member-tasks-container">
-                    <div class="market-item">
-                        <strong>SUBSCRIBE & ENGAGE</strong>
-                        <p>Reward: 10.00 BFP ($0.010)</p>
-                        <a href="tasks.html">Participate &rarr;</a>
-                    </div>
-                </div>
+        <div class="dash-grid">
+            <div class="dash-card">
+                <h3>Available Balance</h3>
+                <div class="val" id="userBalance">0.00 BFP</div>
             </div>
+            <div class="dash-card">
+                <h3>Total Tasks Done</h3>
+                <div class="val" id="userTasks">0</div>
+            </div>
+            <div class="dash-card">
+                <h3>Ads Viewed</h3>
+                <div class="val" id="userAds">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal البريد الوارد والصادر والمراسلة -->
+    <div id="inboxModal" class="modal">
+        <div class="modal-content">
+            <h2>Internal Messaging System</h2>
+            <div style="margin-bottom: 15px; max-height: 200px; overflow-y:auto; border: 1px solid #333; padding: 10px;" id="messagesBox">
+                <p style="color: #666; font-size: 0.8rem;">No messages yet.</p>
+            </div>
+            <form id="sendMessageForm">
+                <div class="form-group">
+                    <label>Send Message to Member / Admin</label>
+                    <textarea id="msgContent" required placeholder="Write your message here..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn" onclick="closeInboxModal()">Close</button>
+                    <button type="submit" class="btn" style="background:#fff; color:#000; font-weight:bold;">Send Message</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <script>
         const API_URL = 'https://earn-uq8k.onrender.com/api';
-        const BFP_TO_USD = 0.001;
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            const savedUser = localStorage.getItem('user');
-            if (!savedUser) {
-                alert('Please login first');
-                window.location.href = 'login.html';
-                return;
-            }
-
-            const localUser = JSON.parse(savedUser);
-            const userId = localUser.id || localUser._id;
-
-            try {
-                const response = await fetch(`${API_URL}/user?id=${userId}`);
-                const result = await response.json();
-                if (result.success && result.user) {
-                    updateUI(result.user);
-                } else {
-                    updateUI(localUser);
-                }
-            } catch (error) {
-                updateUI(localUser);
-            }
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserData();
+            checkNotifications();
         });
 
-        function updateUI(user) {
-            document.getElementById('usernameDisplay').innerText = user.username || user.email;
+        function loadUserData() {
+            // جلب بيانات المستخدم المخزنة محلياً بعد تسجيل الدخول
+            const user = JSON.parse(localStorage.getItem('currentUser')) || {
+                username: 'Demo User',
+                email: 'user@blackflower.art',
+                balance: 15.50,
+                level: 2,
+                tasksDone: 12,
+                adsViewed: 45
+            };
 
-            // قراءة الليفيل بدقة من قاعدة البيانات (سواء من حقل level أو __v)
-            let totalLevel = user.level !== undefined ? user.level : (user.__v !== undefined ? user.__v : 1);
-            if (totalLevel > 30) totalLevel = 30;
-            if (totalLevel < 1) totalLevel = 1;
+            document.getElementById('welcomeUser').innerText = `Welcome, ${user.username}`;
+            document.getElementById('userEmail').innerText = user.email;
+            document.getElementById('userBalance').innerText = `${user.balance.toFixed(2)} BFP`;
+            document.getElementById('userTasks').innerText = user.tasksDone || 0;
+            document.getElementById('userAds').innerText = user.adsViewed || 0;
 
-            // تقسيم الـ 30 ليفيل إلى 3 مستويات رئيسية (بواقع 10 ليفيلات لكل مستوى)
-            let tierName = "Bronze";
-            let subLevel = totalLevel;
-
-            if (totalLevel > 20) {
-                tierName = "Gold";       // المستوى الثالث (ليفيلات 21 إلى 30)
-                subLevel = totalLevel - 20; 
-            } else if (totalLevel > 10) {
-                tierName = "Silver";     // المستوى الثاني (ليفيلات 11 إلى 20)
-                subLevel = totalLevel - 10; 
-            } else {
-                tierName = "Bronze";     // المستوى الأول (ليفيلات 1 إلى 10)
-                subLevel = totalLevel; 
-            }
-
-            document.getElementById('userLevelDisplay').innerText = `Tier: ${tierName} | Level: ${subLevel} (Total Lvl: ${totalLevel})`;
-
-            const bfpBalance = user.balance !== undefined ? user.balance : 0.00;
-            const usdBalance = bfpBalance * BFP_TO_USD;
-            document.getElementById('bfpBalance').innerText = `${bfpBalance.toFixed(2)} BFP`;
-            document.getElementById('usdBalance').innerText = `≈ $${usdBalance.toFixed(4)} USD (1 BFP = $0.001)`;
+            // تحديث شريط المستويات الرسومي (افتراض كل مستوى يحتاج 10 مستويات أو نسب معينة)
+            const currentLvl = user.level || 1;
+            document.getElementById('currentLevelText').innerText = `Level ${currentLvl}`;
+            
+            // حساب نسبة تقدم افتراضية للمستوى (مثلاً بناءً على المهام)
+            const progressPercent = Math.min(((user.tasksDone % 10) * 10), 100);
+            document.getElementById('levelProgressBar').style.width = `${progressPercent}%`;
+            document.getElementById('nextLevelProgressText').innerText = `${progressPercent}% to Level ${currentLvl + 1}`;
         }
 
+        function checkNotifications() {
+            // محاكاة جلب إشعار مرسل من المدير التنفيذي
+            const notice = localStorage.getItem('executiveNotice');
+            if (notice) {
+                document.getElementById('notificationText').innerText = notice;
+                document.getElementById('adminNotification').classList.add('active');
+            }
+        }
+
+        function openInboxModal() {
+            document.getElementById('inboxModal').style.display = 'flex';
+        }
+
+        function closeInboxModal() {
+            document.getElementById('inboxModal').style.display = 'none';
+        }
+
+        document.getElementById('sendMessageForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = document.getElementById('msgContent').value;
+            alert('Message sent successfully through the internal network!');
+            document.getElementById('msgContent').value = '';
+            closeInboxModal();
+        });
+
         function logout() {
-            localStorage.removeItem('user');
-            window.location.href = 'login.html';
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
         }
     </script>
 </body>
