@@ -6,11 +6,9 @@ const multer = require('multer');
 
 const app = express();
 
-// إعدادات الـ Middleware
 app.use(cors());
 app.use(express.json());
 
-// إعداد رفع الملفات (Multer)
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'uploads/');
@@ -21,7 +19,6 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// الاتصال بقاعدة بيانات MongoDB Atlas
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://blackflowerproart_db_user:كلمة_مرور_القاعدة@membersinfo.tmqa7zr.mongodb.net/?appName=Membersinfo';
 
 mongoose.connect(MONGO_URI, {
@@ -31,18 +28,17 @@ mongoose.connect(MONGO_URI, {
 .then(() => console.log('✅ Connected to MongoDB successfully'))
 .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// نموذج المستخدم (User Schema) مع دعم الرصيد والنقاط والمستويات
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    balance: { type: Number, default: 100.00 }, // الرصيد الافتراضي بعملة BFP
-    xp: { type: Number, default: 0 },          // النقاط لتحديد المستوى
+    balance: { type: Number, default: 20.00 },
+    xp: { type: Number, default: 25 },
+    level: { type: Number, default: 15 }, // حقل الليفيل المباشر
     createdAt: { type: Date, default: Date.now }
 });
 const User = mongoose.model('User', userSchema);
 
-// نموذج المهام (Task Schema)
 const taskSchema = new mongoose.Schema({
     user_id: { type: String, required: true },
     title: { type: String, required: true },
@@ -55,9 +51,7 @@ const taskSchema = new mongoose.Schema({
 });
 const Task = mongoose.model('Task', taskSchema);
 
-// ==================== مسارات الـ API ====================
-
-// أ. مسار التسجيل
+// مسارات الـ API
 app.post('/api/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -67,17 +61,15 @@ app.post('/api/register', async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = new User({ username, email, password: hashedPassword });
+        const newUser = new User({ username, email, password: hashedPassword, level: 1 });
         await newUser.save();
 
         res.status(201).json({ success: true, message: 'Account created successfully!' });
     } catch (error) {
-        console.error(error);
         res.status(500).json({ success: false, message: 'Server error during registration.' });
     }
 });
 
-// ب. مسار تسجيل الدخول (مع إعادة بيانات الرصيد والنقاط)
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -99,16 +91,15 @@ app.post('/api/login', async (req, res) => {
                 username: user.username,
                 email: user.email,
                 balance: user.balance,
-                xp: user.xp
+                xp: user.xp,
+                level: user.level !== undefined ? user.level : user.__v || 1
             }
         });
     } catch (error) {
-        console.error(error);
         res.status(500).json({ success: false, message: 'Server error during login.' });
     }
 });
 
-// ج. مسار جلب معلومات المستخدم بالتحديد
 app.get('/api/user', async (req, res) => {
     try {
         const { id } = req.query;
@@ -124,7 +115,8 @@ app.get('/api/user', async (req, res) => {
                 username: user.username,
                 email: user.email,
                 balance: user.balance,
-                xp: user.xp
+                xp: user.xp,
+                level: user.level !== undefined ? user.level : user.__v || 1
             }
         });
     } catch (error) {
@@ -132,7 +124,6 @@ app.get('/api/user', async (req, res) => {
     }
 });
 
-// د. مسار إعادة تعيين كلمة المرور
 app.post('/api/reset-password', async (req, res) => {
     try {
         const { email, newPassword } = req.body;
@@ -148,7 +139,6 @@ app.post('/api/reset-password', async (req, res) => {
     }
 });
 
-// هـ. مسار جلب المهام
 app.get('/api/tasks', async (req, res) => {
     try {
         const tasks = await Task.find().sort({ created_at: -1 });
@@ -158,7 +148,6 @@ app.get('/api/tasks', async (req, res) => {
     }
 });
 
-// و. مسار إنشاء مهمة جديدة
 app.post('/api/tasks', upload.single('media'), async (req, res) => {
     try {
         const { user_id, title, details, target_url, price, duration_days } = req.body;
