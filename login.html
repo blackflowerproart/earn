@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - The BlackFlower Pro Art</title>
+    <title>Login - The BlackFlower Pro Art</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: monospace, sans-serif; }
         body { background-color: #000; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; }
@@ -15,20 +15,17 @@
         input:focus { border-color: #aaa; }
         .btn-submit { width: 100%; background: #fff; color: #000; border: 1px solid #fff; padding: 12px; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: 10px; }
         .btn-submit:hover { background: #000; color: #fff; }
-        .auth-links { margin-top: 20px; font-size: 0.8rem; }
+        .auth-links { margin-top: 20px; font-size: 0.8rem; display: flex; justify-content: space-between; }
         .auth-links a { color: #fff; text-decoration: underline; }
-        #message { margin-top: 15px; font-size: 0.85rem; }
+        .auth-links a:hover { color: #aaa; }
+        #message { margin-top: 15px; font-size: 0.85rem; color: #fff; }
     </style>
 </head>
 <body>
 
     <div class="auth-card">
-        <h1>Register</h1>
-        <form id="registerForm">
-            <div class="form-group">
-                <label>Username</label>
-                <input type="text" id="username" required>
-            </div>
+        <h1>Login</h1>
+        <form id="loginForm">
             <div class="form-group">
                 <label>Email Address</label>
                 <input type="email" id="email" required>
@@ -37,39 +34,39 @@
                 <label>Password</label>
                 <input type="password" id="password" required>
             </div>
-            <button type="submit" class="btn-submit">Create Account</button>
+            <button type="submit" class="btn-submit">Sign In</button>
         </form>
         <div id="message"></div>
         <div class="auth-links">
-            <a href="login.html">Already have an account? Login</a>
+            <a href="register.html">Create Account</a>
+            <a href="reset-password.html">Forgot Password?</a>
         </div>
     </div>
 
     <script>
         const API_URL = 'https://earn-uq8k.onrender.com/api';
 
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const username = document.getElementById('username').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const msg = document.getElementById('message');
 
-            msg.innerText = 'Creating account...';
+            msg.innerText = 'Processing...';
 
             try {
-                const res = await fetch(`${API_URL}/register`, {
+                const res = await fetch(`${API_URL}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, email, password })
+                    body: JSON.stringify({ email, password })
                 });
                 const data = await res.json();
 
                 if (res.ok && data.success) {
-                    msg.innerText = 'Account created successfully! Redirecting...';
-                    setTimeout(() => window.location.href = 'login.html', 1500);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = 'dashboard.html';
                 } else {
-                    msg.innerText = data.message || 'Registration failed.';
+                    msg.innerText = data.message || 'Login failed.';
                 }
             } catch (err) {
                 msg.innerText = 'Server connection error.';
