@@ -3,82 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - The BlackFlower</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Login - The BlackFlower Pro Art</title>
     <style>
-        .auth-container {
-            max-width: 400px;
-            margin: 50px auto;
-            border: 2px solid #ffffff;
-            background-color: #000000;
-            padding: 30px;
-        }
-        .auth-container h2 {
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-align: center;
-            margin-bottom: 25px;
-            color: #fff;
-        }
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: bold;
-        }
-        .form-group input {
-            background: #000;
-            border: 1px solid #fff;
-            color: #fff;
-            padding: 12px;
-            font-family: inherit;
-        }
-        .form-group input:focus {
-            outline: none;
-            border-color: #ff00ff;
-        }
-        .auth-links {
-            text-align: center;
-            margin-top: 15px;
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-        }
-        .auth-links a {
-            color: #00ff77;
-            text-decoration: none;
-        }
-        .auth-links a:hover {
-            text-decoration: underline;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: monospace, sans-serif; }
+        body { background-color: #000; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .auth-card { border: 2px solid #fff; background: #000; padding: 40px; width: 100%; max-width: 400px; text-align: center; }
+        h1 { text-transform: uppercase; letter-spacing: 3px; margin-bottom: 25px; font-size: 1.5rem; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 5px; color: #aaa; }
+        input { width: 100%; background: #000; border: 1px solid #fff; color: #fff; padding: 12px; font-size: 1rem; outline: none; }
+        input:focus { border-color: #aaa; }
+        .btn-submit { width: 100%; background: #fff; color: #000; border: 1px solid #fff; padding: 12px; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn-submit:hover { background: #000; color: #fff; }
+        .auth-links { margin-top: 20px; font-size: 0.8rem; display: flex; justify-content: space-between; }
+        .auth-links a { color: #fff; text-decoration: underline; }
+        .auth-links a:hover { color: #aaa; }
+        #message { margin-top: 15px; font-size: 0.85rem; color: #fff; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="auth-container">
-            <h2>System Login</h2>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" placeholder="name@example.com" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="••••••••" required>
-                </div>
-                <button type="submit" id="submitBtn" class="btn-blackflower" style="width: 100%; border-color: #00ff77; color: #00ff77;">Login</button>
-            </form>
-            <div class="auth-links">
-                <a href="reset-password.html">Forgot Password?</a>
-                <a href="register.html">Create Account</a>
+    <div class="auth-card">
+        <h1>Login</h1>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="email" required>
             </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit" class="btn-submit">Sign In</button>
+        </form>
+        <div id="message"></div>
+        <div class="auth-links">
+            <a href="register.html">Create Account</a>
+            <a href="reset-password.html">Forgot Password?</a>
         </div>
     </div>
 
@@ -87,35 +48,28 @@
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerText = "LOGGING IN...";
-
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const msg = document.getElementById('message');
+
+            msg.innerText = 'Processing...';
 
             try {
-                const response = await fetch(`${API_URL}/login`, {
+                const res = await fetch(`${API_URL}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
+                const data = await res.json();
 
-                const result = await response.json();
-
-                if (!result.success) {
-                    throw new Error(result.message || 'Login failed');
+                if (res.ok && data.success) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = 'dashboard.html';
+                } else {
+                    msg.innerText = data.message || 'Login failed.';
                 }
-
-                localStorage.setItem('user', JSON.stringify(result.user));
-                alert('Logged in successfully!');
-                window.location.href = 'dashboard.html';
-
-            } catch (error) {
-                alert('Error: ' + error.message);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Login";
+            } catch (err) {
+                msg.innerText = 'Server connection error.';
             }
         });
     </script>
