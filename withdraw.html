@@ -3,227 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instant Withdrawal - The Black Flower Professional Art</title>
+    <title>Withdraw Funds - The Black Flower</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        .withdraw-card {
-            border: 1px solid #333;
-            background: #050505;
-            padding: 30px;
-            max-width: 600px;
-            margin: 40px auto;
-        }
-        .balance-box {
-            background: #0a0a0a;
-            border: 1px solid #444;
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        .balance-value {
-            font-size: 2rem;
-            color: #00ff66;
-            font-weight: bold;
-            margin-top: 5px;
-        }
-        .gateway-options {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .gateway-btn {
-            padding: 15px;
-            border: 1px solid #555;
-            background: #000;
-            color: #fff;
-            cursor: pointer;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            transition: 0.3s;
-            text-align: center;
-        }
-        .gateway-btn.selected {
-            border-color: #fff;
-            background: #fff;
-            color: #000;
-            font-weight: bold;
-        }
-        .fee-notice {
-            background: #111;
-            border-left: 3px solid #00ff66;
-            padding: 10px 15px;
-            margin-bottom: 20px;
-            font-size: 0.8rem;
-            color: #bbb;
-        }
+        body { background: #000; color: #fff; font-family: monospace, sans-serif; padding: 20px; }
+        .withdraw-container { max-width: 500px; margin: 50px auto; border: 2px solid #fff; padding: 30px; background: #050505; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 8px; color: #aaa; }
+        input { width: 100%; background: #000; border: 1px solid #fff; color: #fff; padding: 10px; font-size: 0.9rem; outline: none; }
+        .btn { background: #fff; color: #000; border: 1px solid #fff; padding: 10px 15px; width: 100%; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .btn:hover { background: #00ff66; border-color: #00ff66; }
     </style>
 </head>
 <body>
-
-    <!-- الشريط العلوي الثابت والموحد -->
-    <header class="site-header">
-        <div class="header-left">
-            <img src="logo.png" alt="Logo" class="site-logo">
-            <span class="brand-title">The Black Flower</span>
+    <div class="withdraw-container">
+        <h2>Withdraw Funds (سحب الأرباح)</h2>
+        <p style="font-size: 0.8rem; color: #888; margin-bottom: 20px;">Available Balance: <span id="lblBalance" style="color:#00ff66; font-weight:bold;">0.00 BFP</span></p>
+        
+        <div class="form-group">
+            <label>Amount to Withdraw (BFP)</label>
+            <input type="number" id="withdrawAmt" placeholder="0.00" step="0.01">
         </div>
-        <div class="header-right">
-            <span>Professional Art</span>
+        <div class="form-group">
+            <label>Wallet / Destination Address</label>
+            <input type="text" id="walletAddress" placeholder="Enter your crypto wallet or account info...">
         </div>
-    </header>
-
-    <div class="dashboard-container" style="max-width: 800px;">
-        <div class="dash-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <div>
-                <h1>Instant Withdrawal</h1>
-                <span style="color: #888; font-size: 0.75rem;">Convert your BFP currency instantly</span>
-            </div>
-            <div>
-                <a href="dashboard.html" class="btn" style="width: auto; margin-top:0; padding: 8px 15px;">Dashboard</a>
-            </div>
-        </div>
-
-        <div class="withdraw-card">
-            <!-- صندوق الرصيد المتاح -->
-            <div class="balance-box">
-                <span style="color: #aaa; font-size: 0.85rem; text-transform: uppercase;">Available BFP Balance</span>
-                <div class="balance-value" id="userBalanceDisplay">0 BFP</div>
-                <span style="color: #666; font-size: 0.75rem;" id="usdEquivalent">Equivalent to $0.00 USD</span>
-            </div>
-
-            <form id="withdrawForm" onsubmit="processInstantWithdrawal(event)">
-                <div class="form-group">
-                    <label>Amount to Withdraw (BFP)</label>
-                    <input type="number" id="withdrawAmount" placeholder="Enter BFP amount" min="1000" required oninput="updateFeeCalculation()">
-                    <small style="color: #888; font-size: 0.7rem; margin-top: 5px; display: block;">Minimum withdrawal: 1,000 BFP ($1.00 USD)</small>
-                </div>
-
-                <div class="form-group">
-                    <label>Select Instant Withdrawal Method</label>
-                    <div class="gateway-options">
-                        <div class="gateway-btn selected" id="methodFaucetPay" onclick="selectMethod('faucetpay')">FaucetPay</div>
-                        <div class="gateway-btn" id="methodPayPal" onclick="selectMethod('paypal')">PayPal</div>
-                    </div>
-                </div>
-
-                <div class="fee-notice" id="feeNoticeDisplay">
-                    Fee for FaucetPay: <strong>$0.10 USD</strong>. You will receive: <strong>$0.00 USD</strong>
-                </div>
-
-                <div class="form-group">
-                    <label id="accountLabel">FaucetPay Email or Username / Wallet Address</label>
-                    <input type="text" id="walletAccount" placeholder="Enter your FaucetPay email/address" required>
-                </div>
-
-                <button type="submit" class="btn" style="background: #fff; color: #000; font-weight: bold; margin-top: 10px;">Withdraw Instantly Now</button>
-            </form>
-        </div>
+        
+        <button class="btn" onclick="submitWithdrawal()">Submit Withdrawal Request</button>
+        <br><br>
+        <a href="dashboard.html" style="color: #aaa; font-size: 0.75rem; text-decoration: underline;">Back to Dashboard</a>
     </div>
 
     <script>
-        const API_URL = 'https://earn-uq8k.onrender.com/api';
-        let selectedMethodType = 'faucetpay';
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || { balance: 0 };
+        document.getElementById('lblBalance').innerText = `${currentUser.balance.toFixed(2)} BFP`;
 
-        window.onload = function() {
-            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-            if (currentUser) {
-                document.getElementById('userBalanceDisplay').innerText = `${currentUser.balance.toLocaleString()} BFP`;
-                const usdVal = currentUser.balance * 0.001;
-                document.getElementById('usdEquivalent').innerText = `Equivalent to $${usdVal.toFixed(2)} USD`;
-                document.getElementById('withdrawAmount').max = currentUser.balance;
-                updateFeeCalculation();
-            } else {
-                alert('Please log in first.');
-                window.location.href = 'index.html';
+        function submitWithdrawal() {
+            const amt = parseFloat(document.getElementById('withdrawAmt').value);
+            const wallet = document.getElementById('walletAddress').value;
+
+            if (!amt || amt <= 0 || amt > currentUser.balance) {
+                alert('Invalid withdrawal amount or insufficient balance.');
+                return;
             }
-        };
-
-        function selectMethod(method) {
-            selectedMethodType = method;
-            if(method === 'faucetpay') {
-                document.getElementById('methodFaucetPay').classList.add('selected');
-                document.getElementById('methodPayPal').classList.remove('selected');
-                document.getElementById('accountLabel').innerText = 'FaucetPay Email or Username / Wallet Address';
-            } else {
-                document.getElementById('methodPayPal').classList.add('selected');
-                document.getElementById('methodFaucetPay').classList.remove('selected');
-                document.getElementById('accountLabel').innerText = 'PayPal Registered Email Address';
-            }
-            updateFeeCalculation();
-        }
-
-        function updateFeeCalculation() {
-            const bfp = parseFloat(document.getElementById('withdrawAmount').value) || 0;
-            const grossUsd = bfp * 0.001;
-            const fee = selectedMethodType === 'paypal' ? 0.50 : 0.10;
-            const netUsd = Math.max(0, grossUsd - fee);
-
-            document.getElementById('feeNoticeDisplay').innerHTML = `
-                Fee for ${selectedMethodType.toUpperCase()}: <strong>$${fee.toFixed(2)} USD</strong>. You will receive: <strong>$${netUsd.toFixed(2)} USD</strong>
-            `;
-        }
-
-        async function processInstantWithdrawal(event) {
-            event.preventDefault();
-            const amount = parseFloat(document.getElementById('withdrawAmount').value);
-            const account = document.getElementById('walletAccount').value;
-            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-
-            if (!currentUser || !currentUser.id) {
-                alert('Session expired. Please log in again.');
-                window.location.href = 'index.html';
+            if (!wallet) {
+                alert('Please enter your destination wallet address.');
                 return;
             }
 
-            if (amount < 1000) {
-                alert('Minimum withdrawal amount is 1,000 BFP.');
-                return;
-            }
-
-            if (amount > currentUser.balance) {
-                alert('Insufficient balance for this withdrawal.');
-                return;
-            }
-
-            const fee = selectedMethodType === 'paypal' ? 0.50 : 0.10;
-            const grossUsd = amount * 0.001;
-            if (grossUsd <= fee) {
-                alert('Withdrawal amount is too low to cover the transaction fee.');
-                return;
-            }
-
-            if(!confirm(`Confirm instant withdrawal of ${amount.toLocaleString()} BFP via ${selectedMethodType.toUpperCase()}?`)) {
-                return;
-            }
-
-            try {
-                // إرسال البيانات للسيرفر ليتم حفظها في MongoDB وخصم الرصيد وتحديث قاعدة البيانات
-                const response = await fetch(`${API_URL}/withdraw`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        userId: currentUser.id,
-                        amountBfp: amount,
-                        method: selectedMethodType,
-                        account: account
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    currentUser.balance = data.newBalance;
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-
-                    alert(data.message);
-                    window.location.href = 'dashboard.html';
-                } else {
-                    alert(data.message || 'Failed to process instant withdrawal.');
-                }
-            } catch (err) {
-                console.error('Error connecting to server:', err);
-                alert('Server connection error during withdrawal.');
-            }
+            currentUser.balance -= amt;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            alert('Withdrawal request successfully sent to administration processing queue.');
+            window.location.href = 'dashboard.html';
         }
     </script>
 </body>
