@@ -3,83 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - The BlackFlower</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Register - The BlackFlower Pro Art</title>
     <style>
-        .auth-container {
-            max-width: 400px;
-            margin: 50px auto;
-            border: 2px solid #ffffff;
-            background-color: #000000;
-            padding: 30px;
-        }
-        .auth-container h2 {
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-align: center;
-            margin-bottom: 25px;
-            color: #fff;
-        }
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: bold;
-        }
-        .form-group input {
-            background: #000;
-            border: 1px solid #fff;
-            color: #fff;
-            padding: 12px;
-            font-family: inherit;
-        }
-        .form-group input:focus {
-            outline: none;
-            border-color: #ff00ff;
-        }
-        .auth-links {
-            text-align: center;
-            margin-top: 15px;
-        }
-        .auth-links a {
-            color: #00ff77;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-        .auth-links a:hover {
-            text-decoration: underline;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: monospace, sans-serif; }
+        body { background-color: #000; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .auth-card { border: 2px solid #fff; background: #000; padding: 40px; width: 100%; max-width: 400px; text-align: center; }
+        h1 { text-transform: uppercase; letter-spacing: 3px; margin-bottom: 25px; font-size: 1.5rem; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 5px; color: #aaa; }
+        input { width: 100%; background: #000; border: 1px solid #fff; color: #fff; padding: 12px; font-size: 1rem; outline: none; }
+        input:focus { border-color: #aaa; }
+        .btn-submit { width: 100%; background: #fff; color: #000; border: 1px solid #fff; padding: 12px; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn-submit:hover { background: #000; color: #fff; }
+        .auth-links { margin-top: 20px; font-size: 0.8rem; }
+        .auth-links a { color: #fff; text-decoration: underline; }
+        #message { margin-top: 15px; font-size: 0.85rem; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="auth-container">
-            <h2>Create Account</h2>
-            <form id="registerForm">
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" placeholder="ENTER YOUR USERNAME" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" placeholder="name@example.com" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="••••••••" required>
-                </div>
-                <button type="submit" id="submitBtn" class="btn-blackflower" style="width: 100%; border-color: #00ff77; color: #00ff77;">Register</button>
-            </form>
-            <div class="auth-links">
-                <p>Already have an account? <a href="login.html">Login here</a></p>
+    <div class="auth-card">
+        <h1>Register</h1>
+        <form id="registerForm">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="username" required>
             </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit" class="btn-submit">Create Account</button>
+        </form>
+        <div id="message"></div>
+        <div class="auth-links">
+            <a href="login.html">Already have an account? Login</a>
         </div>
     </div>
 
@@ -88,35 +50,29 @@
 
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerText = "REGISTERING...";
-
             const username = document.getElementById('username').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const msg = document.getElementById('message');
+
+            msg.innerText = 'Creating account...';
 
             try {
-                const response = await fetch(`${API_URL}/register`, {
+                const res = await fetch(`${API_URL}/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, email, password })
                 });
+                const data = await res.json();
 
-                const result = await response.json();
-
-                if (!result.success) {
-                    throw new Error(result.message || 'Registration failed');
+                if (res.ok && data.success) {
+                    msg.innerText = 'Account created successfully! Redirecting...';
+                    setTimeout(() => window.location.href = 'login.html', 1500);
+                } else {
+                    msg.innerText = data.message || 'Registration failed.';
                 }
-
-                alert('Account created successfully! Please login.');
-                window.location.href = 'login.html';
-
-            } catch (error) {
-                alert('Error: ' + error.message);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Register";
+            } catch (err) {
+                msg.innerText = 'Server connection error.';
             }
         });
     </script>
