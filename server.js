@@ -18,7 +18,7 @@ mongoose.connect(MONGO_URI, {
     console.error('MongoDB connection error:', err);
 });
 
-// تعريف نموذج المستخدم وهيكل بيانات الـ JSON الخاص بالداشبورد
+// تعريف نموذج المستخدم وهيكل بيانات الداشبورد (JSON)
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -43,7 +43,7 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-// تعريف نموذج الإشعارات
+// تعريف نموذج الإشعارات الفورية
 const notificationSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     message: { type: String, required: true },
@@ -52,9 +52,9 @@ const notificationSchema = new mongoose.Schema({
 });
 const Notification = mongoose.model('Notification', notificationSchema);
 
-// --- مسارات الـ API الأساسية ---
+// --- مسارات النظام ---
 
-// 1. مسار تسجيل الدخول (مخصص للمستخدمين الذين أنشأت لهم الإدارة حسابات مسبقاً)
+// 1. مسار تسجيل الدخول (للمستخدمين المسجلين مسبقاً)
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -64,7 +64,7 @@ app.post('/api/login', async (req, res) => {
             return res.status(401).json({ success: false, message: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' });
         }
 
-        // تحديث حالة الاتصال وعدد مرات الدخول داخل ملف الـ JSON
+        // تحديث حالة الاتصال وعدد مرات الدخول في ملف الـ JSON الخاص بالداشبورد
         user.dashboardData.isOnline = true;
         user.dashboardData.loginCount = (user.dashboardData.loginCount || 0) + 1;
         await user.save();
@@ -75,7 +75,7 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// 2. مسار إنشاء حساب جديد (يُستدعى حصرياً بواسطة مدير النظام لإنشاء حساب وتوليد ملف الداشبورد في MongoDB)
+// 2. مسار إنشاء الحساب وإصدار ملف الداشبورد في MongoDB (يُدار ويُنفذ عبر مدير النظام)
 app.post('/api/admin/create-user', async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -110,7 +110,7 @@ app.post('/api/admin/create-user', async (req, res) => {
 
         res.status(201).json({ 
             success: true, 
-            message: 'تم إنشاء الحساب وملف الداشبورد في MongoDB بنجاح بواسطة الإدارة', 
+            message: 'Registration feature is managed by the system administrator. User and dashboard JSON created successfully.', 
             user: newUser 
         });
     } catch (err) {
@@ -118,7 +118,7 @@ app.post('/api/admin/create-user', async (req, res) => {
     }
 });
 
-// 3. جلب جميع المستخدمين (للوحة تحكم المدير)
+// 3. جلب كافة المستخدمين للوحة الإدارة
 app.get('/api/admin/users', async (req, res) => {
     try {
         const users = await User.find({});
@@ -128,7 +128,7 @@ app.get('/api/admin/users', async (req, res) => {
     }
 });
 
-// 4. إرسال الأموال أو الأرصدة للمستخدم مع إنشاء إشعار فوري
+// 4. إرسال الأموال وتوليد الإشعار الفوري للمستخدم
 app.post('/api/user/send-funds', async (req, res) => {
     try {
         const { userId, amount, reason } = req.body;
