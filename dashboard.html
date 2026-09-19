@@ -1,233 +1,78 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - The Black Flower Professional Art</title>
-    <link rel="stylesheet" href="style.css">
+    <title>لوحة التحكم - Black Flower Pro Art</title>
     <style>
-        .actions-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 12px;
-            margin-bottom: 30px;
-        }
-        .action-btn {
-            background: #050505;
-            color: #fff;
-            border: 1px solid #fff;
-            padding: 12px 10px;
-            text-align: center;
-            cursor: pointer;
-            text-transform: uppercase;
-            font-size: 0.7rem;
-            transition: 0.3s;
-            text-decoration: none;
-            display: block;
-        }
-        .action-btn:hover { background: #fff; color: #000; }
-        .action-btn.danger { border-color: #ff3333; color: #ff3333; }
-        .action-btn.danger:hover { background: #ff3333; color: #000; }
-        .content-section {
-            border: 1px solid #333;
-            background: #050505;
-            padding: 20px;
-            margin-bottom: 25px;
-        }
-        .content-section h3 {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #222;
-            padding-bottom: 8px;
-            color: #aaa;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .item-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px dashed #222;
-            font-size: 0.8rem;
-        }
-        .item-row:last-child { border-bottom: none; }
-        .notification-badge {
-            background: #ff3333;
-            color: #000;
-            padding: 2px 6px;
-            font-size: 0.65rem;
-            font-weight: bold;
-            border-radius: 50%;
-            margin-left: 5px;
-        }
+        body { font-family: Tahoma, sans-serif; background: #121212; color: #fff; margin: 0; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 15px; }
+        .header h1 { color: #d4af37; margin: 0; font-size: 22px; }
+        .logout-btn { background: #d32f2f; color: #fff; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-top: 20px; }
+        .card { background: #1e1e1e; padding: 20px; border-radius: 8px; border-top: 4px solid #d4af37; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .card h3 { margin: 0 0 10px 0; font-size: 16px; color: #aaa; }
+        .card .value { font-size: 24px; font-weight: bold; color: #fff; }
     </style>
 </head>
 <body>
 
-    <header class="site-header">
-        <div class="header-left">
-            <img src="logo.png" alt="Logo" class="site-logo">
-            <span class="brand-title">The Black Flower</span>
-        </div>
-        <div class="header-right">
-            <span>Professional Art</span>
-        </div>
-    </header>
-
-    <div class="dashboard-container">
-        <div id="adminNotification" class="notification-banner">
-            <strong>[System Notice]:</strong> <span id="notificationText"></span>
-        </div>
-
-        <div class="dash-header">
-            <div>
-                <h1 id="welcomeUser">Welcome, Member</h1>
-                <span style="color: #888; font-size: 0.75rem;" id="userEmail">member@blackflower.art</span>
-            </div>
-            <div>
-                <span id="notifBell" onclick="openNotificationsModal()" style="cursor: pointer; border: 1px solid #fff; padding: 8px 12px; font-size: 0.75rem; text-transform: uppercase;">
-                    🔔 Notifications <span id="notifCount" class="notification-badge">0</span>
-                </span>
-            </div>
-        </div>
-
-        <div class="level-container">
-            <div class="level-info">
-                <span>Current Tier: <strong id="currentLevelText">Level 1</strong></span>
-                <span id="nextLevelProgressText">0% to Level 2 (0/10 BFP)</span>
-            </div>
-            <div class="progress-bar-bg">
-                <div id="levelProgressBar" class="progress-bar-fill"></div>
-            </div>
-        </div>
-
-        <div class="dash-grid">
-            <div class="dash-card">
-                <h3>Balance (BFP)</h3>
-                <div class="val" id="userBalance">0.00 BFP</div>
-            </div>
-            <div class="dash-card">
-                <h3>Total Tasks Done</h3>
-                <div class="val" id="userTasks">0</div>
-            </div>
-            <div class="dash-card">
-                <h3>Ads Viewed</h3>
-                <div class="val" id="userAds">0</div>
-            </div>
-        </div>
-
-        <div class="actions-grid">
-           <a href="buy-bfp.html" class="action-btn">Buy BFP</a>
-           <a href="withdraw.html" class="action-btn" style="background: #00ff66; color: #000; font-weight: bold;">Withdraw Funds</a>
-           <button class="action-btn" onclick="openModal('postAdModal')">Post Ad</button>
-           <button class="action-btn" onclick="openModal('postTaskModal')">Post Task</button>
-           <button class="action-btn" onclick="openModal('referralModal')">Invite Friend</button>
-           <button class="action-btn" onclick="openModal('chatModal')">Live Chat</button>
-           <button class="action-btn" onclick="openModal('changePassModal')">Change Password</button>
-           <button class="action-btn danger" onclick="logout()">Logout</button>
-        </div>
-
-        <div class="content-section">
-            <h3>Available Ads <span style="font-size: 0.7rem; color: #666;">Earn BFP by viewing ads</span></h3>
-            <div id="adsListContainer">
-                <div class="item-row">
-                    <span>Professional Art Banner Ad #1 (Reward: 0.5 BFP)</span>
-                    <button class="action-btn" style="width: auto; padding: 5px 10px;" onclick="earnReward(0.5, 'Ad Viewed')">View Ad</button>
-                </div>
-            </div>
-        </div>
+    <div class="header">
+        <h1 id="welcomeText">مرحباً بك</h1>
+        <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
     </div>
 
-    <!-- Modal الإشعارات -->
-    <div id="notificationsModal" class="modal">
-        <div class="modal-content">
-            <h2>System Notifications</h2>
-            <div id="allNotificationsBox" style="max-height: 200px; overflow-y:auto; font-size: 0.8rem; margin-bottom: 15px;">
-                <p style="color: #666;">No recent notifications.</p>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="action-btn" onclick="closeModals()">Close</button>
-            </div>
+    <div class="grid">
+        <div class="card">
+            <h3>الرصيد الحالي</h3>
+            <div class="value" id="balance">0.00 BFP</div>
+        </div>
+        <div class="card">
+            <h3>المستوى</h3>
+            <div class="value" id="level">1</div>
+        </div>
+        <div class="card">
+            <h3>المهام المنجزة</h3>
+            <div class="value" id="tasksDone">0</div>
+        </div>
+        <div class="card">
+            <h3>الإعلانات المشاهدة</h3>
+            <div class="value" id="adsViewed">0</div>
+        </div>
+        <div class="card">
+            <h3>الدولة</h3>
+            <div class="value" id="country">Jordan (Amman)</div>
+        </div>
+        <div class="card">
+            <h3>عدد مرات الدخول</h3>
+            <div class="value" id="loginCount">0</div>
         </div>
     </div>
 
     <script>
-        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || {
-            _id: '64a5f1e2bcf28a1122334455',
-            username: 'Professional Member',
-            email: 'member@blackflower.art',
-            balance: 5.00,
-            tasksDone: 2,
-            adsViewed: 4
-        };
-
-        let userNotifications = [];
-
-        document.addEventListener('DOMContentLoaded', () => {
-            updateDashboardUI();
-            fetchUserNotifications();
-        });
-
-        function updateDashboardUI() {
-            document.getElementById('welcomeUser').innerText = `Welcome, ${currentUser.username}`;
-            document.getElementById('userEmail').innerText = currentUser.email;
-            document.getElementById('userBalance').innerText = `${currentUser.balance.toFixed(2)} BFP`;
-            document.getElementById('userTasks').innerText = currentUser.tasksDone || 0;
-            document.getElementById('userAds').innerText = currentUser.adsViewed || 0;
-
-            const calculatedLevel = Math.floor(currentUser.balance / 10) + 1;
-            const currentLevelBfp = currentUser.balance % 10;
-            const progressPercent = (currentLevelBfp / 10) * 100;
-
-            document.getElementById('currentLevelText').innerText = `Level ${calculatedLevel}`;
-            document.getElementById('nextLevelProgressText').innerText = `${progressPercent.toFixed(0)}% to Level ${calculatedLevel + 1} (${currentLevelBfp.toFixed(1)}/10 BFP)`;
-            document.getElementById('levelProgressBar').style.width = `${progressPercent}%`;
-            document.getElementById('notifCount').innerText = userNotifications.length;
-
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        // التحقق من وجود المستخدم مسجل الدخول
+        const userStr = localStorage.getItem('currentUser');
+        if (!userStr) {
+            window.location.href = 'login.html';
         }
 
-        async function fetchUserNotifications() {
-            try {
-                const res = await fetch(`https://earn-uq8k.onrender.com/api/notifications/${currentUser._id}`);
-                const data = await res.json();
-                if (data.success) {
-                    userNotifications = data.notifications;
-                    document.getElementById('notifCount').innerText = userNotifications.length;
-                }
-            } catch (e) {
-                console.error('Error fetching notifications');
-            }
-        }
+        const user = JSON.parse(userStr);
 
-        function earnReward(amount, type) {
-            currentUser.balance += amount;
-            if(type === 'Ad Viewed') currentUser.adsViewed++;
-            else currentUser.tasksDone++;
-            updateDashboardUI();
-            alert(`Reward received: +${amount} BFP added!`);
-        }
+        // تعبئة البيانات في الواجهة من ملف الـ JSON القادم من MongoDB
+        document.getElementById('welcomeText').textContent = `مرحباً بك، ${user.username}`;
+        
+        const dbData = user.dashboardData || {};
+        document.getElementById('balance').textContent = `${(dbData.balance || 0).toFixed(2)} BFP`;
+        document.getElementById('level').textContent = dbData.level || 1;
+        document.getElementById('tasksDone').textContent = dbData.tasksDone || 0;
+        document.getElementById('adsViewed').textContent = dbData.adsViewed || 0;
+        document.getElementById('country').textContent = dbData.country || 'Jordan (Amman)';
+        document.getElementById('loginCount').textContent = dbData.loginCount || 1;
 
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
-        function openNotificationsModal() {
-            openModal('notificationsModal');
-            const box = document.getElementById('allNotificationsBox');
-            if(userNotifications.length === 0) {
-                box.innerHTML = '<p style="color: #666;">No notifications.</p>';
-            } else {
-                box.innerHTML = userNotifications.map(n => `
-                    <div style="padding: 8px 0; border-bottom: 1px dashed #333;">
-                        <span>${n.message}</span><br>
-                        <span style="font-size: 0.65rem; color: #888;">${new Date(n.createdAt).toLocaleTimeString()}</span>
-                    </div>
-                `).join('');
-            }
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'login.html';
         }
-        function logout() { localStorage.removeItem('currentUser'); window.location.href = 'index.html'; }
     </script>
 </body>
 </html>
