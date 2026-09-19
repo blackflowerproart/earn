@@ -112,14 +112,13 @@
     <div class="container" style="max-width: 100%; padding: 0 20px;">
         
         <button onclick="window.location.href='dashboard.html'" class="btn-blackflower" style="margin-top:20px; min-width: 150px;">🏠 Back to Dashboard</button>
-        
 
         <div class="ads-wrapper">
             
             <div class="ads-panel">
                 <h2>📺 Available Advertisements</h2>
                 <div id="available-ads-container">
-                    <p style="color:#555;">Loading active advertisements...</p>
+                    <p style="color:#555;">Loading active advertisements from local database...</p>
                 </div>
             </div>
 
@@ -161,9 +160,10 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase-config.js"></script>
     <script>
+        // رابط السيرفر المحلي الثابت
+        const API_URL = 'http://localhost:5000/api';
+
         // دالة حساب تكلفة الإعلان فورياً للمستخدم أثناء الكتابة
         function calculateAdCost() {
             const type = document.getElementById('ad-type').value;
@@ -180,38 +180,40 @@
             document.getElementById('create-ad-form').addEventListener('submit', handleCreateAd);
         });
 
-        // 1. جلب وعرض الإعلانات النشطة من قاعدة البيانات
+        // 1. جلب وعرض الإعلانات النشطة بصيغة JSON من السيرفر المحلي (MongoDB)
         async function loadActiveAds() {
             const container = document.getElementById('available-ads-container');
             
-            const { data: ads, error } = await supabase
-                .from('ads')
-                .select('*')
-                .eq('status', 'active')
-                .gt('ends_at', new Date().toISOString());
+            try {
+                const response = await fetch(`${API_URL}/ads`);
+                const result = await response.json();
 
-            if (error || !ads || ads.length === 0) {
-                container.innerHTML = '<p style="color:#666;">No active advertisements available right now.</p>';
-                return;
+                if (!result.success || !result.ads || result.ads.length === 0) {
+                    container.innerHTML = '<p style="color:#666;">No active advertisements available right now.</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                result.ads.forEach(ad => {
+                    const card = document.createElement('div');
+                    card.className = 'ad-card';
+                    card.innerHTML = `
+                        <div class="ad-info">
+                            <h4>${ad.title}</h4>
+                            <p>${ad.description}</p>
+                            <div class="ad-meta">⏱️ Time: ${ad.ad_type === '5s' ? '5 Sec' : '10 Sec'} | 💰 Earn: $${parseFloat(ad.reward_per_view || 0.001).toFixed(4)}</div>
+                        </div>
+                        <button onclick="watchAd('${ad._id}', '${ad.website_url}', ${ad.ad_type === '5s' ? 5 : 10})" class="btn-blackflower" style="min-width:100px;">📺 Watch</button>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Error connecting to local server:', error);
+                container.innerHTML = '<p style="color:#ff4444;">Server connection error. Make sure node server.js is running.</p>';
             }
-
-            container.innerHTML = '';
-            ads.forEach(ad => {
-                const card = document.createElement('div');
-                card.className = 'ad-card';
-                card.innerHTML = `
-                    <div class="ad-info">
-                        <h4>${ad.title}</h4>
-                        <p>${ad.description}</p>
-                        <div class="ad-meta">⏱️ Time: ${ad.ad_type === '5s' ? '5 Sec' : '10 Sec'} | 💰 Earn: $${parseFloat(ad.reward_per_view).toFixed(4)}</div>
-                    </div>
-                    <button onclick="watchAd('${ad.id}', '${ad.website_url}', ${ad.ad_type === '5s' ? 5 : 10})" class="btn-blackflower" style="min-width:100px;">📺 Watch</button>
-                `;
-                container.appendChild(card);
-            });
         }
 
-        // 2. معالجة تقديم دالة إضافة إعلان جديد والخصم من المحفظة
+        // 2. إرسال الإعلان الجديد كملف JSON إلى السيرفر ليحفظه في MongoDB
         async function handleCreateAd(e) {
             e.preventDefault();
             
@@ -225,78 +227,79 @@
             const total_cost = pricePerDay * duration_days;
             const reward_per_view = (ad_type === '5s') ? 0.0005 : 0.0010;
 
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) { alert('Please login first'); return; }
-
-            // تحقق من رصيد المعلن أولاً من جدول profiles
-            const { data: profile } = await supabase.from('profiles').select('wallet_balance').eq('id', user.id).single();
-            
-            if (profile.wallet_balance < total_cost) {
-                alert(`⚠️ Insufficient funds. You need $${total_cost.toFixed(4)} but your balance is $${parseFloat(profile.wallet_balance).toFixed(4)}`);
-                return;
+            // جلب المستخدم الحالي المخزني محلياً في المتصفح
+            const savedUser = localStorage.getItem('user');
+            if (!savedUser) { 
+                alert('Please login first'); 
+                window.location.href = 'login.html';
+                return; 
             }
+            const currentUser = JSON.parse(savedUser);
 
-            // حساب تاريخ انتهاء الإعلان بناءً على الأيام المطلوبة
-            let endsAt = new Date();
-            endsAt.setDate(endsAt.getDate() + duration_days);
+            try {
+                const response = await fetch(`${API_URL}/ads/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: currentUser.email,
+                        title,
+                        description,
+                        website_url,
+                        ad_type,
+                        duration_days,
+                        total_cost,
+                        reward_per_view
+                    })
+                });
 
-            // 1. خصم الرصيد من المحفظة
-            const newBalance = parseFloat(profile.wallet_balance) - total_cost;
-            await supabase.from('profiles').update({ wallet_balance: newBalance }).eq('id', user.id);
+                const result = await response.json();
 
-            // 2. تسجيل الإعلان في جدول ads
-            const { error: insertError } = await supabase.from('ads').insert([{
-                user_id: user.id,
-                title,
-                description,
-                website_url,
-                ad_type,
-                duration_days,
-                total_cost,
-                reward_per_view,
-                ends_at: endsAt.toISOString()
-            }]);
-
-            if (insertError) {
-                alert('Error creating ad campaign: ' + insertError.message);
-            } else {
-                alert('🚀 Campaign launched successfully! Your ad is now live.');
-                document.getElementById('create-ad-form').reset();
-                calculateAdCost();
-                loadActiveAds();
+                if (result.success) {
+                    alert('🚀 Campaign launched successfully! Saved to MongoDB.');
+                    document.getElementById('create-ad-form').reset();
+                    calculateAdCost();
+                    loadActiveAds();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to connect to local server.');
             }
         }
 
-        // 3. دالة محاكاة مشاهدة الإعلان واحتساب الربح وزيادة عداد الرتبة
+        // 3. دالة مشاهدة الإعلان وتسجيل الربح محلياً وعبر السيرفر
         async function watchAd(adId, url, duration) {
             alert(`Opening ad. Please stay on the tab for ${duration} seconds to claim your reward.`);
             const adWindow = window.open(url, '_blank');
 
             setTimeout(async () => {
-                const { data: { user } } = await supabase.auth.getUser();
-                
-                // إضافة المكافأة للمشاهد، وتحديث عداد مشاهدة الإعلانات (ads_watched_count) لتأهيل رتبته تلقائياً
-                const { data: adData } = await supabase.from('ads').select('reward_per_view').eq('id', adId).single();
-                const { data: profile } = await supabase.from('profiles').select('wallet_balance, ads_watched_count').eq('id', user.id).single();
+                const savedUser = localStorage.getItem('user');
+                if (!savedUser) return;
+                const currentUser = JSON.parse(savedUser);
 
-                const updatedBalance = parseFloat(profile.wallet_balance) + parseFloat(adData.reward_per_view);
-                const updatedCount = (profile.ads_watched_count || 0) + 1;
+                try {
+                    const response = await fetch(`${API_URL}/ads/watch`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: currentUser.email,
+                            adId: adId
+                        })
+                    });
 
-                // تحديث جدول الـ profiles (مما يشغل الـ Trigger للرتبة تلقائياً)
-                await supabase.from('profiles').update({
-                    wallet_balance: updatedBalance,
-                    ads_watched_count: updatedCount
-                }).eq('id', user.id);
-
-                // حفظ عملية المشاهدة لمنع التكرار
-                await supabase.from('ad_views').insert([{ user_id: user.id, ad_id: adId }]);
-
-                alert(`🎉 Success! You earned $${parseFloat(adData.reward_per_view).toFixed(4)} and your rank counter increased!`);
-                loadActiveAds();
+                    const result = await response.json();
+                    if (result.success) {
+                        alert(`🎉 Success! Reward added to your balance in MongoDB.`);
+                        loadActiveAds();
+                    } else {
+                        alert('Notice: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Error updating reward:', error);
+                }
             }, duration * 1000);
         }
     </script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase-config.js"></script>
 </body>
 </html>
