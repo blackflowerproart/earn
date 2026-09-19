@@ -8,7 +8,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: monospace, sans-serif; }
         body { background-color: #000; color: #fff; padding: 20px; }
         .admin-container { max-width: 1400px; margin: 0 auto; }
-        
         .admin-header { border: 2px solid #fff; padding: 20px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; background: #000; }
         .admin-header h1 { text-transform: uppercase; font-size: 1.4rem; letter-spacing: 2px; }
         .admin-badge { background: #fff; color: #000; padding: 5px 10px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
@@ -21,22 +20,18 @@
         .table-wrapper { border: 2px solid #fff; overflow-x: auto; background: #000; }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.8rem; }
         th, td { border: 1px solid #333; padding: 12px 10px; white-space: nowrap; }
-        th { background: #111; color: #fff; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; }
+        th { background: #111; color: #fff; text-transform: uppercase; font-size: 0.75rem; }
         tr:hover { background: #080808; }
 
         .status-online { color: #00ff00; font-weight: bold; }
         .status-offline { color: #888; }
-        .ip-warning { color: #ff3333; font-weight: bold; border: 1px solid #ff3333; padding: 2px 5px; }
-
         .btn { background: #000; color: #fff; border: 1px solid #fff; padding: 5px 10px; cursor: pointer; text-transform: uppercase; font-size: 0.7rem; transition: 0.3s; margin-right: 3px; }
         .btn:hover { background: #fff; color: #000; }
-        .btn-danger { border-color: #ff3333; color: #ff3333; }
-        .btn-danger:hover { background: #ff3333; color: #000; }
+        .btn-funds { border-color: #00ff66; color: #00ff66; }
+        .btn-funds:hover { background: #00ff66; color: #000; }
 
-        /* Modal Styles */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { border: 2px solid #fff; background: #000; padding: 30px; width: 100%; max-width: 500px; }
-        .modal-content h2 { text-transform: uppercase; font-size: 1.1rem; margin-bottom: 20px; border-bottom: 1px solid #fff; padding-bottom: 10px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 5px; color: #aaa; }
         input { width: 100%; background: #000; border: 1px solid #fff; color: #fff; padding: 8px; font-size: 0.85rem; outline: none; }
@@ -57,10 +52,6 @@
                 <div class="val" id="totalUsers">0</div>
             </div>
             <div class="stat-box">
-                <h3>Online Now</h3>
-                <div class="val" id="onlineUsers">0</div>
-            </div>
-            <div class="stat-box">
                 <h3>Total System Balance</h3>
                 <div class="val" id="totalBalance">0.00 BFP</div>
             </div>
@@ -73,21 +64,13 @@
                         <th>Username / Email</th>
                         <th>Joined Date</th>
                         <th>Status</th>
-                        <th>Country / IP Info</th>
                         <th>Balance (BFP)</th>
-                        <th>Level / Tier</th>
-                        <th>Logins</th>
-                        <th>Ads Viewed</th>
-                        <th>Tasks Done</th>
-                        <th>Deposits</th>
-                        <th>Withdrawals</th>
-                        <th>Ads Posted</th>
-                        <th>Tasks Created</th>
-                        <th>Actions</th>
+                        <th>Level</th>
+                        <th>Actions (Edit / Send Funds)</th>
                     </tr>
                 </thead>
                 <tbody id="usersTableBody">
-                    <tr><td colspan="14" style="text-align: center; color: #666;">Loading users database from MongoDB...</td></tr>
+                    <tr><td colspan="6" style="text-align: center; color: #666;">Loading database from MongoDB...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -96,50 +79,32 @@
     <!-- Edit User Modal -->
     <div id="editModal" class="modal">
         <div class="modal-content">
-            <h2>Edit User Data (MongoDB Sync)</h2>
+            <h2>Edit User Data (MongoDB)</h2>
             <form id="editForm">
                 <input type="hidden" id="editUserId">
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="editUsername" required>
-                </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="editEmail" required>
-                </div>
-                <div class="form-group">
-                    <label>New Password (Leave blank to keep current)</label>
-                    <input type="password" id="editPassword">
-                </div>
-                <div class="form-group">
-                    <label>Balance (BFP)</label>
-                    <input type="number" step="0.01" id="editBalance" required>
-                </div>
-                <div class="form-group">
-                    <label>Level</label>
-                    <input type="number" id="editLevel" required>
-                </div>
+                <div class="form-group"><label>Username</label><input type="text" id="editUsername" required></div>
+                <div class="form-group"><label>Email</label><input type="email" id="editEmail" required></div>
+                <div class="form-group"><label>Balance (BFP)</label><input type="number" step="0.01" id="editBalance" required></div>
+                <div class="form-group"><label>Level</label><input type="number" id="editLevel" required></div>
                 <div class="modal-actions">
                     <button type="button" class="btn" onclick="closeModal()">Cancel</button>
-                    <button type="submit" class="btn" style="background:#fff; color:#000; font-weight:bold;">Save & Replace in DB</button>
+                    <button type="submit" class="btn" style="background:#fff; color:#000; font-weight:bold;">Save to DB</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Message User Modal -->
-    <div id="msgModal" class="modal">
+    <!-- Send Funds Modal (مع إرسال إشعار فوري للمستخدم) -->
+    <div id="fundsModal" class="modal">
         <div class="modal-content">
-            <h2>Send Message to User</h2>
-            <form id="msgForm">
-                <input type="hidden" id="msgUserId">
-                <div class="form-group">
-                    <label>Message Content / Warning</label>
-                    <input type="text" id="msgText" required placeholder="Type executive message here...">
-                </div>
+            <h2>Send Funds & Notify User</h2>
+            <form id="fundsForm">
+                <input type="hidden" id="fundsUserId">
+                <div class="form-group"><label>Amount (BFP)</label><input type="number" step="0.01" id="sendAmount" required placeholder="0.00"></div>
+                <div class="form-group"><label>Reason / Note</label><input type="text" id="sendReason" required placeholder="e.g. Monthly Reward / Task Bonus"></div>
                 <div class="modal-actions">
-                    <button type="button" class="btn" onclick="closeMsgModal()">Cancel</button>
-                    <button type="submit" class="btn" style="background:#fff; color:#000; font-weight:bold;">Send Message</button>
+                    <button type="button" class="btn" onclick="closeFundsModal()">Cancel</button>
+                    <button type="submit" class="btn" style="background:#00ff66; color:#000; font-weight:bold;">Send & Notify</button>
                 </div>
             </form>
         </div>
@@ -148,27 +113,20 @@
     <script>
         const API_URL = 'https://earn-uq8k.onrender.com/api';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchAdminData();
-        });
+        document.addEventListener('DOMContentLoaded', () => { fetchAdminData(); });
 
         async function fetchAdminData() {
             try {
                 const res = await fetch(`${API_URL}/admin/users`);
                 const data = await res.json();
-                
                 if (data.success && data.users) {
                     renderTable(data.users);
                     document.getElementById('totalUsers').innerText = data.users.length;
-                    document.getElementById('onlineUsers').innerText = data.users.filter(u => u.isOnline).length;
-                    
                     const totalBal = data.users.reduce((acc, u) => acc + (u.balance || 0), 0);
                     document.getElementById('totalBalance').innerText = `${totalBal.toFixed(2)} BFP`;
-                } else {
-                    document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="14" style="text-align: center; color: #ff3333;">Failed to load data from server.</td></tr>`;
                 }
             } catch (err) {
-                document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="14" style="text-align: center; color: #ff3333;">Server connection error.</td></tr>`;
+                console.error('Error fetching admin data');
             }
         }
 
@@ -176,26 +134,14 @@
             const tbody = document.getElementById('usersTableBody');
             tbody.innerHTML = users.map(u => `
                 <tr>
-                    <td><strong>${escapeHtml(u.username)}</strong><br><span style="color:#888; font-size:0.7rem;">${escapeHtml(u.email)}</span></td>
-                    <td>${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}</td>
+                    <td><strong>${u.username}</strong><br><span style="color:#888;">${u.email}</span></td>
+                    <td>${new Date(u.createdAt).toLocaleDateString()}</td>
                     <td>${u.isOnline ? '<span class="status-online">● ONLINE</span>' : '<span class="status-offline">○ OFFLINE</span>'}</td>
+                    <td>${u.balance.toFixed(2)} BFP</td>
+                    <td>Lvl ${u.level || 1}</td>
                     <td>
-                        ${escapeHtml(u.country || 'Jordan (Amman)')} <br>
-                        ${(u.ipChanges || 0) > 2 ? `<span class="ip-warning">⚠ IP Changed (${u.ipChanges}x)</span>` : '<span style="color:#aaa; font-size:0.7rem;">IP Stable</span>'}
-                    </td>
-                    <td>${u.balance !== undefined ? u.balance.toFixed(2) : '0.00'} BFP</td>
-                    <td>Lvl ${u.level !== undefined ? u.level : (u.__v || 1)}</td>
-                    <td>${u.loginCount || 0}</td>
-                    <td>${u.adsViewed || 0}</td>
-                    <td>${u.tasksDone || 0}</td>
-                    <td>${u.depositsCount || 0}</td>
-                    <td>${u.withdrawalsCount || 0}</td>
-                    <td>${u.adsPosted || 0}</td>
-                    <td>${u.tasksCreated || 0}</td>
-                    <td>
-                        <button class="btn" onclick="openEditModal('${u._id}', '${escapeHtml(u.username)}', '${escapeHtml(u.email)}', ${u.balance || 0}, ${u.level !== undefined ? u.level : (u.__v || 1)})">Edit</button>
-                        <button class="btn" onclick="openMsgModal('${u._id}')">Message</button>
-                        <button class="btn btn-danger" onclick="toggleBan('${u._id}', ${u.isBanned})">${u.isBanned ? 'Unban' : 'Ban'}</button>
+                        <button class="btn" onclick="openEditModal('${u._id}', '${u.username}', '${u.email}', ${u.balance}, ${u.level || 1})">Edit</button>
+                        <button class="btn btn-funds" onclick="openFundsModal('${u._id}')">Send Funds 🔔</button>
                     </td>
                 </tr>
             `).join('');
@@ -207,72 +153,57 @@
             document.getElementById('editEmail').value = email;
             document.getElementById('editBalance').value = balance;
             document.getElementById('editLevel').value = level;
-            document.getElementById('editPassword').value = '';
             document.getElementById('editModal').style.display = 'flex';
         }
 
-        function closeModal() {
-            document.getElementById('editModal').style.display = 'none';
+        function closeModal() { document.getElementById('editModal').style.display = 'none'; }
+
+        function openFundsModal(id) {
+            document.getElementById('fundsUserId').value = id;
+            document.getElementById('sendAmount').value = '';
+            document.getElementById('sendReason').value = '';
+            document.getElementById('fundsModal').style.display = 'flex';
         }
 
-        function openMsgModal(id) {
-            document.getElementById('msgUserId').value = id;
-            document.getElementById('msgText').value = '';
-            document.getElementById('msgModal').style.display = 'flex';
-        }
+        function closeFundsModal() { document.getElementById('fundsModal').style.display = 'none'; }
 
-        function closeMsgModal() {
-            document.getElementById('msgModal').style.display = 'none';
-        }
-
-        // إرسال البيانات المعدلة وحفظها واستبدالها في قاعدة بيانات MongoDB عبر الـ API
         document.getElementById('editForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('editUserId').value;
             const updatedData = {
                 username: document.getElementById('editUsername').value,
                 email: document.getElementById('editEmail').value,
-                password: document.getElementById('editPassword').value,
                 balance: parseFloat(document.getElementById('editBalance').value),
                 level: parseInt(document.getElementById('editLevel').value)
             };
-
-            try {
-                const res = await fetch(`${API_URL}/admin/user/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updatedData)
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    alert('User data successfully updated and replaced in MongoDB!');
-                    closeModal();
-                    fetchAdminData(); // إعادة تحديث الجدول بالبيانات الجديدة مباشرة
-                } else {
-                    alert(data.message || 'Update failed.');
-                }
-            } catch (err) {
-                alert('Server connection error while saving to MongoDB.');
-            }
+            const res = await fetch(`${API_URL}/admin/user/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedData)
+            });
+            if (res.ok) { alert('Updated successfully in MongoDB!'); closeModal(); fetchAdminData(); }
         });
 
-        document.getElementById('msgForm').addEventListener('submit', async (e) => {
+        document.getElementById('fundsForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            alert('Executive message sent successfully to the user!');
-            closeMsgModal();
-        });
+            const userId = document.getElementById('fundsUserId').value;
+            const amount = parseFloat(document.getElementById('sendAmount').value);
+            const reason = document.getElementById('sendReason').value;
 
-        async function toggleBan(id, currentStatus) {
-            if (confirm(currentStatus ? 'Are you sure you want to unban this user?' : 'Are you sure you want to block/ban this user from accessing the platform?')) {
-                alert('User access status updated in database.');
+            const res = await fetch(`${API_URL}/user/send-funds`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, amount, reason })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('Funds sent successfully and real-time notification generated for the user!');
+                closeFundsModal();
                 fetchAdminData();
+            } else {
+                alert('Failed to send funds.');
             }
-        }
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        }
+        });
     </script>
 </body>
 </html>
