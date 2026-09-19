@@ -19,15 +19,25 @@
         </div>
     </header>
 
-    <div class="container">
+    <div class="container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh;">
         <h2 style="text-transform: uppercase; letter-spacing: 3px; margin-bottom: 15px; text-align: center;">Welcome to The BlackFlower</h2>
-        <p style="color: #aaaaaa; margin-bottom: 40px; font-size: 1.1rem; text-align: center; letter-spacing: 1px;">Join the professional art community and start your journey.</p>
+        <p style="color: #aaaaaa; margin-bottom: 40px; font-size: 1.1rem; text-align: center; letter-spacing: 1px; max-width: 600px;">Join the professional art community and start your journey.</p>
         
-        <div class="auth-buttons-container">
-            <button onclick="window.location.href='login.html'" class="btn-blackflower">Login</button>
-            <button onclick="window.location.href='register.html'" class="btn-blackflower">Register</button>
+        <div class="auth-buttons-container" style="display: flex; gap: 20px; width: 100%; max-width: 400px; justify-content: center;">
+            <button onclick="window.location.href='login.html'" class="btn-blackflower" style="flex: 1; padding: 14px;">Login</button>
+            <button onclick="window.location.href='register.html'" class="btn-blackflower" style="flex: 1; padding: 14px;">Register</button>
         </div>
     </div>
 
+    <script>
+        // التحقق السريع: إذا كان المستخدم مسجل الدخول مسبقاً، يمكنك توجيهه تلقائياً للوحة التحكم
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+                // اختيارية: إذا أردت توجيه العضو للداشبورد مباشرة إذا كان مسجلاً مسبقاً
+                // window.location.href = 'dashboard.html';
+            }
+        });
+    </script>
 </body>
 </html>
