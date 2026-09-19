@@ -12,7 +12,7 @@
         .user-profile-card { border: 2px solid #fff; background-color: #000; padding: 30px; text-align: center; margin-bottom: 30px; }
         .user-profile-card h1 { text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; font-size: 1.8rem; }
         
-        .user-level-badge { display: inline-block; background: #000; border: 1px solid #fff; color: #fff; padding: 5px 15px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
+        .user-level-badge { display: inline-block; background: #000; border: 1px solid #fff; color: #fff; padding: 6px 18px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
         
         .balance-box { background: #0a0a0a; border: 1px dashed #fff; padding: 20px; margin: 20px 0; }
         .balance-box .bfp-val { color: #fff; font-size: 1.8rem; font-weight: bold; letter-spacing: 1px; }
@@ -41,7 +41,7 @@
             <div style="margin-bottom: 12px;">
                 <a href="dashboard.html" class="btn-action" style="font-size: 0.7rem; padding: 5px 12px;">Control Panel (لوحة التحكم)</a>
             </div>
-            <div id="userLevelDisplay" class="user-level-badge">Tier: Rookie | Level: 1</div>
+            <div id="userLevelDisplay" class="user-level-badge">Loading Level...</div>
             
             <div class="balance-box">
                 <div style="font-size: 0.8rem; text-transform: uppercase; color: #aaa; margin-bottom: 5px;">Current Balance</div>
@@ -113,23 +113,27 @@
         function updateUI(user) {
             document.getElementById('usernameDisplay').innerText = user.username || user.email;
 
-            // نظام المستويات (3 مستويات رئيسية، كل مستوى 10 ليفيلات بإجمالي 30 ليفيل)
-            const userXp = user.xp || 0;
-            let currentLevel = Math.floor(userXp / 100) + 1;
-            if (currentLevel > 30) currentLevel = 30;
+            // حساب الليفيل والمستويات الثلاثة بناءً على البيانات من MongoDB (تعتمد على حقل xp أو level)
+            // إذا كان المستخدم يملك حقل level مباشرة، أو يتم احتسابه من الـ xp (كل 100 نقطة ليفيل)
+            let totalLevel = user.level !== undefined ? user.level : Math.floor((user.xp || 0) / 100) + 1;
+            if (totalLevel > 30) totalLevel = 30;
+            if (totalLevel < 1) totalLevel = 1;
 
-            let tierName = "Rookie";
-            let tierLevel = currentLevel;
+            let tierName = "Bronze";
+            let subLevel = totalLevel;
 
-            if (currentLevel > 20) {
-                tierName = "Master";
-                tierLevel = currentLevel - 20;
-            } else if (currentLevel > 10) {
-                tierName = "Expert";
-                tierLevel = currentLevel - 10;
+            if (totalLevel > 20) {
+                tierName = "Gold";
+                subLevel = totalLevel - 20; // مستويات من 1 إلى 10 داخل الـ Gold
+            } else if (totalLevel > 10) {
+                tierName = "Silver";
+                subLevel = totalLevel - 10; // مستويات من 1 إلى 10 داخل الـ Silver
+            } else {
+                tierName = "Bronze";
+                subLevel = totalLevel; // مستويات من 1 إلى 10 داخل الـ Bronze
             }
 
-            document.getElementById('userLevelDisplay').innerText = `Tier: ${tierName} | Level ${tierLevel} (Total Lvl: ${currentLevel})`;
+            document.getElementById('userLevelDisplay').innerText = `Tier: ${tierName} | Level: ${subLevel} (Total Lvl: ${totalLevel})`;
 
             const bfpBalance = user.balance !== undefined ? user.balance : 0.00;
             const usdBalance = bfpBalance * BFP_TO_USD;
