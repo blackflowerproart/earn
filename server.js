@@ -51,7 +51,28 @@ const notificationSchema = new mongoose.Schema({
 
 const Notification = mongoose.model('Notification', notificationSchema);
 
-// --- مسارات الـ API ---
+// --- مسارات الـ API الأساسية ---
+
+// مسار التحقق أو تسجيل الدخول
+app.post('/api/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const user = await User.findOne({ email });
+        
+        if (!user || user.password !== password) {
+            return res.status(401).json({ success: false, message: 'Invalid email or password' });
+        }
+
+        // تحديث حالة الاتصال للمستخدم عند تسجيل الدخول
+        user.isOnline = true;
+        user.loginCount = (user.loginCount || 0) + 1;
+        await user.save();
+
+        res.json({ success: true, message: 'Login successful', user });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
 
 // جلب جميع المستخدمين (للوحة المدير التنفيذي)
 app.get('/api/admin/users', async (req, res) => {
@@ -63,14 +84,14 @@ app.get('/api/admin/users', async (req, res) => {
     }
 });
 
-// تعديل بيانات المستخدم واستبدالها في MongoDB (بواسطة المدير التنفيذي)
+// تعديل بيانات المستخدم في MongoDB (بواسطة المدير التنفيذي)
 app.put('/api/admin/user/:id', async (req, res) => {
     try {
         const { username, email, password, balance, level } = req.body;
         const updateData = { username, email, balance, level };
         
         if (password && password.trim() !== '') {
-            updateData.password = password; // يُفضل تشفير كلمة المرور في الإنتاج
+            updateData.password = password;
         }
 
         const updatedUser = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
@@ -97,7 +118,7 @@ app.post('/api/user/send-funds', async (req, res) => {
         user.balance += parseFloat(amount);
         await user.save();
 
-        // إنشاء إشعار فوري يظهر في واجهة المستخدم
+        // إنشاء إشعار فوري يظهر في واجهة المستخدم فوراً
         const notifMessage = `تم إضافة مبلغ ${amount} BFP إلى رصيدك. السبب: ${reason || 'تحويل مباشر من الإدارة'}`;
         await Notification.create({
             userId: user._id,
@@ -110,7 +131,7 @@ app.post('/api/user/send-funds', async (req, res) => {
     }
 });
 
-// جلب إشعارات المستخدم الخاصة
+// جلب إشعارات المستخدم الخاصة بناءً على الـ ID
 app.get('/api/notifications/:userId', async (req, res) => {
     try {
         const notifications = await Notification.find({ userId: req.params.userId }).sort({ createdAt: -1 });
@@ -120,7 +141,7 @@ app.get('/api/notifications/:userId', async (req, res) => {
     }
 });
 
-// بث إشعار عام
+// جلب أحدث الإشعارات العامة
 app.get('/api/notifications', async (req, res) => {
     try {
         const notifications = await Notification.find({}).sort({ createdAt: -1 }).limit(5);
