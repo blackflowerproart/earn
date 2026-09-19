@@ -3,15 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - The Black Flower Pro Art</title>
+    <title>Dashboard - The Black Flower Professional Art</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* تنسيقات إضافية خاصة بالأزرار والأقسام الجديدة */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+        .action-btn {
+            background: #050505;
+            color: #fff;
+            border: 1px solid #fff;
+            padding: 12px 10px;
+            text-align: center;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            transition: 0.3s;
+            text-decoration: none;
+            display: block;
+        }
+        .action-btn:hover {
+            background: #fff;
+            color: #000;
+        }
+        .action-btn.danger { border-color: #ff3333; color: #ff3333; }
+        .action-btn.danger:hover { background: #ff3333; color: #000; }
+
+        .content-section {
+            border: 1px solid #333;
+            background: #050505;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .content-section h3 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 8px;
+            color: #aaa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dashed #222;
+            font-size: 0.8rem;
+        }
+        .item-row:last-child { border-bottom: none; }
+        
+        /* شارة الإشعارات */
+        .notification-badge {
+            background: #ff3333;
+            color: #000;
+            padding: 2px 6px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            border-radius: 50%;
+            margin-left: 5px;
+        }
+    </style>
 </head>
 <body>
 
-    <!-- الشريط العلوي الموحد الثابت -->
+    <!-- الشريط العلوي الثابت والموحد -->
     <header class="site-header">
         <div class="header-left">
-            <img src="black.jpg" alt="Logo" class="site-logo">
+            <img src="logo.png" alt="Logo" class="site-logo">
             <span class="brand-title">The Black Flower</span>
         </div>
         <div class="header-right">
@@ -20,35 +86,38 @@
     </header>
 
     <div class="dashboard-container">
+        <!-- إشعار النظام الفوري -->
         <div id="adminNotification" class="notification-banner">
-            <strong>[System / Executive Notice]:</strong> <span id="notificationText"></span>
+            <strong>[System Notice]:</strong> <span id="notificationText"></span>
         </div>
 
         <div class="dash-header">
             <div>
-                <h1 id="welcomeUser">Welcome, User</h1>
-                <span style="color: #888; font-size: 0.75rem;" id="userEmail">user@domain.com</span>
+                <h1 id="welcomeUser">Welcome, Member</h1>
+                <span style="color: #888; font-size: 0.75rem;" id="userEmail">member@blackflower.art</span>
             </div>
             <div>
-                <button class="btn" style="width: auto; margin-top: 0; display: inline-block;" onclick="openInboxModal()">Inbox</button>
-                <button class="btn" style="width: auto; margin-top: 0; display: inline-block; border-color: #ff3333; color: #ff3333;" onclick="logout()">Logout</button>
+                <span id="notifBell" onclick="openNotificationsModal()" style="cursor: pointer; border: 1px solid #fff; padding: 8px 12px; font-size: 0.75rem; text-transform: uppercase;">
+                    🔔 Notifications <span id="notifCount" class="notification-badge">0</span>
+                </span>
             </div>
         </div>
 
-        <!-- شريط تقدم المستويات الرسومي -->
+        <!-- شريط تقدم المستويات الديناميكي (يعتمد على عملات BFP: كل 10 عملات = مستوى جديد) -->
         <div class="level-container">
             <div class="level-info">
                 <span>Current Tier: <strong id="currentLevelText">Level 1</strong></span>
-                <span id="nextLevelProgressText">0% to Level 2</span>
+                <span id="nextLevelProgressText">0% to Level 2 (0/10 BFP)</span>
             </div>
             <div class="progress-bar-bg">
                 <div id="levelProgressBar" class="progress-bar-fill"></div>
             </div>
         </div>
 
+        <!-- البطاقات الإحصائية -->
         <div class="dash-grid">
             <div class="dash-card">
-                <h3>Available Balance</h3>
+                <h3>Balance (BFP)</h3>
                 <div class="val" id="userBalance">0.00 BFP</div>
             </div>
             <div class="dash-card">
@@ -60,79 +129,220 @@
                 <div class="val" id="userAds">0</div>
             </div>
         </div>
+
+        <!-- أزرار الإجراءات والتحكم المطلوبة -->
+        <div class="actions-grid">
+            <button class="action-btn" onclick="openModal('buyBfpModal')">Buy BFP</button>
+            <button class="action-btn" onclick="openModal('withdrawModal')">Withdraw Funds</button>
+            <button class="action-btn" onclick="openModal('postAdModal')">Post Ad</button>
+            <button class="action-btn" onclick="openModal('postTaskModal')">Post Task</button>
+            <button class="action-btn" onclick="openModal('referralModal')">Invite Friend</button>
+            <button class="action-btn" onclick="openModal('chatModal')">Live Chat</button>
+            <button class="action-btn" onclick="openModal('changePassModal')">Change Password</button>
+            <button class="action-btn danger" onclick="logout()">Logout</button>
+        </div>
+
+        <!-- أسفل الأزرار: قسم الإعلانات والمهام المتاحة -->
+        <div class="content-section">
+            <h3>Available Ads <span style="font-size: 0.7rem; color: #666;">Earn BFP by viewing ads</span></h3>
+            <div id="adsListContainer">
+                <div class="item-row">
+                    <span>Professional Art Banner Ad #1 (Reward: 0.5 BFP)</span>
+                    <button class="btn" style="width: auto; margin-top:0; padding: 5px 10px;" onclick="earnReward(0.5, 'Ad Viewed')">View Ad</button>
+                </div>
+                <div class="item-row">
+                    <span>Black Flower Brand Promotion (Reward: 1.0 BFP)</span>
+                    <button class="btn" style="width: auto; margin-top:0; padding: 5px 10px;" onclick="earnReward(1.0, 'Ad Viewed')">View Ad</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h3>Available Tasks <span style="font-size: 0.7rem; color: #666;">Complete tasks to increase level</span></h3>
+            <div id="tasksListContainer">
+                <div class="item-row">
+                    <span>Share Gallery Design on Social Media (Reward: 2.0 BFP)</span>
+                    <button class="btn" style="width: auto; margin-top:0; padding: 5px 10px;" onclick="completeTask(2.0)">Complete Task</button>
+                </div>
+                <div class="item-row">
+                    <span>Review 3D Architectural Render (Reward: 1.5 BFP)</span>
+                    <button class="btn" style="width: auto; margin-top:0; padding: 5px 10px;" onclick="completeTask(1.5)">Complete Task</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Modal البريد الوارد والصادر -->
-    <div id="inboxModal" class="modal">
+    <!-- Modals للتفاعل مع الأزرار -->
+    <!-- Modal سحب النقود -->
+    <div id="withdrawModal" class="modal">
         <div class="modal-content">
-            <h2>Internal Messaging System</h2>
-            <div style="margin-bottom: 15px; max-height: 180px; overflow-y:auto; border: 1px solid #333; padding: 10px;" id="messagesBox">
-                <p style="color: #666; font-size: 0.8rem;">No messages yet.</p>
+            <h2>Withdraw Funds</h2>
+            <div class="form-group"><label>Amount (BFP)</label><input type="number" id="withdrawAmount" placeholder="0.00"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn" onclick="closeModals()" style="border-color:#555;">Cancel</button>
+                <button type="button" class="btn" onclick="processWithdraw()" style="background:#fff; color:#000; font-weight:bold;">Submit Request</button>
             </div>
-            <form id="sendMessageForm">
-                <div class="form-group">
-                    <label>Send Message</label>
-                    <textarea id="msgContent" required placeholder="Write your message..."></textarea>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <button type="button" class="btn" onclick="closeInboxModal()" style="border-color:#555;">Close</button>
-                    <button type="submit" class="btn" style="background:#fff; color:#000; font-weight:bold;">Send</button>
-                </div>
-            </form>
+        </div>
+    </div>
+
+    <!-- Modal شات المراسلة الفوري -->
+    <div id="chatModal" class="modal">
+        <div class="modal-content">
+            <h2>Live Community Chat</h2>
+            <div style="height: 150px; border: 1px solid #333; overflow-y:auto; padding: 10px; margin-bottom: 15px; font-size: 0.75rem;" id="chatBox">
+                <p style="color:#888;">[System]: Welcome to live chat room.</p>
+            </div>
+            <div class="form-group"><input type="text" id="chatInput" placeholder="Type message..."></div>
+            <div class="modal-actions">
+                <button type="button" class="btn" onclick="closeModals()">Close</button>
+                <button type="button" class="btn" onclick="sendChatMessage()" style="background:#fff; color:#000;">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal الإشعارات -->
+    <div id="notificationsModal" class="modal">
+        <div class="modal-content">
+            <h2>System Notifications</h2>
+            <div id="allNotificationsBox" style="max-height: 200px; overflow-y:auto; font-size: 0.8rem; margin-bottom: 15px;">
+                <p style="color: #666;">No recent notifications.</p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn" onclick="closeModals()">Close</button>
+            </div>
         </div>
     </div>
 
     <script>
+        // محاكاة بيانات المستخدم أو جلبها من التخزين المحلي
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || {
+            username: 'Professional Member',
+            email: 'member@blackflower.art',
+            balance: 5.00, // رصيد ابتدائي لتبسيط التجربة
+            tasksDone: 2,
+            adsViewed: 4
+        };
+
+        let userNotifications = [
+            { text: 'Welcome to The Black Flower platform!', date: 'Today' }
+        ];
+
         document.addEventListener('DOMContentLoaded', () => {
-            loadUserData();
-            checkNotifications();
+            updateDashboardUI();
+            checkAdminBroadcast();
         });
 
-        function loadUserData() {
-            const user = JSON.parse(localStorage.getItem('currentUser')) || {
-                username: 'Demo Member',
-                email: 'member@blackflower.art',
-                balance: 0.00,
-                level: 1,
-                tasksDone: 0,
-                adsViewed: 0
-            };
+        function updateDashboardUI() {
+            document.getElementById('welcomeUser').innerText = `Welcome, ${currentUser.username}`;
+            document.getElementById('userEmail').innerText = currentUser.email;
+            document.getElementById('userBalance').innerText = `${currentUser.balance.toFixed(2)} BFP`;
+            document.getElementById('userTasks').innerText = currentUser.tasksDone || 0;
+            document.getElementById('userAds').innerText = currentUser.adsViewed || 0;
 
-            document.getElementById('welcomeUser').innerText = `Welcome, ${user.username}`;
-            document.getElementById('userEmail').innerText = user.email;
-            document.getElementById('userBalance').innerText = `${(user.balance || 0).toFixed(2)} BFP`;
-            document.getElementById('userTasks').innerText = user.tasksDone || 0;
-            document.getElementById('userAds').innerText = user.adsViewed || 0;
+            // حساب اليفيل ديناميكياً: كل 10 عملات BFP تزيد المستوى درجة واحدة
+            // المستوى يبدأ من 1. المستوى = 1 + الجزء الصحيح من (Balance / 10)
+            const calculatedLevel = Math.floor(currentUser.balance / 10) + 1;
+            currentUser.level = calculatedLevel;
 
-            const currentLvl = user.level || 1;
-            document.getElementById('currentLevelText').innerText = `Level ${currentLvl}`;
-            const progressPercent = Math.min((((user.tasksDone || 0) % 10) * 10), 100);
+            // حساب نسبة التقدم داخل المستوى الحالي (0 إلى 10 عملات للمستوى)
+            const currentLevelBfp = currentUser.balance % 10;
+            const progressPercent = (currentLevelBfp / 10) * 100;
+
+            document.getElementById('currentLevelText').innerText = `Level ${calculatedLevel}`;
+            document.getElementById('nextLevelProgressText').innerText = `${progressPercent.toFixed(0)}% to Level ${calculatedLevel + 1} (${currentLevelBfp.toFixed(1)}/10 BFP)`;
             document.getElementById('levelProgressBar').style.width = `${progressPercent}%`;
-            document.getElementById('nextLevelProgressText').innerText = `${progressPercent}% to Level ${currentLvl + 1}`;
+
+            // تحديث عداد الإشعارات
+            document.getElementById('notifCount').innerText = userNotifications.length;
+
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
         }
 
-        async function checkNotifications() {
+        // كسب عملات عند مشاهدة إعلان أو إنجاز مهمة
+        function earnReward(amount, type) {
+            currentUser.balance += amount;
+            if(type === 'Ad Viewed') currentUser.adsViewed++;
+            else currentUser.tasksDone++;
+            
+            addNotification(`Successfully earned +${amount} BFP from ${type}!`);
+            updateDashboardUI();
+            alert(`Reward received: +${amount} BFP added to your balance!`);
+        }
+
+        function completeTask(amount) {
+            earnReward(amount, 'Task Completed');
+        }
+
+        function processWithdraw() {
+            const amt = parseFloat(document.getElementById('withdrawAmount').value);
+            if(!amt || amt <= 0 || amt > currentUser.balance) {
+                alert('Invalid withdrawal amount.');
+                return;
+            }
+            currentUser.balance -= amt;
+            addNotification(`Withdrawal request of ${amt} BFP submitted successfully.`);
+            updateDashboardUI();
+            closeModals();
+            alert('Withdrawal request processed and sent to system.');
+        }
+
+        function addNotification(text) {
+            userNotifications.unshift({ text, date: 'Just now' });
+            document.getElementById('notifCount').innerText = userNotifications.length;
+        }
+
+        async function checkAdminBroadcast() {
             try {
                 const res = await fetch('https://earn-uq8k.onrender.com/api/notifications');
                 const data = await res.json();
                 if (data.success && data.notifications.length > 0) {
-                    document.getElementById('notificationText').innerText = data.notifications[0].message;
+                    const latest = data.notifications[0].message;
+                    document.getElementById('notificationText').innerText = latest;
                     document.getElementById('adminNotification').classList.add('active');
+                    addNotification(`[Admin Notice]: ${latest}`);
                 }
             } catch (e) {
-                console.error('Error fetching notifications');
+                console.error('Error fetching broadcast');
             }
         }
 
-        function openInboxModal() { document.getElementById('inboxModal').style.display = 'flex'; }
-        function closeInboxModal() { document.getElementById('inboxModal').style.display = 'none'; }
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+            if(modalId === 'notificationsModal') {
+                renderNotificationsList();
+            }
+        }
 
-        document.getElementById('sendMessageForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            alert('Message sent successfully!');
-            document.getElementById('msgContent').value = '';
-            closeInboxModal();
-        });
+        function closeModals() {
+            document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+        }
+
+        function openNotificationsModal() {
+            openModal('notificationsModal');
+        }
+
+        function renderNotificationsList() {
+            const box = document.getElementById('allNotificationsBox');
+            if(userNotifications.length === 0) {
+                box.innerHTML = '<p style="color: #666;">No notifications.</p>';
+                return;
+            }
+            box.innerHTML = userNotifications.map(n => `
+                <div style="padding: 8px 0; border-bottom: 1px dashed #333;">
+                    <span>${n.text}</span><br>
+                    <span style="font-size: 0.65rem; color: #888;">${n.date}</span>
+                </div>
+            `).join('');
+        }
+
+        function sendChatMessage() {
+            const txt = document.getElementById('chatInput').value;
+            if(!txt) return;
+            const box = document.getElementById('chatBox');
+            box.innerHTML += `<p><strong>You:</strong> ${txt}</p>`;
+            document.getElementById('chatInput').value = '';
+            box.scrollTop = box.scrollHeight;
+        }
 
         function logout() {
             localStorage.removeItem('currentUser');
