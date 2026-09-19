@@ -1,171 +1,108 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 const cors = require('cors');
-const bcrypt = require('bcryptjs');
-const multer = require('multer');
 
 const app = express();
 
-app.use(cors());
+// Middleware
 app.use(express.json());
+app.use(cors());
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'uploads/');
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + '-' + file.originalname);
-    }
-});
-const upload = multer({ storage: storage });
-
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://blackflowerproart_db_user:كلمة_مرور_القاعدة@membersinfo.tmqa7zr.mongodb.net/?appName=Membersinfo';
+// الاتصال بقاعدة بيانات MongoDB (استبدل الرابط برابط الاتصال الخاص بك إذا لزم الأمر)
+const MONGO_URI = process.env.MONGO_URI || 'YOUR_MONGODB_CONNECTION_STRING_HERE';
 
 mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
-})
-.then(() => console.log('✅ Connected to MongoDB successfully'))
-.catch(err => console.error('❌ MongoDB connection error:', err));
+}).then(() => {
+    console.log('Connected to MongoDB successfully.');
+}).catch((err) => {
+    console.error('MongoDB connection error:', err);
+});
 
+// تعريف مخطط المستخدم (User Schema) مع الحقول الشاملة للإحصائيات والحالة والدولة
 const userSchema = new mongoose.Schema({
-    username: { type: String, required: true },
+    username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    balance: { type: Number, default: 20.00 },
-    xp: { type: Number, default: 25 },
-    level: { type: Number, default: 15 }, // حقل الليفيل المباشر
+    balance: { type: Number, default: 0 },
+    level: { type: Number, default: 1 },
+    isOnline: { type: Boolean, default: false },
+    country: { type: String, default: 'Jordan' },
+    ipChanges: { type: Number, default: 0 },
+    lastIp: { type: String, default: '' },
+    loginCount: { type: Number, default: 0 },
+    adsViewed: { type: Number, default: 0 },
+    tasksDone: { type: Number, default: 0 },
+    depositsCount: { type: Number, default: 0 },
+    withdrawalsCount: { type: Number, default: 0 },
+    adsPosted: { type: Number, default: 0 },
+    tasksCreated: { type: Number, default: 0 },
+    isBanned: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now }
 });
+
 const User = mongoose.model('User', userSchema);
 
-const taskSchema = new mongoose.Schema({
-    user_id: { type: String, required: true },
-    title: { type: String, required: true },
-    details: { type: String, required: true },
-    target_url: { type: String, required: true },
-    price: { type: Number, required: true },
-    duration_days: { type: Number, required: true },
-    media_url: { type: String },
-    created_at: { type: Date, default: Date.now }
-});
-const Task = mongoose.model('Task', taskSchema);
+// ==========================================
+// مسارات لوحة تحكم المدير التنفيذي (Executive Admin APIs)
+// ==========================================
 
-// مسارات الـ API
-app.post('/api/register', async (req, res) => {
+// 1. مسار جلب كافة المستخدمين للوحة تحكم المدير التنفيذي
+app.get('/api/admin/users', async (req, res) => {
     try {
-        const { username, email, password } = req.body;
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ success: false, message: 'Email already registered.' });
+        const users = await User.find({}, '-password'); // جلب المستخدمين باستثناء كلمة المرور للأمان
+        res.json({ success: true, users });
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({ success: false, message: 'Error fetching users from database.' });
+    }
+});
+
+// 2. مسار تحديث واستبدال بيانات المستخدم مباشرة في MongoDB بواسطة المدير التنفيذي
+app.put('/api/admin/user/:id', async (req, res) => {
+    try {
+        const { username, email, password, balance, level } = req.body;
+        
+        // تجهيز الكائنات للتحديث
+        const updateData = { 
+            username, 
+            email, 
+            balance: parseFloat(balance), 
+            level: parseInt(level) 
+        };
+
+        // إذا أدخل المدير كلمة مرور جديدة، يتم تشفيرها واستبدال القديمة، وإن تركها فارغة تبقى كما هي
+        if (password && password.trim() !== "") {
+            updateData.password = await bcrypt.hash(password, 10);
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = new User({ username, email, password: hashedPassword, level: 1 });
-        await newUser.save();
+        // تنفيذ التحديث والاستبدال الفوري في قاعدة بيانات MongoDB
+        const updatedUser = await User.findByIdAndUpdate(
+            req.params.id, 
+            updateData, 
+            { new: true, runValidators: true }
+        ).select('-password');
 
-        res.status(201).json({ success: true, message: 'Account created successfully!' });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error during registration.' });
-    }
-});
-
-app.post('/api/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ success: false, message: 'Invalid email or password.' });
+        if (!updatedUser) {
+            return res.status(404).json({ success: false, message: 'User not found in database.' });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ success: false, message: 'Invalid email or password.' });
-        }
-
-        res.json({
-            success: true,
-            message: 'Logged in successfully',
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                balance: user.balance,
-                xp: user.xp,
-                level: user.level !== undefined ? user.level : user.__v || 1
-            }
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error during login.' });
-    }
-});
-
-app.get('/api/user', async (req, res) => {
-    try {
-        const { id } = req.query;
-        if (!id) return res.status(400).json({ success: false, message: 'User ID is required.' });
-
-        const user = await User.findById(id);
-        if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
-
-        res.json({
-            success: true,
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                balance: user.balance,
-                xp: user.xp,
-                level: user.level !== undefined ? user.level : user.__v || 1
-            }
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Error fetching user data.' });
-    }
-});
-
-app.post('/api/reset-password', async (req, res) => {
-    try {
-        const { email, newPassword } = req.body;
-        const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
-
-        user.password = await bcrypt.hash(newPassword, 10);
-        await user.save();
-
-        res.json({ success: true, message: 'Password updated successfully!' });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error.' });
-    }
-});
-
-app.get('/api/tasks', async (req, res) => {
-    try {
-        const tasks = await Task.find().sort({ created_at: -1 });
-        res.json({ success: true, tasks });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Error fetching tasks.' });
-    }
-});
-
-app.post('/api/tasks', upload.single('media'), async (req, res) => {
-    try {
-        const { user_id, title, details, target_url, price, duration_days } = req.body;
-        let mediaUrl = req.file ? `/uploads/${req.file.filename}` : null;
-
-        const newTask = new Task({
-            user_id, title, details, target_url,
-            price: parseFloat(price),
-            duration_days: parseInt(duration_days),
-            media_url: mediaUrl
+        res.json({ 
+            success: true, 
+            message: 'User data successfully updated and replaced in MongoDB!', 
+            user: updatedUser 
         });
 
-        await newTask.save();
-        res.status(201).json({ success: true, message: 'Task created successfully!', task: newTask });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Error creating task.' });
+        console.error('Error updating user:', error);
+        res.status(500).json({ success: false, message: 'Error updating user in MongoDB.' });
     }
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// تشغيل الخادم
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
