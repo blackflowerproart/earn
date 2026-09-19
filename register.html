@@ -66,8 +66,10 @@
                 const data = await res.json();
 
                 if (res.ok && data.success) {
-                    msg.innerText = 'Account created successfully! Redirecting...';
-                    setTimeout(() => window.location.href = 'login.html', 1500);
+                    msg.innerText = 'Account created successfully! Redirecting to login...';
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 1200);
                 } else {
                     msg.innerText = data.message || 'Registration failed.';
                 }
