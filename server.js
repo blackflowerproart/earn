@@ -23,6 +23,8 @@ const userSchema = new mongoose.Schema({
     level: { type: Number, default: 1 },
     tasksDone: { type: Number, default: 0 },
     adsViewed: { type: Number, default: 0 },
+    adsPosted: { type: Number, default: 0 },
+    tasksCreated: { type: Number, default: 0 },
     isBanned: { type: Boolean, default: false },
     country: { type: String, default: 'Jordan' }
   },
@@ -31,7 +33,7 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-// --- المسارات API ---
+// --- المسارات (Endpoints) ---
 
 // 1. تسجيل جديد
 app.post('/api/register', async (req, res) => {
@@ -62,7 +64,94 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// 3. جلب جميع المستخدمين (للأدمن)
+// 3. جلب بيانات المستخدم المحدثة للداشبورد
+app.get('/api/user/me/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 4. مشاهدة إعلان
+app.post('/api/user/watch-ad', async (req, res) => {
+  try {
+    const { userId, reward } = req.body;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
+
+    user.dashboardData.balance += reward;
+    user.dashboardData.adsViewed += 1;
+    await user.save();
+
+    res.json({ success: true, newBalance: user.dashboardData.balance, user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 5. نشر إعلان جديد
+app.post('/api/user/post-ad', async (req, res) => {
+  try {
+    const { userId, totalCost } = req.body;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
+    if (user.dashboardData.balance < totalCost) {
+      return res.status(400).json({ success: false, message: 'الرصيد غير كافٍ' });
+    }
+
+    user.dashboardData.balance -= totalCost;
+    user.dashboardData.adsPosted += 1;
+    await user.save();
+
+    res.json({ success: true, newBalance: user.dashboardData.balance, user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 6. نشر مهمة جديدة
+app.post('/api/user/post-task', async (req, res) => {
+  try {
+    const { userId, totalCost } = req.body;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
+    if (user.dashboardData.balance < totalCost) {
+      return res.status(400).json({ success: false, message: 'الرصيد غير كافٍ' });
+    }
+
+    user.dashboardData.balance -= totalCost;
+    user.dashboardData.tasksCreated += 1;
+    await user.save();
+
+    res.json({ success: true, newBalance: user.dashboardData.balance, user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 7. سحب الأموال
+app.post('/api/user/withdraw', async (req, res) => {
+  try {
+    const { userId, amount } = req.body;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
+    if (user.dashboardData.balance < amount) {
+      return res.status(400).json({ success: false, message: 'الرصيد المتاح غير كافٍ' });
+    }
+
+    user.dashboardData.balance -= amount;
+    await user.save();
+
+    res.json({ success: true, newBalance: user.dashboardData.balance, user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 8. مسارات الأدمن
 app.get('/api/admin/users', async (req, res) => {
   try {
     const users = await User.find({});
@@ -72,7 +161,6 @@ app.get('/api/admin/users', async (req, res) => {
   }
 });
 
-// 4. تحديث بيانات المستخدم (تعديل الرصيد، الحظر، كلمة السر) بواسطة الأدمن
 app.put('/api/admin/update-user/:id', async (req, res) => {
   try {
     const { balance, isBanned, password } = req.body;
@@ -85,23 +173,6 @@ app.put('/api/admin/update-user/:id', async (req, res) => {
 
     await user.save();
     res.json({ success: true, message: 'تم التحديث بنجاح', user });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-// 5. إضافة رصيد عند مشاهدة الإعلان
-app.post('/api/user/watch-ad', async (req, res) => {
-  try {
-    const { userId, reward } = req.body;
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
-
-    user.dashboardData.balance += reward;
-    user.dashboardData.adsViewed += 1;
-    await user.save();
-
-    res.json({ success: true, newBalance: user.dashboardData.balance });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
