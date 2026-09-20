@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء إعلان جديد - The BlackFlower Pro Art</title>
+    <style>
+        * { box-sizing: border-box; font-family: monospace, sans-serif; margin: 0; padding: 0; }
+        body { background: #000; color: #fff; padding: 20px; display: flex; justify-content: center; }
+        .card { border: 2px solid #fff; background: #000; padding: 30px; width: 100%; max-width: 500px; text-align: center; }
+        h1 { text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; font-size: 1.2rem; }
+        .form-group { margin-bottom: 15px; text-align: right; }
+        label { display: block; font-size: 0.8rem; margin-bottom: 5px; color: #aaa; }
+        input, textarea, select { width: 100%; background: #000; border: 1px solid #fff; color: #fff; padding: 10px; font-size: 0.9rem; outline: none; }
+        .btn { width: 100%; background: #fff; color: #000; border: 1px solid #fff; padding: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn:hover { background: #000; color: #fff; }
+        .back-link { display: block; margin-top: 15px; color: #fff; font-size: 0.8rem; }
+        #msg { margin-top: 10px; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>إنشاء ونشر إعلان جديد</h1>
+        <form id="adForm">
+            <div class="form-group">
+                <label>عنوان الإعلان</label>
+                <input type="text" id="title" placeholder="مثال: زيارة متجري الإلكتروني" required>
+            </div>
+            <div class="form-group">
+                <label>رابط Target URL</label>
+                <input type="url" id="url" placeholder="https://example.com" required>
+            </div>
+            <div class="form-group">
+                <label>المكافأة لكل مشاهدة (BFP)</label>
+                <input type="number" step="0.01" id="reward" value="0.10" required>
+            </div>
+            <div class="form-group">
+                <label>عدد المشاهدات المطلوبة</label>
+                <input type="number" id="views" value="100" required>
+            </div>
+            <button type="submit" class="btn">خصم الميزانية ونشر الإعلان</button>
+        </form>
+        <div id="msg"></div>
+        <a href="dashboard.html" class="back-link">العودة للواجهة الرئيسية</a>
+    </div>
+
+    <script>
+        const API_URL = 'https://earn-uq8k.onrender.com/api';
+        const user = JSON.parse(localStorage.getItem('user'));
+        if(!user) window.location.href = 'login.html';
+
+        document.getElementById('adForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('msg');
+            const totalCost = parseFloat(document.getElementById('reward').value) * parseInt(document.getElementById('views').value);
+
+            if (user.dashboardData.balance < totalCost) {
+                msg.style.color = '#ff4d4d';
+                msg.innerText = `رصيدك غير كافٍ. التكلفة الإجمالية: ${totalCost} BFP`;
+                return;
+            }
+
+            msg.style.color = '#fff';
+            msg.innerText = 'جاري حفظ ونشر الإعلان...';
+
+            try {
+                const res = await fetch(`${API_URL}/user/post-ad`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: user._id,
+                        title: document.getElementById('title').value,
+                        url: document.getElementById('url').value,
+                        reward: parseFloat(document.getElementById('reward').value),
+                        views: parseInt(document.getElementById('views').value),
+                        totalCost
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    msg.style.color = '#00ff00';
+                    msg.innerText = 'تم نشر الإعلان بنجاح!';
+                    user.dashboardData.balance = data.newBalance;
+                    localStorage.setItem('user', JSON.stringify(user));
+                } else {
+                    msg.style.color = '#ff4d4d';
+                    msg.innerText = data.message || 'فشل نشر الإعلان';
+                }
+            } catch (err) {
+                msg.style.color = '#ff4d4d';
+                msg.innerText = 'خطأ في الاتصال بالسيرفر';
+            }
+        });
+    </script>
+</body>
+</html>
