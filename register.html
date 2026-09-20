@@ -6,7 +6,7 @@
     <title>Register - The BlackFlower Pro Art</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: monospace, sans-serif; }
-        body { background-color: #000; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        body { background-color: #000; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
         .auth-card { border: 2px solid #fff; background: #000; padding: 40px; width: 100%; max-width: 400px; text-align: center; }
         h1 { text-transform: uppercase; letter-spacing: 3px; margin-bottom: 25px; font-size: 1.5rem; }
         .form-group { margin-bottom: 20px; text-align: left; }
@@ -15,10 +15,11 @@
         input:focus { border-color: #aaa; }
         .btn-submit { width: 100%; background: #fff; color: #000; border: 1px solid #fff; padding: 12px; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: 10px; }
         .btn-submit:hover { background: #000; color: #fff; }
-        .auth-links { margin-top: 20px; font-size: 0.8rem; display: flex; justify-content: space-between; }
+        .btn-submit:disabled { background: #555; border-color: #555; cursor: not-allowed; }
+        .auth-links { margin-top: 20px; font-size: 0.8rem; display: flex; justify-content: center; }
         .auth-links a { color: #fff; text-decoration: underline; }
         .auth-links a:hover { color: #aaa; }
-        #message { margin-top: 15px; font-size: 0.85rem; color: #fff; }
+        #message { margin-top: 15px; font-size: 0.85rem; color: #fff; word-break: break-word; }
     </style>
 </head>
 <body>
@@ -27,18 +28,18 @@
         <h1>Create Account</h1>
         <form id="registerForm">
             <div class="form-group">
-                <label>Username</label>
-                <input type="text" id="username" required>
+                <label for="username">Username</label>
+                <input type="text" id="username" required autocomplete="username">
             </div>
             <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" id="email" required>
+                <label for="email">Email Address</label>
+                <input type="email" id="email" required autocomplete="email">
             </div>
             <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="password" required>
+                <label for="password">Password</label>
+                <input type="password" id="password" minlength="6" required autocomplete="new-password">
             </div>
-            <button type="submit" class="btn-submit">Sign Up</button>
+            <button type="submit" class="btn-submit" id="submitBtn">Sign Up</button>
         </form>
         <div id="message"></div>
         <div class="auth-links">
@@ -51,12 +52,16 @@
 
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const username = document.getElementById('username').value;
-            const email = document.getElementById('email').value;
+            
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const msg = document.getElementById('message');
+            const submitBtn = document.getElementById('submitBtn');
 
+            msg.style.color = '#fff';
             msg.innerText = 'Creating account...';
+            submitBtn.disabled = true;
 
             try {
                 const res = await fetch(`${API_URL}/register`, {
@@ -64,18 +69,31 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, email, password })
                 });
+
                 const data = await res.json();
 
                 if (res.ok && data.success) {
-                    // حفظ بيانات المستخدم والداشبورد في المتصفح
+                    msg.style.color = '#00ff00';
+                    msg.innerText = 'Account created successfully! Redirecting...';
+                    
+                    // حفظ بيانات المستخدم والـ Token إن وجد
                     localStorage.setItem('user', JSON.stringify(data.user));
-                    // الدخول التلقائي إلى الواجهة بعد التسجيل لأول مرة
-                    window.location.href = 'dashboard.html';
+                    if (data.token) {
+                        localStorage.setItem('token', data.token);
+                    }
+
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1000);
                 } else {
+                    msg.style.color = '#ff4d4d';
                     msg.innerText = data.message || 'Registration failed.';
+                    submitBtn.disabled = false;
                 }
             } catch (err) {
-                msg.innerText = 'Server connection error.';
+                msg.style.color = '#ff4d4d';
+                msg.innerText = 'Server connection error. Please try again later.';
+                submitBtn.disabled = false;
             }
         });
     </script>
