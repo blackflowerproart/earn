@@ -6,13 +6,10 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// الاتصال بقاعدة بيانات MongoDB الخاصة بك (تأكد من وضع كلمة المرور مكان <db_password>)
+// الاتصال بقاعدة بيانات MongoDB الخاصة بك
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://blackflowerproart_db_user:En123456789@membersinfo.tmqa7zr.mongodb.net/blackflower_art?retryWrites=true&w=majority&appName=Membersinfo';
 
-mongoose.connect(MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => {
+mongoose.connect(MONGO_URI).then(() => {
     console.log('Connected to MongoDB (Membersinfo) successfully.');
 }).catch(err => {
     console.error('MongoDB connection error:', err);
@@ -54,7 +51,54 @@ const Notification = mongoose.model('Notification', notificationSchema);
 
 // --- مسارات النظام ---
 
-// 1. مسار تسجيل الدخول (للمستخدمين المسجلين مسبقاً)
+// 1. مسار تسجيل حساب جديد من صفحة التسجيل (Public Registration)
+app.post('/api/register', async (req, res) => {
+    try {
+        const { username, email, password } = req.body;
+
+        if (!username || !email || !password) {
+            return res.status(400).json({ success: false, message: 'جميع الحقول مطلوبة' });
+        }
+
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ success: false, message: 'البريد الإلكتروني مستخدم مسبقاً' });
+        }
+
+        const newUser = new User({
+            username,
+            email,
+            password, // يمكن إضافة تشفير bcrypt لاحقاً إذا رغبت
+            dashboardData: {
+                balance: 0.00,
+                level: 1,
+                tasksDone: 0,
+                adsViewed: 0,
+                depositsCount: 0,
+                withdrawalsCount: 0,
+                adsPosted: 0,
+                tasksCreated: 0,
+                isOnline: true,
+                isBanned: false,
+                country: 'Jordan (Amman)',
+                ipChanges: 0,
+                loginCount: 1
+            }
+        });
+
+        await newUser.save();
+
+        res.status(201).json({
+            success: true,
+            message: 'تم إنشاء الحساب بنجاح',
+            user: newUser
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// 2. مسار تسجيل الدخول (للمستخدمين المسجلين مسبقاً)
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -74,7 +118,7 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// 2. مسار إنشاء الحساب وإصدار ملف الداشبورد (يُدار حصرياً بواسطة مدير النظام)
+// 3. مسار إنشاء الحساب بواسطة الأدمن
 app.post('/api/admin/create-user', async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -109,7 +153,7 @@ app.post('/api/admin/create-user', async (req, res) => {
 
         res.status(201).json({ 
             success: true, 
-            message: 'Registration feature is managed by the system administrator. User and dashboard JSON created successfully.', 
+            message: 'User created successfully.', 
             user: newUser 
         });
     } catch (err) {
@@ -117,7 +161,7 @@ app.post('/api/admin/create-user', async (req, res) => {
     }
 });
 
-// 3. جلب كافة المستخدمين لوحة الإدارة
+// 4. جلب كافة المستخدمين لوحة الإدارة
 app.get('/api/admin/users', async (req, res) => {
     try {
         const users = await User.find({});
@@ -127,7 +171,7 @@ app.get('/api/admin/users', async (req, res) => {
     }
 });
 
-// 4. إرسال الأموال وتوليد الإشعار الفوري للمستخدم
+// 5. إرسال الأموال وتوليد الإشعار الفوري للمستخدم
 app.post('/api/user/send-funds', async (req, res) => {
     try {
         const { userId, amount, reason } = req.body;
