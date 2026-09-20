@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The BlackFlower Pro Art - الرئيسية</title>
+    <style>
+        * { box-sizing: border-box; font-family: monospace, sans-serif; margin: 0; padding: 0; }
+        body { background: #000; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; text-align: center; }
+        .hero-card { border: 2px solid #fff; background: #000; padding: 40px 30px; width: 100%; max-width: 480px; }
+        h1 { text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; font-size: 1.6rem; line-height: 1.4; }
+        p { font-size: 0.9rem; color: #aaa; margin-bottom: 30px; line-height: 1.6; }
+        .btn-group { display: flex; flex-direction: column; gap: 15px; }
+        .btn { background: #fff; color: #000; border: 1px solid #fff; padding: 14px; font-size: 1rem; font-weight: bold; text-decoration: none; text-transform: uppercase; transition: 0.3s; display: block; }
+        .btn:hover { background: #000; color: #fff; }
+        .btn-outline { background: #000; color: #fff; border: 1px solid #fff; }
+        .btn-outline:hover { background: #fff; color: #000; }
+        .footer-note { margin-top: 25px; font-size: 0.75rem; color: #666; }
+    </style>
+</head>
+<body>
+
+    <div class="hero-card">
+        <h1>The BlackFlower Pro Art</h1>
+        <p>منصة الإعلانات والمهام المصغرة وكسب عملات BFP الرقمية.</p>
+
+        <div class="btn-group">
+            <a href="login.html" class="btn">تسجيل الدخول</a>
+            <a href="register.html" class="btn btn-outline">إنشاء حساب جديد</a>
+        </div>
+
+        <div class="footer-note">جميع الحقوق محفوظة &copy; The BlackFlower Pro Art</div>
+    </div>
+
+    <script>
+        // التوجيه التلقائي للداشبورد إذا كان المستخدم مسجل دخول بالفعل
+        const user = localStorage.getItem('user');
+        if (user) {
+            window.location.href = 'dashboard.html';
+        }
+    </script>
+</body>
+</html>
