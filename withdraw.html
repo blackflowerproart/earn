@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سحب الأرباح - The BlackFlower Pro Art</title>
+    <style>
+        * { box-sizing: border-box; font-family: monospace, sans-serif; margin: 0; padding: 0; }
+        body { background: #000; color: #fff; padding: 20px; display: flex; justify-content: center; }
+        .card { border: 2px solid #fff; background: #000; padding: 30px; width: 100%; max-width: 450px; text-align: center; }
+        h1 { text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; font-size: 1.2rem; }
+        .balance-info { border: 1px dashed #fff; padding: 15px; margin-bottom: 20px; font-size: 1.1rem; }
+        .form-group { margin-bottom: 15px; text-align: right; }
+        label { display: block; font-size: 0.8rem; margin-bottom: 5px; color: #aaa; }
+        input, select { width: 100%; background: #000; border: 1px solid #fff; color: #fff; padding: 10px; font-size: 0.9rem; outline: none; }
+        .btn { width: 100%; background: #fff; color: #000; border: 1px solid #fff; padding: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn:hover { background: #000; color: #fff; }
+        .back-link { display: block; margin-top: 15px; color: #fff; font-size: 0.8rem; }
+        #msg { margin-top: 10px; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>طلب سحب الأرباح</h1>
+        <div class="balance-info">
+            الرصيد المتاح للسحب: <span id="userBalance">0.00</span> BFP
+        </div>
+        <form id="withdrawForm">
+            <div class="form-group">
+                <label>طريقة السحب</label>
+                <select id="method">
+                    <option value="faucetpay">FaucetPay (e-mail)</option>
+                    <option value="paypal">PayPal (e-mail)</option>
+                    <option value="crypto">Cryptocurrency Wallet (USDT/BTC)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>عنوان المحفظة / البريد الإلكتروني للدفعة</label>
+                <input type="text" id="accountDetails" placeholder="أدخل العنوان أو الإيميل" required>
+            </div>
+            <div class="form-group">
+                <label>المبلغ المراد سحبه (BFP)</label>
+                <input type="number" step="0.01" id="amount" placeholder="الحد الأدنى 1.00" min="1" required>
+            </div>
+            <button type="submit" class="btn">تأكيد طلب السحب</button>
+        </form>
+        <div id="msg"></div>
+        <a href="dashboard.html" class="back-link">العودة للواجهة الرئيسية</a>
+    </div>
+
+    <script>
+        const API_URL = 'https://earn-uq8k.onrender.com/api';
+        const user = JSON.parse(localStorage.getItem('user'));
+        if(!user) window.location.href = 'login.html';
+
+        document.getElementById('userBalance').innerText = user.dashboardData.balance.toFixed(2);
+
+        document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('msg');
+            const amount = parseFloat(document.getElementById('amount').value);
+
+            if (amount > user.dashboardData.balance) {
+                msg.style.color = '#ff4d4d';
+                msg.innerText = 'الرصيد المطلوب أكبر من المتاح في حسابك';
+                return;
+            }
+
+            msg.style.color = '#fff';
+            msg.innerText = 'جاري إرسال الطلب...';
+
+            try {
+                const res = await fetch(`${API_URL}/user/withdraw`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: user._id,
+                        method: document.getElementById('method').value,
+                        accountDetails: document.getElementById('accountDetails').value,
+                        amount
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    msg.style.color = '#00ff00';
+                    msg.innerText = 'تم إرسال طلب السحب بنجاح وسيتم معالجته قريباً';
+                    user.dashboardData.balance = data.newBalance;
+                    localStorage.setItem('user', JSON.stringify(user));
+                    document.getElementById('userBalance').innerText = data.newBalance.toFixed(2);
+                } else {
+                    msg.style.color = '#ff4d4d';
+                    msg.innerText = data.message || 'فشل إرسال طلب السحب';
+                }
+            } catch (err) {
+                msg.style.color = '#ff4d4d';
+                msg.innerText = 'خطأ في الاتصال بالسيرفر';
+            }
+        });
+    </script>
+</body>
+</html>
