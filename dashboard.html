@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - The BlackFlower Pro Art</title>
+    <style>
+        * { box-sizing: border-box; font-family: monospace, sans-serif; margin: 0; padding: 0; }
+        body { background: #000; color: #fff; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #fff; padding-bottom: 15px; margin-bottom: 25px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .card { border: 1px solid #fff; padding: 20px; text-align: center; }
+        .card h3 { font-size: 0.9rem; color: #aaa; margin-bottom: 10px; }
+        .card p { font-size: 1.5rem; font-weight: bold; }
+        .nav-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn { background: #fff; color: #000; padding: 12px 20px; text-decoration: none; font-weight: bold; border: 1px solid #fff; transition: 0.3s; }
+        .btn:hover { background: #000; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>لوحة التحكم الرئيسيّة</h1>
+        <span id="userGreeting">أهلاً بك</span>
+    </div>
+
+    <div class="grid">
+        <div class="card"><h3>الرصيد الحالي</h3><p id="balance">0.00 BFP</p></div>
+        <div class="card"><h3>الإعلانات المشاهدة</h3><p id="adsViewed">0</p></div>
+        <div class="card"><h3>المستوى</h3><p id="level">1</p></div>
+    </div>
+
+    <div class="nav-btns">
+        <a href="ads.html" class="btn">مشاهدة الإعلانات والربح</a>
+        <a href="buy-bfp.html" class="btn">شراء BFP</a>
+        <a href="#" class="btn" onclick="logout()" style="border-color: red; color: red;">تسجيل الخروج</a>
+    </div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user) window.location.href = 'login.html';
+
+        document.getElementById('userGreeting').innerText = `أهلاً، ${user.username}`;
+        document.getElementById('balance').innerText = `${user.dashboardData.balance.toFixed(2)} BFP`;
+        document.getElementById('adsViewed').innerText = user.dashboardData.adsViewed;
+        document.getElementById('level').innerText = user.dashboardData.level;
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>
