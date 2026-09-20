@@ -1,202 +1,71 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const bcrypt = require('bcryptjs'); // لتشفير كلمة المرور
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-// الاتصال بقاعدة بيانات MongoDB الخاصة بك
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://blackflowerproart_db_user:En123456789@membersinfo.tmqa7zr.mongodb.net/blackflower_art?retryWrites=true&w=majority&appName=Membersinfo';
+// رابط اتصال MongoDB الخاصة بك
+// استبدل <db_password> بكلمة المرور الحقيقية لقاعدة البيانات
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://blackflowerproart_db_user:<db_password>@membersinfo.tmqa7zr.mongodb.net/Membersinfo?retryWrites=true&w=majority&appName=Membersinfo";
 
-mongoose.connect(MONGO_URI).then(() => {
-    console.log('Connected to MongoDB (Membersinfo) successfully.');
-}).catch(err => {
-    console.error('MongoDB connection error:', err);
-});
+mongoose.connect(MONGO_URI)
+    .then(() => console.log('Connected to MongoDB Atlas'))
+    .catch(err => console.error('MongoDB Connection Error:', err));
 
-// تعريف نموذج المستخدم وهيكل بيانات الداشبورد (JSON)
+// تعريف schema المستخدم
 const userSchema = new mongoose.Schema({
-    username: { type: String, required: true },
+    username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    dashboardData: {
-        balance: { type: Number, default: 0.00 },
-        level: { type: Number, default: 1 },
-        tasksDone: { type: Number, default: 0 },
-        adsViewed: { type: Number, default: 0 },
-        depositsCount: { type: Number, default: 0 },
-        withdrawalsCount: { type: Number, default: 0 },
-        adsPosted: { type: Number, default: 0 },
-        tasksCreated: { type: Number, default: 0 },
-        isOnline: { type: Boolean, default: false },
-        isBanned: { type: Boolean, default: false },
-        country: { type: String, default: 'Jordan (Amman)' },
-        ipChanges: { type: Number, default: 0 },
-        loginCount: { type: Number, default: 0 }
-    },
     createdAt: { type: Date, default: Date.now }
 });
 
 const User = mongoose.model('User', userSchema);
 
-// تعريف نموذج الإشعارات الفورية
-const notificationSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    message: { type: String, required: true },
-    isRead: { type: Boolean, default: false },
-    createdAt: { type: Date, default: Date.now }
-});
-const Notification = mongoose.model('Notification', notificationSchema);
-
-// --- مسارات النظام ---
-
-// 1. مسار تسجيل حساب جديد من صفحة التسجيل (Public Registration)
+// مسار التسجيل API /register
 app.post('/api/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
 
         if (!username || !email || !password) {
-            return res.status(400).json({ success: false, message: 'جميع الحقول مطلوبة' });
+            return res.status(400).json({ success: false, message: 'All fields are required.' });
         }
 
-        const existingUser = await User.findOne({ email });
+        // التحقق من وجود المستخدم أو البريد الإلكتروني مسبقاً
+        const existingUser = await User.findOne({ $or: [{ email }, { username }] });
         if (existingUser) {
-            return res.status(400).json({ success: false, message: 'البريد الإلكتروني مستخدم مسبقاً' });
+            return res.status(400).json({ success: false, message: 'Username or Email already exists.' });
         }
 
+        // تشفير كلمة المرور
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // إنشاء مستخدم جديد
         const newUser = new User({
             username,
             email,
-            password, // يمكن إضافة تشفير bcrypt لاحقاً إذا رغبت
-            dashboardData: {
-                balance: 0.00,
-                level: 1,
-                tasksDone: 0,
-                adsViewed: 0,
-                depositsCount: 0,
-                withdrawalsCount: 0,
-                adsPosted: 0,
-                tasksCreated: 0,
-                isOnline: true,
-                isBanned: false,
-                country: 'Jordan (Amman)',
-                ipChanges: 0,
-                loginCount: 1
-            }
+            password: hashedPassword
         });
 
         await newUser.save();
 
         res.status(201).json({
             success: true,
-            message: 'تم إنشاء الحساب بنجاح',
-            user: newUser
-        });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-});
-
-// 2. مسار تسجيل الدخول (للمستخدمين المسجلين مسبقاً)
-app.post('/api/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
-        
-        if (!user || user.password !== password) {
-            return res.status(401).json({ success: false, message: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' });
-        }
-
-        user.dashboardData.isOnline = true;
-        user.dashboardData.loginCount = (user.dashboardData.loginCount || 0) + 1;
-        await user.save();
-
-        res.json({ success: true, message: 'تم تسجيل الدخول بنجاح', user });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-});
-
-// 3. مسار إنشاء الحساب بواسطة الأدمن
-app.post('/api/admin/create-user', async (req, res) => {
-    try {
-        const { username, email, password } = req.body;
-        
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ success: false, message: 'البريد الإلكتروني مستخدم مسبقاً' });
-        }
-
-        const newUser = new User({
-            username,
-            email,
-            password,
-            dashboardData: {
-                balance: 0.00,
-                level: 1,
-                tasksDone: 0,
-                adsViewed: 0,
-                depositsCount: 0,
-                withdrawalsCount: 0,
-                adsPosted: 0,
-                tasksCreated: 0,
-                isOnline: false,
-                isBanned: false,
-                country: 'Jordan (Amman)',
-                ipChanges: 0,
-                loginCount: 0
+            message: 'User registered successfully',
+            user: {
+                id: newUser._id,
+                username: newUser.username,
+                email: newUser.email
             }
         });
-
-        await newUser.save();
-
-        res.status(201).json({ 
-            success: true, 
-            message: 'User created successfully.', 
-            user: newUser 
-        });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
+    } catch (error) {
+        console.error('Registration Error:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
 });
 
-// 4. جلب كافة المستخدمين لوحة الإدارة
-app.get('/api/admin/users', async (req, res) => {
-    try {
-        const users = await User.find({});
-        res.json({ success: true, users });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-});
-
-// 5. إرسال الأموال وتوليد الإشعار الفوري للمستخدم
-app.post('/api/user/send-funds', async (req, res) => {
-    try {
-        const { userId, amount, reason } = req.body;
-        const user = await User.findById(userId);
-        
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
-        }
-
-        user.dashboardData.balance += parseFloat(amount);
-        await user.save();
-
-        const notifMessage = `تم إضافة مبلغ ${amount} BFP إلى رصيدك. السبب: ${reason || 'تحويل مباشر من الإدارة'}`;
-        await Notification.create({
-            userId: user._id,
-            message: notifMessage
-        });
-
-        res.json({ success: true, message: 'تم إرسال الأموال وإنشاء الإشعار بنجاح', newBalance: user.dashboardData.balance });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-});
-
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
