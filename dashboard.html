@@ -2,51 +2,117 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - The BlackFlower Pro Art</title>
     <style>
         * { box-sizing: border-box; font-family: monospace, sans-serif; margin: 0; padding: 0; }
         body { background: #000; color: #fff; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #fff; padding-bottom: 15px; margin-bottom: 25px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .card { border: 1px solid #fff; padding: 20px; text-align: center; }
-        .card h3 { font-size: 0.9rem; color: #aaa; margin-bottom: 10px; }
-        .card p { font-size: 1.5rem; font-weight: bold; }
-        .nav-btns { display: flex; gap: 10px; flex-wrap: wrap; }
-        .btn { background: #fff; color: #000; padding: 12px 20px; text-decoration: none; font-weight: bold; border: 1px solid #fff; transition: 0.3s; }
-        .btn:hover { background: #000; color: #fff; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #fff; padding-bottom: 15px; margin-bottom: 25px; flex-wrap: wrap; gap: 10px; }
+        .header h1 { font-size: 1.5rem; text-transform: uppercase; letter-spacing: 1px; }
+        .user-info { font-size: 0.9rem; color: #aaa; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .card { border: 1px solid #fff; padding: 20px; text-align: center; background: #000; }
+        .card h3 { font-size: 0.8rem; color: #aaa; text-transform: uppercase; margin-bottom: 10px; }
+        .card p { font-size: 1.4rem; font-weight: bold; }
+
+        .section-title { font-size: 1.1rem; border-right: 3px solid #fff; padding-right: 10px; margin-bottom: 15px; text-transform: uppercase; }
+
+        .nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .nav-btn { background: #fff; color: #000; border: 1px solid #fff; padding: 15px; text-decoration: none; font-weight: bold; text-align: center; transition: 0.3s; display: block; }
+        .nav-btn:hover { background: #000; color: #fff; }
+        
+        .admin-btn { background: #000; color: #ff4d4d; border: 1px solid #ff4d4d; }
+        .admin-btn:hover { background: #ff4d4d; color: #000; }
+
+        .logout-btn { background: #000; color: #aaa; border: 1px solid #555; width: 100%; padding: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .logout-btn:hover { background: #fff; color: #000; }
     </style>
 </head>
 <body>
+
     <div class="header">
-        <h1>لوحة التحكم الرئيسيّة</h1>
-        <span id="userGreeting">أهلاً بك</span>
+        <h1>لوحة التحكم الرئيسية</h1>
+        <div class="user-info">
+            المستخدم: <strong id="username" style="color: #fff;">...</strong> | البريد: <span id="userEmail">...</span>
+        </div>
     </div>
 
-    <div class="grid">
-        <div class="card"><h3>الرصيد الحالي</h3><p id="balance">0.00 BFP</p></div>
-        <div class="card"><h3>الإعلانات المشاهدة</h3><p id="adsViewed">0</p></div>
-        <div class="card"><h3>المستوى</h3><p id="level">1</p></div>
+    <!-- بطاقات عرض الأحصائيات من قاعدة البيانات -->
+    <div class="stats-grid">
+        <div class="card">
+            <h3>الرصيد المتاح</h3>
+            <p id="balance">0.00 BFP</p>
+        </div>
+        <div class="card">
+            <h3>إعلانات شاهدتها</h3>
+            <p id="adsViewed">0</p>
+        </div>
+        <div class="card">
+            <h3>إعلانات نشرتها</h3>
+            <p id="adsPosted">0</p>
+        </div>
+        <div class="card">
+            <h3>مهام أنشأتها</h3>
+            <p id="tasksCreated">0</p>
+        </div>
     </div>
 
-    <div class="nav-btns">
-        <a href="ads.html" class="btn">مشاهدة الإعلانات والربح</a>
-        <a href="buy-bfp.html" class="btn">شراء BFP</a>
-        <a href="#" class="btn" onclick="logout()" style="border-color: red; color: red;">تسجيل الخروج</a>
+    <!-- التنقل السريع بين كليّة صفحات المشروع -->
+    <div class="section-title">إدارة الحساب والخدمات</div>
+    <div class="nav-grid">
+        <a href="ads.html" class="nav-btn">مشاهدة الإعلانات والربح</a>
+        <a href="post-ad.html" class="nav-btn">إنشاء ونشر إعلان</a>
+        <a href="post-task.html" class="nav-btn">إنشاء ونشر مهمة</a>
+        <a href="buy-bfp.html" class="nav-btn">شراء رصيد BFP</a>
+        <a href="withdraw.html" class="nav-btn">سحب الأرباح</a>
+        <a href="admin-control.html" id="adminLink" class="nav-btn admin-btn" style="display: none;">لوحة تحكم الأدمن</a>
     </div>
+
+    <button onclick="logout()" class="logout-btn">تسجيل الخروج</button>
 
     <script>
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (!user) window.location.href = 'login.html';
+        const API_URL = 'https://earn-uq8k.onrender.com/api';
+        
+        // التحقق من وجود الجلسة المحلية
+        let localUser = JSON.parse(localStorage.getItem('user'));
+        if (!localUser || !localUser._id) {
+            window.location.href = 'login.html';
+        }
 
-        document.getElementById('userGreeting').innerText = `أهلاً، ${user.username}`;
-        document.getElementById('balance').innerText = `${user.dashboardData.balance.toFixed(2)} BFP`;
-        document.getElementById('adsViewed').innerText = user.dashboardData.adsViewed;
-        document.getElementById('level').innerText = user.dashboardData.level;
+        // جلب أحدث البيانات المحدثة من MongoDB
+        async function fetchLatestUserData() {
+            try {
+                const res = await fetch(`${API_URL}/user/me/${localUser._id}`);
+                const data = await res.json();
+                
+                if (data.success && data.user) {
+                    const user = data.user;
+                    localStorage.setItem('user', JSON.stringify(user)); // تحديث التخزين المحلي
+
+                    document.getElementById('username').innerText = user.username;
+                    document.getElementById('userEmail').innerText = user.email;
+                    document.getElementById('balance').innerText = `${user.dashboardData.balance.toFixed(2)} BFP`;
+                    document.getElementById('adsViewed').innerText = user.dashboardData.adsViewed || 0;
+                    document.getElementById('adsPosted').innerText = user.dashboardData.adsPosted || 0;
+                    document.getElementById('tasksCreated').innerText = user.dashboardData.tasksCreated || 0;
+
+                    if (user.isAdmin) {
+                        document.getElementById('adminLink').style.display = 'block';
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching dashboard data:', err);
+            }
+        }
 
         function logout() {
             localStorage.clear();
             window.location.href = 'login.html';
         }
+
+        fetchLatestUserData();
     </script>
 </body>
 </html>
