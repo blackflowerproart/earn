@@ -3,72 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل الدخول - The BlackFlower Pro Art</title>
+    <title>تسجيل الدخول - Black Flower Pro Art</title>
     <style>
-        * { box-sizing: border-box; font-family: monospace, sans-serif; margin: 0; padding: 0; }
-        body { background: #000; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .card { border: 2px solid #fff; background: #000; padding: 30px; width: 100%; max-width: 400px; text-align: center; }
-        h1 { text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; font-size: 1.3rem; }
-        .form-group { margin-bottom: 15px; text-align: right; }
-        label { display: block; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 5px; color: #aaa; }
-        input { width: 100%; background: #000; border: 1px solid #fff; color: #fff; padding: 10px; font-size: 1rem; outline: none; }
-        input:focus { border-color: #aaa; }
-        .btn { width: 100%; background: #fff; color: #000; border: 1px solid #fff; padding: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        .btn:hover { background: #000; color: #fff; }
-        .links { margin-top: 15px; font-size: 0.8rem; }
-        .links a { color: #fff; text-decoration: underline; }
-        #msg { margin-top: 10px; font-size: 0.85rem; }
+        body { font-family: Tahoma, sans-serif; background-color: #121212; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-box { background: #1e1e1e; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); width: 350px; border-top: 4px solid #d4af37; }
+        h2 { text-align: center; color: #d4af37; margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-size: 14px; }
+        input { width: 100%; padding: 10px; border: 1px solid #333; background: #2a2a2a; color: #fff; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #d4af37; border: none; color: #121212; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #c59b27; }
+        .back-link { display: block; text-align: center; margin-top: 15px; color: #aaa; text-decoration: none; font-size: 13px; }
+        .back-link:hover { color: #d4af37; }
+        .message { text-align: center; margin-top: 15px; font-size: 14px; }
+        .error { color: #ff5252; }
+        .success { color: #4caf50; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>تسجيل الدخول</h1>
+
+    <div class="login-box">
+        <h2>تسجيل الدخول</h2>
         <form id="loginForm">
-            <div class="form-group">
+            <div class="input-group">
                 <label>البريد الإلكتروني</label>
-                <input type="email" id="email" required>
+                <input type="email" id="email" required placeholder="name@example.com">
             </div>
-            <div class="form-group">
-                <label>كلمة السر</label>
-                <input type="password" id="password" required>
+            <div class="input-group">
+                <label>كلمة المرور</label>
+                <input type="password" id="password" required placeholder="********">
             </div>
-            <button type="submit" class="btn">دخول</button>
+            <button type="submit">دخول</button>
         </form>
-        <div id="msg"></div>
-        <div class="links">
-            <a href="register.html">ليس لديك حساب؟ إنشاء حساب جديد</a>
-        </div>
+        <div id="message" class="message"></div>
+        <a href="index.html" class="back-link">العودة للرئيسية</a>
     </div>
 
     <script>
-        const API_URL = 'https://earn-uq8k.onrender.com/api';
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        const API_URL = 'http://localhost:10000/api'; // استبدله برابط سيرفرك أونلاين عند الرفع
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const msg = document.getElementById('msg');
-            msg.innerText = 'جاري التحقق...';
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const msgDiv = document.getElementById('message');
+
+            msgDiv.textContent = 'جاري التحقق وتسجيل الدخول...';
+            msgDiv.className = 'message';
 
             try {
-                const res = await fetch(`${API_URL}/login`, {
+                const response = await fetch(`${API_URL}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: document.getElementById('email').value,
-                        password: document.getElementById('password').value
-                    })
+                    body: JSON.stringify({ email, password })
                 });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    msg.style.color = '#00ff00';
-                    msg.innerText = 'تم تسجيل الدخول بنجاح!';
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    setTimeout(() => window.location.href = 'dashboard.html', 800);
+
+                const data = await response.json();
+
+                if (response.ok && data.success && data.user) {
+                    msgDiv.textContent = 'تم تسجيل الدخول بنجاح! جاري تحويلك...';
+                    msgDiv.className = 'message success';
+                    
+                    // ضمان حفظ بيانات المستخدم في LocalStorage بشكل صحيح
+                    localStorage.setItem('currentUser', JSON.stringify(data.user));
+                    
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 800);
                 } else {
-                    msg.style.color = '#ff4d4d';
-                    msg.innerText = data.message || 'بيانات غير صحيحة';
+                    msgDiv.textContent = data.message || 'بيانات الدخول غير صحيحة';
+                    msgDiv.className = 'message error';
                 }
             } catch (err) {
-                msg.style.color = '#ff4d4d';
-                msg.innerText = 'خطأ في الاتصال بالسيرفر';
+                msgDiv.textContent = 'خطأ في الاتصال بالخادم (Server Error)';
+                msgDiv.className = 'message error';
             }
         });
     </script>
