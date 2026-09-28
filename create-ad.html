@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء إعلان جديد - Black Flower Pro Art</title>
+    <style>
+        body { font-family: Tahoma, sans-serif; background-color: #121212; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: #1e1e1e; padding: 30px; border-radius: 8px; width: 380px; border-top: 4px solid #d4af37; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        h2 { text-align: center; color: #d4af37; margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-size: 14px; }
+        input, select { width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #333; color: #fff; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #d4af37; border: none; color: #121212; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #c59b27; }
+        .back-link { display: block; text-align: center; margin-top: 15px; color: #aaa; text-decoration: none; font-size: 13px; }
+        .back-link:hover { color: #d4af37; }
+        .message { text-align: center; margin-top: 15px; font-size: 14px; }
+        .success { color: #4caf50; }
+        .error { color: #ff5252; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h2>إنشاء إعلان جديد</h2>
+        <form id="adForm">
+            <div class="input-group">
+                <label>عنوان الإعلان</label>
+                <input type="text" id="title" required placeholder="مثال: إعلان منصة التصميم">
+            </div>
+            <div class="input-group">
+                <label>رابط الإعلان (URL)</label>
+                <input type="url" id="url" required placeholder="https://example.com">
+            </div>
+            <div class="input-group">
+                <label>مدة المشاهدة (بالثواني)</label>
+                <input type="number" id="duration" required value="30" min="5">
+            </div>
+            <div class="input-group">
+                <label>السعر اليومي ($)</label>
+                <input type="number" step="0.01" id="pricePerDay" required value="1.00">
+            </div>
+            <div class="input-group">
+                <label>مدة الحملة (الأيام)</label>
+                <select id="durationDays">
+                    <option value="1">1 يوم</option>
+                    <option value="7">7 أيام</option>
+                    <option value="30">30 يوم</option>
+                </select>
+            </div>
+            <button type="submit">نشر الإعلان</button>
+        </form>
+        <div id="msg" class="message"></div>
+        <a href="dashboard.html" class="back-link">العودة لوحة التحكم</a>
+    </div>
+
+    <script>
+        const API_URL = 'https://earn-uq8k.onrender.com/api';
+
+        document.getElementById('adForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const url = document.getElementById('url').value;
+            const duration = document.getElementById('duration').value;
+            const pricePerDay = document.getElementById('pricePerDay').value;
+            const durationDays = document.getElementById('durationDays').value;
+            const msgDiv = document.getElementById('msg');
+
+            try {
+                const response = await fetch(`${API_URL}/ads`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, url, duration, pricePerDay, durationDays })
+                });
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    msgDiv.textContent = 'تم نشر الإعلان بنجاح وتوجيهه للوحة التحكم!';
+                    msgDiv.className = 'message success';
+                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 1200);
+                } else {
+                    msgDiv.textContent = data.message || 'حدث خطأ أثناء النشر';
+                    msgDiv.className = 'message error';
+                }
+            } catch (err) {
+                msgDiv.textContent = 'خطأ في الاتصال بالخادم';
+                msgDiv.className = 'message error';
+            }
+        });
+    </script>
+</body>
+</html>
