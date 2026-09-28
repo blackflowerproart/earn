@@ -1,0 +1,17 @@
+{
+  "name": "blackflower-art-server",
+  "version": "1.0.0",
+  "description": "Backend server for Black Flower Pro Art",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.3.1"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}
