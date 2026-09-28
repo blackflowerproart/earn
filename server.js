@@ -6,19 +6,14 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// استبدل الـ URI بكلمة المرور الخاصة بك أو اتركه كما هو لو كان جاهزاً في متغيرات البيئة
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://blackflowerproart_db_user:YOUR_PASSWORD_HERE@membersinfo.tmqa7zr.mongodb.net/blackflower_art?retryWrites=true&w=majority&appName=Membersinfo';
 
 mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
-}).then(() => {
-    console.log('Connected to MongoDB successfully.');
-}).catch(err => {
-    console.error('MongoDB connection error:', err);
-});
+}).then(() => console.log('Connected to MongoDB.')).catch(err => console.error(err));
 
-// نموذج المستخدم والداشبورد
+// --- Schemas ---
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -28,127 +23,185 @@ const userSchema = new mongoose.Schema({
         level: { type: Number, default: 1 },
         tasksDone: { type: Number, default: 0 },
         adsViewed: { type: Number, default: 0 },
-        country: { type: String, default: 'Jordan (Amman)' },
-        loginCount: { type: Number, default: 0 }
+        tasksAvailable: { type: Number, default: 5 },
+        adsAvailable: { type: Number, default: 10 }
     },
     createdAt: { type: Date, default: Date.now }
 });
 const User = mongoose.model('User', userSchema);
 
-// نموذج الإعلانات
+// طلبات تعديل الحساب بانتظار موافقة الأدمن
+const updateRequestSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    oldUsername: String,
+    newUsername: String,
+    oldPassword: String,
+    newPassword: String,
+    status: { type: String, default: 'pending' }, // pending, approved, rejected
+    createdAt: { type: Date, default: Date.now }
+});
+const UpdateRequest = mongoose.model('UpdateRequest', updateRequestSchema);
+
+// الإعلانات
 const adSchema = new mongoose.Schema({
     title: String,
     url: String,
-    duration: Number, // ثواني المشاهدة
-    pricePerDay: Number, // سعر اليوم الواحد
-    durationDays: { type: Number, default: 1 }, // 1 يوم، 7 أيام، 30 يوم
-    createdAt: { type: Date, default: Date.now },
-    expiresAt: Date
+    duration: Number,
+    reward: Number,
+    createdAt: { type: Date, default: Date.now }
 });
 const Ad = mongoose.model('Ad', adSchema);
 
-// نموذج الرسائل والبريد الداخلي والدعم
+// المهام
+const taskSchema = new mongoose.Schema({
+    title: String,
+    description: String,
+    reward: Number,
+    createdAt: { type: Date, default: Date.now }
+});
+const Task = mongoose.model('Task', taskSchema);
+
+// الدعم الفني والرسائل
 const messageSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    isAdmin: { type: Boolean, default: false },
-    sender: String,
-    subject: String,
+    senderName: String,
     content: String,
-    type: { type: String, enum: ['inbox', 'support'], default: 'inbox' },
+    type: { type: String, default: 'support' }, // support or admin_notification
     createdAt: { type: Date, default: Date.now }
 });
 const Message = mongoose.model('Message', messageSchema);
 
-// --- المسارات (Endpoints) ---
+// عمليات السحب والإيداع
+const transactionSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    username: String,
+    type: { type: String, enum: ['withdraw', 'deposit'] },
+    amount: Number,
+    status: { type: String, default: 'pending' },
+    createdAt: { type: Date, default: Date.now }
+});
+const Transaction = mongoose.model('Transaction', transactionSchema);
 
-// 1. تسجيل الدخول
+// --- Endpoints ---
+
+// 1. Login
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
         if (!user || user.password !== password) {
-            return.status(401).json({ success: false, message: 'البريد أو كلمة المرور غير صحيحة' });
+            return.status(401).json({ success: false, message: 'بيانات الدخول غير صحيحة' });
         }
-        user.dashboardData.loginCount = (user.dashboardData.loginCount || 0) + 1;
-        await user.save();
         res.json({ success: true, user });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 });
 
-// 2. إنشاء حساب جديد
-app.post('/api/admin/create-user', async (req, res) => {
+// 2. Register
+app.post('/api/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return.status(400).json({ success: false, message: 'البريد الإلكتروني مستخدم مسبقاً' });
-        }
+        const exists = await User.findOne({ email });
+        if (exists) return.status(400).json({ success: false, message: 'البريد مستخدم مسبقاً' });
         
-        const newUser = await User.create({
-            username,
-            email,
-            password,
-            dashboardData: {
-                balance: 0.00,
-                level: 1,
-                tasksDone: 0,
-                adsViewed: 0
-            }
-        });
-        
-        res.json({ success: true, user: newUser });
+        const user = await User.create({ username, email, password });
+        res.json({ success: true, user });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 });
 
-// 3. تحديث بيانات المستخدم (اسم المستخدم وكلمة المرور)
-app.post('/api/user/update-profile', async (req, res) => {
+// 3. إحصائيات عامة (عدد المستخدمين، آخر سحب)
+app.post('/api/stats', async (req, res) => {
     try {
-        const { userId, newUsername, newPassword } = req.body;
-        const user = await User.findById(userId);
-        if (!user) return.status(404).json({ success: false, message: 'المستخدم غير موجود' });
-
-        if (newUsername) user.username = newUsername;
-        if (newPassword) user.password = newPassword;
-        await user.save();
-
-        res.json({ success: true, message: 'تم التحديث بنجاح', user });
+        const usersCount = await User.countDocuments();
+        const recentTransactions = await Transaction.find().sort({ createdAt: -1 }).limit(5);
+        res.json({ success: true, usersCount, recentTransactions });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 });
 
-// 4. جلب الإعلانات النشطة
+// 4. طلب تعديل البيانات (اسم وكلمة مرور)
+app.post('/api/user/request-update', async (req, res) => {
+    try {
+        const { userId, oldUsername, newUsername, oldPassword, newPassword } = req.body;
+        await UpdateRequest.create({ userId, oldUsername, newUsername, oldPassword, newPassword });
+        res.json({ success: true, message: 'تم إرسال طلب التعديل إلى الأدمن للموافقة' });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// 5. إرسال دعم فني
+app.post('/api/support', async (req, res) => {
+    try {
+        const { userId, senderName, content } = req.body;
+        await Message.create({ userId, senderName, content, type: 'support' });
+        res.json({ success: true, message: 'تم إرسال رسالتك بنجاح للأدمن' });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// 6. إنشاء إعلان أو مهمة (أو جلبها)
 app.get('/api/ads', async (req, res) => {
+    const ads = await Ad.find();
+    res.json({ success: true, ads });
+});
+app.post('/api/ads', async (req, res) => {
+    const ad = await Ad.create(req.body);
+    res.json({ success: true, ad });
+});
+
+app.get('/api/tasks', async (req, res) => {
+    const tasks = await Task.find();
+    res.json({ success: true, tasks });
+});
+app.post('/api/tasks', async (req, res) => {
+    const task = await Task.create(req.body);
+    res.json({ success: true, task });
+});
+
+// 7. سحب وإيداع
+app.post('/api/transaction', async (req, res) => {
     try {
-        const now = new Date();
-        // إذا لم تقم بإضافة إعلانات بعد، يمكنك جلب كل الإعلانات أو شرط انتهاء الوقت
-        const ads = await Ad.find(); 
-        res.json({ success: true, ads });
+        const { userId, username, type, amount } = req.body;
+        const tx = await Transaction.create({ userId, username, type, amount });
+        res.json({ success: true, message: 'تم تسجيل الطلب بنجاح', tx });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 });
 
-// 5. إرسال رسالة (دعم فني أو بريد)
-app.post('/api/messages', async (req, res) => {
+// 8. لوحة تحكم الأدمن (admin-control) - جلب الطلبات والرسائل
+app.get('/api/admin/data', async (req, res) => {
     try {
-        const { userId, sender, subject, content, type } = req.body;
-        const msg = await Message.create({ userId, sender, subject, content, type });
-        res.json({ success: true, message: 'تم الإرسال بنجاح', msg });
+        const updateRequests = await UpdateRequest.find({ status: 'pending' });
+        const supportMessages = await Message.find({ type: 'support' });
+        const transactions = await Transaction.find({ status: 'pending' });
+        res.json({ success: true, updateRequests, supportMessages, transactions });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 });
 
-// 6. جلب رسائل المستخدم
-app.get('/api/messages/:userId', async (req, res) => {
+// موافقة الأدمن على تعديل المستخدم
+app.post('/api/admin/approve-update', async (req, res) => {
     try {
-        const messages = await Message.find({ userId: req.params.userId }).sort({ createdAt: -1 });
-        res.json({ success: true, messages });
+        const { requestId } = req.body;
+        const reqDoc = await UpdateRequest.findById(requestId);
+        if (!reqDoc) return.status(404).json({ success: false, message: 'الطلب غير موجود' });
+
+        await User.findByIdAndUpdate(reqDoc.userId, {
+            username: reqDoc.newUsername,
+            password: reqDoc.newPassword
+        });
+
+        reqDoc.status = 'approved';
+        await reqDoc.save();
+        res.json({ success: true, message: 'تمت الموافقة وتحديث البيانات بنجاح' });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
