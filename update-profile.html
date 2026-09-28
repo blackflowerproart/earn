@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8"><title>تعديل الحساب</title>
+    <style>body{background:#121212;color:#fff;font-family:Tahoma;padding:40px;text-align:center;} form{max-width:300px;margin:auto;background:#1e1e1e;padding:20px;border-radius:8px;} input,button{width:100%;padding:10px;margin:10px 0;background:#2a2a2a;color:#fff;border:1px solid #444;} button{background:#d4af37;color:#121212;font-weight:bold;cursor:pointer;}</style>
+</head>
+<body>
+    <h2>طلب تعديل بيانات الحساب</h2>
+    <form id="updateForm">
+        <label>اسم المستخدم الجديد:</label>
+        <input type="text" id="newUsername" required>
+        <label>كلمة المرور الجديدة:</label>
+        <input type="password" id="newPassword" required>
+        <button type="submit">إرسال للأدمن للموافقة</button>
+    </form>
+    <p id="msg"></p>
+    <a href="dashboard.html" style="color:#d4af37;">العودة للوحة التحكم</a>
+    <script>
+        const user = JSON.parse(localStorage.getItem('currentUser'));
+        document.getElementById('newUsername').value = user.username;
+
+        document.getElementById('updateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const res = await fetch('https://earn-uq8k.onrender.com/api/user/request-update', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    userId: user._id,
+                    oldUsername: user.username,
+                    newUsername: document.getElementById('newUsername').value,
+                    oldPassword: user.password,
+                    newPassword: document.getElementById('newPassword').value
+                })
+            });
+            const data = await res.json();
+            document.getElementById('msg').textContent = data.message;
+        });
+    </script>
+</body>
+</html>
