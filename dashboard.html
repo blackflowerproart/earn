@@ -3,183 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم الرئيسية</title>
+    <title>لوحة التحكم - Black Flower Pro Art</title>
     <style>
-        body { font-family: Tahoma, sans-serif; background: #121212; color: #fff; margin: 0; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-        .header h1 { color: #d4af37; margin: 0; font-size: 20px; }
-        .nav-buttons button { background: #333; color: #fff; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; margin-left: 5px; }
-        .nav-buttons button:hover { background: #d4af37; color: #121212; }
-        .logout-btn { background: #d32f2f !important; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
-        .card { background: #1e1e1e; padding: 15px; border-radius: 8px; border-top: 4px solid #d4af37; }
-        .card h3 { margin: 0 0 8px 0; font-size: 14px; color: #aaa; }
-        .card .value { font-size: 20px; font-weight: bold; }
-        .section { margin-top: 30px; background: #1a1a1a; padding: 20px; border-radius: 8px; }
-        .section h2 { color: #d4af37; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .item-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-top: 15px; }
-        .item-box { background: #252525; padding: 15px; border-radius: 6px; border: 1px solid #333; }
-        .item-box h4 { margin: 0 0 5px 0; color: #fff; }
-        .item-box p { margin: 0 0 10px 0; font-size: 13px; color: #aaa; }
-        .btn { background: #d4af37; color: #121212; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        body { font-family: Tahoma, sans-serif; background-color: #121212; color: #fff; margin: 0; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 15px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
+        .card { background: #1e1e1e; padding: 20px; border-radius: 8px; border-top: 3px solid #d4af37; text-align: center; }
+        .card h3 { color: #aaa; font-size: 14px; margin: 0 0 10px 0; }
+        .card p { font-size: 22px; font-weight: bold; color: #d4af37; margin: 0; }
+        .actions-panel { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 10px; }
+        .btn { padding: 10px 20px; background: #d4af37; color: #121212; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; }
         .btn:hover { background: #c59b27; }
-        
-        /* مودال (نافذة منبثقة) التعديل والبريد والدعم */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
-        .modal-content { background: #1e1e1e; padding: 25px; border-radius: 8px; width: 400px; border: 1px solid #d4af37; }
-        .modal-content input, .modal-content textarea { width: 100%; padding: 8px; margin: 8px 0; background: #2a2a2a; border: 1px solid #444; color: #fff; border-radius: 4px; box-sizing: border-box; }
+        .btn-danger { background: #ff5252; color: #fff; }
+        .ticker { background: #1a1a1a; padding: 10px; margin-top: 20px; border-radius: 4px; border: 1px solid #333; overflow: hidden; white-space: nowrap; }
+        .ticker span { display: inline-block; padding-left: 50px; animation: ticker 15s linear infinite; color: #4caf50; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1 id="welcomeText">مرحباً بك</h1>
-        <div class="nav-buttons">
-            <button onclick="openModal('profileModal')">تعديل الحساب</button>
-            <button onclick="openModal('inboxModal')">البريد الداخلي</button>
-            <button onclick="openModal('supportModal')">الدعم الفني</button>
-            <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
+        <h2>مرحباً، <span id="usernameDisplay"></span></h2>
+        <div>
+            <span id="notifIcon" style="cursor: pointer; font-size: 20px; margin-left: 15px;" title="الإشعارات">🔔</span>
+            <button class="btn btn-danger" onclick="logout()">تسجيل الخروج</button>
         </div>
     </div>
 
-    <!-- إحصائيات الداشبورد -->
-    <div class="grid">
-        <div class="card"><h3>الرصيد الحالي</h3><div class="value" id="balance">0.00 BFP</div></div>
-        <div class="card"><h3>المستوى</h3><div class="value" id="level">1</div></div>
-        <div class="card"><h3>المهام المنجزة</h3><div class="value" id="tasksDone">0</div></div>
-        <div class="card"><h3>الإعلانات المشاهدة</h3><div class="value" id="adsViewed">0</div></div>
+    <!-- شريط آخر عمليات السحب -->
+    <div class="ticker">
+        <strong>آخر العمليات:</strong> <span id="tickerText">جاري تحميل آخر عمليات السحب...</span>
     </div>
 
-    <!-- قسم الإعلانات المتاحة -->
-    <div class="section">
-        <h2>الإعلانات المتاحة للمشاهدة</h2>
-        <div class="item-list" id="adsContainer">
-            <p>جاري تحميل الإعلانات...</p>
-        </div>
+    <!-- الإحصائيات -->
+    <div class="stats-grid">
+        <div class="card"><h3>الرصيد الحالي</h3><p id="balance">0.00 $</p></div>
+        <div class="card"><h3>المستوى</h3><p id="level">1</p></div>
+        <div class="card"><h3>الإعلانات المشاهدة / المتاحة</h3><p><span id="adsViewed">0</span> / <span id="adsAvail">10</span></p></div>
+        <div class="card"><h3>المهام المنجزة / المتاحة</h3><p><span id="tasksDone">0</span> / <span id="tasksAvail">5</span></p></div>
+        <div class="card"><h3>إجمالي مستخدمي الموقع</h3><p id="totalUsers">0</p></div>
     </div>
 
-    <!-- قسم المهام في الأسفل -->
-    <div class="section">
-        <h2>المهام المتاحة</h2>
-        <div class="item-list" id="tasksContainer">
-            <div class="item-box">
-                <h4>مهمة ترويجية #1</h4>
-                <p>قم بمشاركة رابط الموقع واحصل على 0.5 BFP</p>
-                <button class="btn" onclick="alert('تم إنجاز المهمة بنجاح!')">تنفيذ المهمة</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- مودال تعديل الحساب -->
-    <div id="profileModal" class="modal">
-        <div class="modal-content">
-            <h3>تعديل اسم المستخدم وكلمة المرور</h3>
-            <input type="text" id="newUsername" placeholder="اسم المستخدم الجديد">
-            <input type="password" id="newPassword" placeholder="كلمة المرور الجديدة">
-            <button class="btn" onclick="updateProfile()">حفظ التعديلات</button>
-            <button class="btn logout-btn" onclick="closeModal('profileModal')" style="margin-top:5px;">إغلاق</button>
-        </div>
-    </div>
-
-    <!-- مودال البريد الداخلي -->
-    <div id="inboxModal" class="modal">
-        <div class="modal-content">
-            <h3>البريد الداخلي</h3>
-            <div id="inboxMessages" style="max-height: 150px; overflow-y: auto; margin-bottom: 10px; font-size: 13px;">لا توجد رسائل جديدة.</div>
-            <button class="btn logout-btn" onclick="closeModal('inboxModal')">إغلاق</button>
-        </div>
-    </div>
-
-    <!-- مودال الدعم الفني -->
-    <div id="supportModal" class="modal">
-        <div class="modal-content">
-            <h3>تواصل مع الدعم الفني</h3>
-            <input type="text" id="supSubject" placeholder="موضوع المشكلة">
-            <textarea id="supContent" placeholder="اكتب تفاصيل مشكلتك هنا..." rows="4"></textarea>
-            <button class="btn" onclick="sendSupportMessage()">إرسال للإدارة</button>
-            <button class="btn logout-btn" onclick="closeModal('supportModal')" style="margin-top:5px;">إغلاق</button>
-        </div>
+    <!-- الأزرار المطلوبة -->
+    <div class="actions-panel">
+        <a href="update-profile.html" class="btn">تعديل الحساب (بواسطة الأدمن)</a>
+        <a href="support.html" class="btn">الدعم الفني والرسائل</a>
+        <a href="ads.html" class="btn">إدارة ومشاهدة الإعلانات</a>
+        <a href="tasks.html" class="btn">إدارة ومشاهدة المهام</a>
+        <a href="wallet.html" class="btn">سحب وإيداع الأموال</a>
     </div>
 
     <script>
-        const API_URL = 'http://localhost:10000/api';
-        let user = JSON.parse(localStorage.getItem('currentUser'));
-        if (!user) window.location.href = 'login.html';
+        const API_URL = 'https://earn-uq8k.onrender.com/api';
+        const user = JSON.parse(localStorage.getItem('currentUser'));
 
-        document.getElementById('welcomeText').textContent = `مرحباً بك، ${user.username}`;
-        document.getElementById('balance').textContent = `${(user.dashboardData.balance || 0).toFixed(2)} BFP`;
-        document.getElementById('level').textContent = user.dashboardData.level || 1;
-        document.getElementById('tasksDone').textContent = user.dashboardData.tasksDone || 0;
-        document.getElementById('adsViewed').textContent = user.dashboardData.adsViewed || 0;
+        if (!user) {
+            window.location.href = 'login.html';
+        } else {
+            document.getElementById('usernameDisplay').textContent = user.username;
+            document.getElementById('balance').textContent = (user.dashboardData?.balance || 0) + ' $';
+            document.getElementById('level').textContent = user.dashboardData?.level || 1;
+            document.getElementById('adsViewed').textContent = user.dashboardData?.adsViewed || 0;
+            document.getElementById('adsAvail').textContent = user.dashboardData?.adsAvailable || 10;
+            document.getElementById('tasksDone').textContent = user.dashboardData?.tasksDone || 0;
+            document.getElementById('tasksAvail').textContent = user.dashboardData?.tasksAvailable || 5;
+        }
 
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-        // جلب الإعلانات النشطة
-        async function loadAds() {
+        // جلب الإحصائيات العامة وعمليات السحب
+        async function fetchStats() {
             try {
-                const res = await fetch(`${API_URL}/ads`);
+                const res = await fetch(`${API_URL}/stats`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
                 const data = await res.json();
-                const container = document.getElementById('adsContainer');
-                if(data.success && data.ads.length > 0) {
-                    container.innerHTML = data.ads.map(ad => `
-                        <div class="item-box">
-                            <h4>${ad.title}</h4>
-                            <p>المدة: ${ad.duration} ثانية | العائد: ${ad.pricePerDay} BFP</p>
-                            <button class="btn" onclick="watchAd('${ad._id}', '${ad.url}', ${ad.duration})">مشاهدة الإعلان</button>
-                        </div>
-                    `).join('');
-                } else {
-                    container.innerHTML = '<p>لا توجد إعلانات متاحة حالياً.</p>';
+                if(data.success) {
+                    document.getElementById('totalUsers').textContent = data.usersCount;
+                    if(data.recentTransactions.length > 0) {
+                        let text = data.recentTransactions.map(t => `${t.username} قام بـ ${t.type === 'withdraw' ? 'سحب' : 'إيداع'} مبلغ ${t.amount}$`).join(' | ');
+                        document.getElementById('tickerText').textContent = text;
+                    } else {
+                        document.getElementById('tickerText').textContent = 'لا توجد عمليات سحب حديثة بعد.';
+                    }
                 }
-            } catch(e) {
-                document.getElementById('adsContainer').innerHTML = '<p>خطأ في تحميل الإعلانات</p>';
-            }
+            } catch(e) { console.error(e); }
         }
-
-        function watchAd(adId, url, duration) {
-            // الانتقال لصفحة المشاهدة مع تمرير البيانات عبر الرابط
-            window.location.href = `watch-ad.html?id=${adId}&url=${encodeURIComponent(url)}&duration=${duration}`;
-        }
-
-        async function updateProfile() {
-            const newUsername = document.getElementById('newUsername').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const res = await fetch(`${API_URL}/user/update-profile`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ userId: user._id, newUsername, newPassword })
-            });
-            const data = await res.json();
-            if(data.success) {
-                alert('تم التحديث بنجاح، يرجى تسجيل الدخول مجدداً');
-                logout();
-            } else {
-                alert(data.message);
-            }
-        }
-
-        async function sendSupportMessage() {
-            const subject = document.getElementById('supSubject').value;
-            const content = document.getElementById('supContent').value;
-            const res = await fetch(`${API_URL}/messages`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ userId: user._id, sender: user.username, subject, content, type: 'support' })
-            });
-            const data = await res.json();
-            if(data.success) {
-                alert('تم إرسال رسالتك إلى الدعم الفني بنجاح');
-                closeModal('supportModal');
-            }
-        }
+        fetchStats();
 
         function logout() {
             localStorage.removeItem('currentUser');
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
         }
-
-        loadAds();
     </script>
 </body>
 </html>
